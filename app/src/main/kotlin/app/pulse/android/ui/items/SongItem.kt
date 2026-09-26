@@ -190,12 +190,19 @@ private fun SongItem(
                     )
                 }
 
-                if (isPlaying) MusicBars(
-                    color = colorPalette.accent,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .height(24.dp)
-                )
+                if (isPlaying) {
+                    Box(
+                        modifier = Modifier
+                            .background(color = Color.Black.copy(alpha = 0.5f))
+                            .fillMaxSize()
+                    )
+                    MusicBars(
+                        color = colorPalette.accent,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .height(24.dp)
+                    )
+                }
             }
 
             onThumbnailContent?.invoke(this)
