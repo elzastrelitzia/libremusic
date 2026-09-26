@@ -204,20 +204,9 @@
     <string name="color_mode_dark">Scuro</string>
     <string name="color_mode_system">Sistema</string>
 
-    <string name="thumbnail_roundness">Arrotondamento miniature</string>
     <string name="none">Nessuno</string>
-    <string name="thumbnail_roundness_light">Leggero</string>
-    <string name="thumbnail_roundness_medium">Medio</string>
-    <string name="thumbnail_roundness_heavy">Pesante</string>
-    <string name="thumbnail_roundness_heavier">Più pesante</string>
-    <string name="thumbnail_roundness_heaviest">Massimo</string>
 
     <string name="text">Testo</string>
-    <string name="font">Font</string>
-    <string name="use_system_font">Usa font di sistema</string>
-    <string name="use_system_font_description">Usa il font applicato dal sistema</string>
-    <string name="apply_font_padding">Applica padding ai font</string>
-    <string name="apply_font_padding_description">Aggiungi spaziatura attorno ai testi</string>
     <string name="language">Lingua</string>
 
     <string name="lockscreen">Schermata di blocco</string>
@@ -225,12 +214,6 @@
     <string name="show_song_cover_description">Usa la copertina del brano in riproduzione come sfondo della schermata di blocco</string>
 
     <string name="player">Player</string>
-    <string name="previous_button_while_collapsed">Pulsante precedente quando collassato</string>
-    <string name="previous_button_while_collapsed_description">Mostra il pulsante del brano precedente quando il player è collassato</string>
-    <string name="swipe_horizontally_to_close">Scorri orizzontalmente per chiudere</string>
-    <string name="swipe_horizontally_to_close_description">Chiude il player quando si scorre a sinistra/destra sul player collassato. Utile per gli utenti con la modalità a una mano di Android attivata.</string>
-    <string name="show_like_button">Mostra pulsante Mi piace</string>
-    <string name="show_like_button_description">Mostra il pulsante Mi piace direttamente nel player</string>
     <string name="swipe_to_remove_item">Scorri per rimuovere elemento</string>
     <string name="swipe_to_remove_item_description">Scorri a sinistra per rimuovere un elemento dalla coda</string>
     <string name="lyrics_keep_screen_awake">Mantieni schermo attivo (testi)</string>
@@ -343,9 +326,6 @@
     <string name="trending">Di tendenza</string>
     <string name="quick_picks_source">Fonte selezioni rapide</string>
 
-    <string name="player_layout">Layout player</string>
-    <string name="classic_player_layout_name">Classico</string>
-    <string name="new_player_layout_name">Moderno (nuovo)</string>
 
     <string name="piped">Piped</string>
     <string name="instance">Istanza</string>
@@ -363,16 +343,6 @@
     <string name="base_api_url">URL API istanza</string>
     <string name="piped_session_created_successfully">Sessione Piped creata con successo</string>
 
-    <string name="seek_bar_style">Stile barra di riproduzione</string>
-    <string name="static_seek_bar_name">Statica</string>
-    <string name="wavy_seek_bar_name">Ondulata</string>
-    <string name="seek_bar_quality">Qualità barra ondulata</string>
-    <string name="seek_bar_quality_poor">Scarsa</string>
-    <string name="seek_bar_quality_low">Bassa</string>
-    <string name="seek_bar_quality_medium">Media</string>
-    <string name="seek_bar_quality_high">Alta</string>
-    <string name="seek_bar_quality_great">Ottima</string>
-    <string name="seek_bar_quality_subpixel">Subpixel</string>
 
     <string name="remove_from_blacklist">Rimuovi dalla lista nera</string>
     <string name="add_to_blacklist">Aggiungi alla lista nera</string>
