@@ -152,7 +152,10 @@ fun HomeSongs(
     }
     var hidingSong: String? by rememberSaveable { mutableStateOf(null) }
 
-    LaunchedEffect(sortBy, sortOrder, songProvider) {
+    // not keyed on songProvider: it is rebuilt on every recomposition of the caller, so
+    // keying on it would cancel and re-run this Room query each time. Both callers derive
+    // the query solely from sortBy and sortOrder, which are keys.
+    LaunchedEffect(sortBy, sortOrder) {
         songProvider().collect { items = it.toPersistentList() }
     }
 
