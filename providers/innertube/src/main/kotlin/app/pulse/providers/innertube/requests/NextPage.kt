@@ -78,7 +78,7 @@ suspend fun Innertube.nextPage(body: ContinuationBody) = runCatchingCancellable 
         ?.toSongsPage()
 }
 
-private fun NextResponse.MusicQueueRenderer.Content.PlaylistPanelRenderer?.toSongsPage() =
+internal fun NextResponse.MusicQueueRenderer.Content.PlaylistPanelRenderer?.toSongsPage() =
     Innertube.ItemsPage(
         items = this
             ?.contents

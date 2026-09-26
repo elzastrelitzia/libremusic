@@ -120,8 +120,18 @@ fun QuickPicks(
 
     // force a fresh related page, bypassing the cache TTL.
     suspend fun refreshRelated() {
-        relatedPageResult = Innertube.relatedPage(body = NextBody(videoId = seedId()))
-        relatedPageResult?.getOrNull()?.let {
+        val seed = seedId()
+        val first = Innertube.relatedPage(body = NextBody(videoId = seed))
+        // An obscure seed can come back with no recommendations at all. Retry once
+        // with the fallback seed, and only publish the final answer, so a dead
+        // attempt never flashes the error message before the retry lands.
+        val result = if (first?.getOrNull()?.songs.isNullOrEmpty() && seed != "J7p4bzqLvCw") {
+            Innertube.relatedPage(body = NextBody(videoId = "J7p4bzqLvCw"))
+        } else first
+        relatedPageResult = result
+        // only cache a page that actually has songs, so a bad refresh cannot
+        // overwrite a good disk cache with an empty one.
+        result?.getOrNull()?.takeIf { !it.songs.isNullOrEmpty() }?.let {
             HomeCache.saveRelated(context.filesDir, it)
             HomeCache.prefetchThumbs(context, null, it)
         }
@@ -305,8 +315,7 @@ fun QuickPicks(
                     }
 
                     items(
-                        items = related.songs?.dropLast(if (trending == null) 0 else 1)
-                            ?: emptyList(),
+                        items = related.songs ?: emptyList(),
                         key = Innertube.SongItem::key
                     ) { song ->
                         SongItem(
@@ -400,7 +409,11 @@ fun QuickPicks(
                     }
                 }
 
-            } ?: relatedPageResult?.exceptionOrNull()?.let {
+            // reached only when getOrNull() is null, so this catches both a real
+            // failure and "loaded, but YouTube Music had no recommendations".
+            // Without it, Result.success(null) fell through to the shimmer below
+            // and spun forever.
+            } ?: relatedPageResult?.let {
                 BasicText(
                     text = stringResource(R.string.error_message),
                     style = typography.s.secondary.center,
