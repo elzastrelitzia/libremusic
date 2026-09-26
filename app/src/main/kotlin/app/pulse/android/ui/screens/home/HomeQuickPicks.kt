@@ -116,9 +116,12 @@ fun QuickPicks(
 
     var relatedPageResult by persist<Result<Innertube.RelatedPage?>?>(tag = "home/relatedPageResult")
 
-    // Seed the shown feed was built from. Not persisted: it only has to outlive a
-    // recomposition, because the page itself is already persisted.
-    var feedSeed by remember { mutableStateOf<String?>(null) }
+    // Seed the shown feed was built from. Persisted alongside the page because a tab
+    // change disposes this composable while the persist map survives, and a plain
+    // remember would come back null, which is exactly the value that makes shouldFetch
+    // refetch. The page came back and the seed did not, so every return to the tab paid
+    // for the same page twice.
+    var feedSeed by persist<String>(tag = "home/feedSeed")
 
     // Restore the disk cache first so a cold open renders instantly and
     // skips the network while the cache is fresh (TTL-configurable).
