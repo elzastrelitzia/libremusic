@@ -23,8 +23,8 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 private val VERSION_NAME = BuildConfig.VERSION_NAME.substringBeforeLast("-")
-private const val REPO_OWNER = "khuza08"
-private const val REPO_NAME = "pulse"
+private const val REPO_OWNER = "elzastrelitzia"
+private const val REPO_NAME = "libremusic"
 suspend fun Version.getNewerVersion(
     repoOwner: String = REPO_OWNER,
     repoName: String = REPO_NAME,
@@ -112,5 +112,3 @@ class VersionCheckWorker(
         }
     }
 }
-
-

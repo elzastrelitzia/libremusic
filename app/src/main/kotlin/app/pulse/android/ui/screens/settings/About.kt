@@ -71,8 +71,8 @@ import app.pulse.android.ui.screens.GlobalRoutes
 import app.pulse.android.ui.components.themed.Scaffold
 
 private val VERSION_NAME = BuildConfig.VERSION_NAME.substringBeforeLast("-")
-private const val REPO_OWNER = "khuza08"
-private const val REPO_NAME = "pulse"
+private const val REPO_OWNER = "elzastrelitzia"
+private const val REPO_NAME = "libremusic"
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private val permission = Manifest.permission.POST_NOTIFICATIONS
