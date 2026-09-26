@@ -114,7 +114,8 @@ fun HomeSongs(
         setSortBy = { songSortBy = it },
         sortOrder = songSortOrder,
         setSortOrder = { songSortOrder = it },
-        title = stringResource(R.string.songs)
+        title = stringResource(R.string.songs),
+        persistTag = "home/songs"
     )
 }
 
@@ -129,7 +130,8 @@ fun HomeSongs(
     setSortBy: (SongSortBy) -> Unit,
     sortOrder: SortOrder,
     setSortOrder: (SortOrder) -> Unit,
-    title: String
+    title: String,
+    persistTag: String
 ) {
     val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
 
@@ -139,7 +141,7 @@ fun HomeSongs(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     var filter: String? by rememberSaveable { mutableStateOf(null) }
-    var items by persistList<Song>("home/songs")
+    var items by persistList<Song>(persistTag)
     val filteredItems by remember {
         derivedStateOf {
             filter?.lowercase()?.ifBlank { null }?.let { f ->

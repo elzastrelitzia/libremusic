@@ -93,7 +93,8 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
         setSortBy = { localSongSortBy = it },
         sortOrder = localSongSortOrder,
         setSortOrder = { localSongSortOrder = it },
-        title = stringResource(R.string.local)
+        title = stringResource(R.string.local),
+        persistTag = "home/localSongs/songs"
     ) else {
         LaunchedEffect(Unit) { launcher.launch(permission) }
 
