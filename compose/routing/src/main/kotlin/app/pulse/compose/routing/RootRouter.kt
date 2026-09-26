@@ -26,7 +26,7 @@ typealias TransitionSpec<T> = TransitionScope<T>.() -> ContentTransform
 private val defaultTransitionSpec: TransitionSpec<Route?> = {
     when {
         isStacking -> defaultStacking
-        isStill -> defaultStill
+        isStill -> defaultStacking
         else -> defaultUnstacking
     }
 }
