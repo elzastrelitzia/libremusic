@@ -71,6 +71,7 @@ import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.center
 import app.pulse.android.utils.color
 import app.pulse.android.utils.forcePlay
+import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.rememberSnapLayoutInfo
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
@@ -308,6 +309,7 @@ fun HomeDiscovery(
                         }
                     )
 
+                    val (currentMediaId, playing) = playingSong(binder)
 
                     LazyHorizontalGrid(
                         state = trendingGridState,
@@ -347,6 +349,7 @@ fun HomeDiscovery(
                                     .animateItem(fadeInSpec = null, fadeOutSpec = null)
                                     .width(itemWidth),
                                 showDuration = false,
+                                isPlaying = playing && currentMediaId == song.key
                             )
                         }
                     }

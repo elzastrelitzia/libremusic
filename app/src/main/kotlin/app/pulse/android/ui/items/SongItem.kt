@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
@@ -27,6 +28,7 @@ import androidx.media3.common.MediaItem
 import app.pulse.android.R
 import app.pulse.core.data.models.Song
 import app.pulse.android.preferences.AppearancePreferences
+import app.pulse.android.ui.components.MusicBars
 import app.pulse.android.ui.components.themed.TextPlaceholder
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.secondary
@@ -49,6 +51,7 @@ fun SongItem(
     modifier: Modifier = Modifier,
     showDuration: Boolean = true,
     clip: Boolean = true,
+    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) = SongItem(
     modifier = modifier,
@@ -60,6 +63,7 @@ fun SongItem(
     thumbnailSize = thumbnailSize,
     showDuration = showDuration,
     clip = clip,
+    isPlaying = isPlaying,
     hideExplicit = hideExplicit
 )
 
@@ -72,6 +76,7 @@ fun SongItem(
     trailingContent: (@Composable () -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
+    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val extras = remember(song) { song.mediaMetadata.extras?.songBundle }
@@ -88,7 +93,8 @@ fun SongItem(
         trailingContent = trailingContent,
         showDuration = showDuration,
         clip = clip,
-            hideExplicit = hideExplicit
+        isPlaying = isPlaying,
+        hideExplicit = hideExplicit
     )
 }
 
@@ -102,6 +108,7 @@ fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
+    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) = SongItem(
     modifier = modifier,
@@ -116,6 +123,7 @@ fun SongItem(
     trailingContent = trailingContent,
     showDuration = showDuration,
     clip = clip,
+    isPlaying = isPlaying,
     hideExplicit = hideExplicit
 )
 
@@ -133,6 +141,7 @@ private fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
+    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
@@ -168,7 +177,7 @@ private fun SongItem(
                     )
                 }
 
-                if (index != null) {
+                if (index != null && !isPlaying) {
                     Box(
                         modifier = Modifier
                             .background(color = Color.Black.copy(alpha = 0.75f))
@@ -180,6 +189,13 @@ private fun SongItem(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
+                if (isPlaying) MusicBars(
+                    color = colorPalette.accent,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .height(24.dp)
+                )
             }
 
             onThumbnailContent?.invoke(this)
@@ -188,7 +204,8 @@ private fun SongItem(
         trailingContent = trailingContent,
         showDuration = showDuration,
         clip = clip,
-            hideExplicit = hideExplicit
+        isPlaying = isPlaying,
+        hideExplicit = hideExplicit
     )
 }
 
@@ -204,18 +221,22 @@ private fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
+    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val (colorPalette, typography) = LocalAppearance.current
 
+    val titleStyle =
+        if (isPlaying) typography.xs.semiBold.copy(color = colorPalette.accent)
+        else typography.xs.semiBold
+
     if (!(hideExplicit && explicit)) ItemContainer(
         alternative = false,
         thumbnailSize = thumbnailSize,
-        modifier = modifier
-            .let {
-                if (clip) Modifier.clip(LocalAppearance.current.thumbnailShape) then it
-                else it
-            }
+        modifier = modifier.let {
+            if (clip) Modifier.clip(LocalAppearance.current.thumbnailShape) then it
+            else it
+        }
     ) {
         Box(
             modifier = Modifier.size(thumbnailSize),
@@ -230,7 +251,7 @@ private fun SongItem(
                 ) {
                     BasicText(
                         text = title.orEmpty(),
-                        style = typography.xs.semiBold,
+                        style = titleStyle,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
@@ -240,7 +261,7 @@ private fun SongItem(
                 }
             } ?: BasicText(
                 text = title.orEmpty(),
-                style = typography.xs.semiBold,
+                style = titleStyle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

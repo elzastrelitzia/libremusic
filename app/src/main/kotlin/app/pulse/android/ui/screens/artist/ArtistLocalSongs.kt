@@ -36,6 +36,7 @@ import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.enqueue
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
+import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.persist
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
@@ -61,6 +62,7 @@ fun ArtistLocalSongs(
 
     val lazyListState = rememberLazyListState()
 
+    val (currentMediaId, playing) = playingSong(binder)
 
     LayoutWithAdaptiveThumbnail(
         thumbnailContent = thumbnailContent,
@@ -119,6 +121,7 @@ fun ArtistLocalSongs(
                             ),
                             song = song,
                             thumbnailSize = Dimensions.thumbnails.song,
+                            isPlaying = playing && currentMediaId == song.id
                         )
                     }
                 } ?: item(key = "loading") {

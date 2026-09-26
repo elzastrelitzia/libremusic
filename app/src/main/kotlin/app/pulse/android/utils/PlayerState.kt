@@ -131,6 +131,32 @@ fun windowState(
 }
 
 @Composable
+fun playingSong(
+    binder: PlayerService.Binder? = LocalPlayerServiceBinder.current
+): Pair<String?, Boolean> {
+    var playing by remember { mutableStateOf(binder?.player?.playWhenReady == true) }
+    var id: String? by remember { mutableStateOf(binder?.player?.currentMediaItem?.mediaId) }
+
+    binder?.player.DisposableListener {
+        object : Player.Listener {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                super.onPlayWhenReadyChanged(playWhenReady, reason)
+
+                playing = playWhenReady
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+
+                id = mediaItem?.mediaId
+            }
+        }
+    }
+
+    return id to playing
+}
+
+@Composable
 fun Player?.rememberIsBuffering(): Boolean {
     var isBuffering by remember(this) { mutableStateOf(this?.isBuffering == true) }
 

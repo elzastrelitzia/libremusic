@@ -40,6 +40,7 @@ import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.enqueue
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
+import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.persist
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
@@ -85,6 +86,7 @@ fun PipedPlaylistSongList(
         url = playlist?.thumbnailUrl?.toString()
     )
 
+    val (currentMediaId, playing) = playingSong(binder)
 
     LayoutWithAdaptiveThumbnail(
         thumbnailContent = thumbnailContent,
@@ -145,6 +147,7 @@ fun PipedPlaylistSongList(
                                         }
                                 }
                             ),
+                            isPlaying = playing && currentMediaId == song.id
                         )
                     }
                 }

@@ -73,6 +73,7 @@ import app.pulse.android.utils.completed
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
 import app.pulse.android.utils.medium
+import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.semiBold
 import app.pulse.compose.persist.persist
 import app.pulse.core.ui.Dimensions
@@ -161,6 +162,7 @@ fun PlaylistSongList(
             .take(4)
     }
 
+    val (currentMediaId, playing) = playingSong(binder)
 
     var tintColor by remember { mutableStateOf(colorPalette.accent) }
 
@@ -398,6 +400,7 @@ fun PlaylistSongList(
                                 }
                             }
                         ),
+                    isPlaying = playing && currentMediaId == song.key
                 )
             }
 

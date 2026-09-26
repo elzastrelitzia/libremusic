@@ -79,6 +79,7 @@ import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
 import app.pulse.android.utils.launchYouTubeMusic
 import app.pulse.android.utils.medium
+import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.semiBold
 import app.pulse.android.utils.toast
 import app.pulse.compose.reordering.animateItemPlacement
@@ -162,6 +163,7 @@ fun LocalPlaylistSongs(
 
     val mediaItems = songs.map { it.asMediaItem }
     val youtubeMusicNotInstalledMessage = stringResource(R.string.youtube_music_not_installed)
+    val (currentMediaId, playing) = playingSong(binder)
 
     val mosaicUrls = remember(songs) {
         songs.mapNotNull { it.thumbnailUrl?.takeIf { u -> u.isNotEmpty() } }.take(4)
@@ -457,6 +459,7 @@ Box(modifier = modifier) {
                             )
                         },
                         clip = !reorderingState.isDragging,
+                        isPlaying = playing && currentMediaId == song.id
                     )
                 }
             }

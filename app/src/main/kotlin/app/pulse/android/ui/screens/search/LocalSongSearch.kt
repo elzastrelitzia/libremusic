@@ -37,6 +37,7 @@ import app.pulse.android.utils.align
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.forcePlay
 import app.pulse.android.utils.medium
+import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.persistList
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
@@ -65,6 +66,7 @@ fun LocalSongSearch(
 
     val lazyListState = rememberLazyListState()
 
+    val (currentMediaId, playing) = playingSong(binder)
 
     Box(modifier = modifier) {
         LazyColumn(
@@ -102,6 +104,7 @@ fun LocalSongSearch(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     // TODO: refactor out a simple 'song list' in order to fix this kind of repetition
+                    isPlaying = playing && currentMediaId == song.id
                 )
             }
         }

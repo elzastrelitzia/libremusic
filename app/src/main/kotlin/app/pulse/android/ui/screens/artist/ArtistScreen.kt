@@ -38,6 +38,7 @@ import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.searchresult.ItemsPage
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.forcePlay
+import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.PersistMapCleanup
 import app.pulse.compose.persist.persist
 import app.pulse.compose.routing.RouteHandler
@@ -106,6 +107,7 @@ fun ArtistScreen(browseId: String) {
         GlobalRoutes()
 
         Content {
+            val (currentMediaId, playing) = playingSong(binder)
 
             val thumbnailContent = adaptiveThumbnailContent(
                 isLoading = artist?.timestamp == null,
@@ -238,6 +240,7 @@ fun ArtistScreen(browseId: String) {
                                             binder?.setupRadio(song.info?.endpoint)
                                         }
                                     ),
+                                    isPlaying = playing && currentMediaId == song.key
                                 )
                             },
                             itemPlaceholderContent = {

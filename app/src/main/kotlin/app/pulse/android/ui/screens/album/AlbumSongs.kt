@@ -33,6 +33,7 @@ import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.enqueue
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
+import app.pulse.android.utils.playingSong
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.utils.isLandscape
@@ -60,6 +61,7 @@ fun AlbumSongs(
     val menuState = LocalMenuState.current
     val lazyListState = rememberLazyListState()
 
+    val (currentMediaId, playing) = playingSong(binder)
 
     Box {
         LazyColumn(
@@ -123,6 +125,7 @@ fun AlbumSongs(
                             )
                         }
                     ),
+                    isPlaying = playing && currentMediaId == song.id
                 )
             }
 
