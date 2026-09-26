@@ -3,8 +3,8 @@ package app.pulse.android.ui.screens.home
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.database.ContentObserver
 import android.net.Uri
-import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,22 +42,18 @@ import app.pulse.android.utils.medium
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.utils.isAtLeastAndroid13
 import app.pulse.core.ui.utils.isCompositionLaunched
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private val permission = if (isAtLeastAndroid13) Manifest.permission.READ_MEDIA_AUDIO
 else Manifest.permission.READ_EXTERNAL_STORAGE
@@ -124,35 +120,37 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
     }
 }
 
-private val mediaScope = CoroutineScope(Dispatchers.IO + CoroutineName("MediaStore worker"))
-fun Context.musicFilesAsFlow(): StateFlow<List<Song>> = flow {
-    var version: String? = null
-
-    while (currentCoroutineContext().isActive) {
-        val newVersion = MediaStore.getVersion(applicationContext)
-
-        if (version != newVersion) {
-            version = newVersion
-
-            AudioMediaCursor.query(contentResolver) {
-                buildList {
-                    while (next()) {
-                        if (!isMusic || duration == 0) continue
-                        add(
-                            Song(
-                                id = "$LOCAL_KEY_PREFIX$id",
-                                title = name,
-                                artistsText = artist,
-                                durationText = formatDuration(duration.milliseconds),
-                                thumbnailUrl = albumUri.toString()
-                            )
-                        )
-                    }
-                }
-            }?.let { emit(it) }
+fun Context.musicFilesAsFlow(): Flow<List<Song>> = callbackFlow {
+    val observer = object : ContentObserver(null) {
+        override fun onChange(selfChange: Boolean) {
+            trySend(Unit)
         }
-        delay(5.seconds)
     }
-}.distinctUntilChanged()
+
+    contentResolver.registerContentObserver(AudioMediaCursor.uri, true, observer)
+    trySend(Unit)
+
+    awaitClose { contentResolver.unregisterContentObserver(observer) }
+}
+    .conflate()
+    .mapNotNull { scanMusicFiles() }
+    .flowOn(Dispatchers.IO)
+    .distinctUntilChanged()
     .onEach { songs -> transaction { songs.forEach { Database.insert(it.toEntity()) } } }
-    .stateIn(mediaScope, SharingStarted.Eagerly, listOf())
+
+private fun Context.scanMusicFiles(): List<Song>? = AudioMediaCursor.query(contentResolver) {
+    buildList {
+        while (next()) {
+            if (!isMusic || duration == 0) continue
+            add(
+                Song(
+                    id = "$LOCAL_KEY_PREFIX$id",
+                    title = name,
+                    artistsText = artist,
+                    durationText = formatDuration(duration.milliseconds),
+                    thumbnailUrl = albumUri.toString()
+                )
+            )
+        }
+    }
+}

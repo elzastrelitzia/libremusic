@@ -83,7 +83,7 @@ class AudioMediaCursor(private val cursor: Cursor) {
             Descending("DESC")
         }
 
-        private val uri by lazy {
+        val uri by lazy {
             if (isAtLeastAndroid10) MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
             else MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
