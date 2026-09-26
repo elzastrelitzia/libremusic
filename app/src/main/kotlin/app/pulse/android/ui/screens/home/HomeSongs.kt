@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -267,17 +266,6 @@ fun HomeSongs(
                             }
                         }
                     }
-
-                    if (items.isNotEmpty()) BasicText(
-                        text = pluralStringResource(
-                            R.plurals.song_count_plural,
-                            items.size,
-                            items.size
-                        ),
-                        style = typography.xs.secondary.semiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
             }
         }
