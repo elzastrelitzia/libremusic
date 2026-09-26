@@ -4,21 +4,7 @@
     <p style="display: inline;">Music streaming for everyone</p>
 </div>
 
-<details>
-  <summary><b>Click to view screenshots</b></summary>
-
-**1.2.7**
-
-<img src="./assets/screenshots/4.jpg" width="30%" />
-<img src="./assets/screenshots/5.jpg" width="30%" />
-<img src="./assets/screenshots/6.jpg" width="30%" />
-
-**1.2.6**
-
-<img src="./assets/screenshots/1.png" width="30%" />
-<img src="./assets/screenshots/2.png" width="30%" />
-<img src="./assets/screenshots/3.png" width="30%" />
-</details>
+[Screenshots are available at the web!](https://elzastrelitzia.github.io/pulse-web/#screenshots)
 
 ## Features
 
