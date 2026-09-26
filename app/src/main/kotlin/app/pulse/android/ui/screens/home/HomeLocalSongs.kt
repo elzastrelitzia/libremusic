@@ -136,7 +136,13 @@ fun Context.musicFilesAsFlow(): Flow<List<Song>> = callbackFlow {
     .mapNotNull { scanMusicFiles() }
     .flowOn(Dispatchers.IO)
     .distinctUntilChanged()
-    .onEach { songs -> transaction { songs.forEach { Database.insert(it.toEntity()) } } }
+    .onEach { songs ->
+        transaction {
+            val present = songs.mapTo(HashSet()) { it.id }
+            Database.localSongIds().forEach { Database.setSongMissing(it, it !in present) }
+            songs.forEach { Database.insert(it.toEntity()) }
+        }
+    }
 
 private fun Context.scanMusicFiles(): List<Song>? = AudioMediaCursor.query(contentResolver) {
     buildList {

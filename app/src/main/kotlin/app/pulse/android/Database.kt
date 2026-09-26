@@ -158,34 +158,40 @@ interface DatabaseAccessor {
     fun songsByPlayTimeDesc(limit: Int = -1): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID ASC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY ROWID ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByRowIdAsc(): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID DESC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY ROWID DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByRowIdDesc(): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE ASC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY title COLLATE NOCASE ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByTitleAsc(): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE DESC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY title COLLATE NOCASE DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByTitleDesc(): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY totalPlayTimeMs ASC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY totalPlayTimeMs ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByPlayTimeAsc(): Flow<List<SongModel>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY totalPlayTimeMs DESC")
+    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND missing = 0 ORDER BY totalPlayTimeMs DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByPlayTimeDesc(): Flow<List<SongModel>>
+
+    @Query("SELECT id FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%'")
+    fun localSongIds(): List<String>
+
+    @Query("UPDATE Song SET missing = :missing WHERE id = :id AND missing != :missing")
+    fun setSongMissing(id: String, missing: Boolean)
 
     @Suppress("CyclomaticComplexMethod")
     fun songs(sortBy: SongSortBy, sortOrder: SortOrder, isLocal: Boolean = false) = when (sortBy) {
@@ -847,7 +853,7 @@ interface DatabaseAccessor {
         PipedSession::class
     ],
     views = [SortedSongPlaylistMap::class],
-    version = 32,
+    version = 33,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -876,6 +882,7 @@ interface DatabaseAccessor {
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
         AutoMigration(from = 30, to = 31, spec = DatabaseInitializer.From30To31Migration::class),
+        AutoMigration(from = 32, to = 33)
     ]
 )
 @TypeConverters(Converters::class)
