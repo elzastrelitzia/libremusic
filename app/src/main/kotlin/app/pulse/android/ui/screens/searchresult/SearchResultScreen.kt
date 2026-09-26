@@ -52,7 +52,6 @@ import app.pulse.android.ui.screens.playlistRoute
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.forcePlay
 import app.pulse.android.utils.medium
-import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.LocalPersistMap
 import app.pulse.compose.persist.PersistMapCleanup
 import app.pulse.compose.routing.RouteHandler
@@ -76,7 +75,6 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
 
     PersistMapCleanup(prefix = "searchResults/$query/")
 
-    val (currentMediaId, playing) = playingSong(binder)
 
     RouteHandler {
         GlobalRoutes()
@@ -199,7 +197,6 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                                             binder?.setupRadio(song.info?.endpoint)
                                         }
                                     ),
-                                    isPlaying = playing && currentMediaId == song.key
                                 )
                             },
                             itemPlaceholderContent = {

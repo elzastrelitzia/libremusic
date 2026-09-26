@@ -74,7 +74,6 @@ import app.pulse.android.utils.asMediaItem
 import androidx.media3.common.MediaItem
 import app.pulse.android.utils.center
 import app.pulse.android.utils.forcePlay
-import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.rememberSnapLayoutInfo
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
@@ -201,7 +200,6 @@ fun QuickPicks(
         .padding(top = 24.dp, bottom = 8.dp)
         .padding(endPaddingValues)
 
-    val (currentMediaId, playing) = playingSong(binder)
 
 
     PullToRefreshBox(
@@ -299,7 +297,6 @@ fun QuickPicks(
                                     )
                                 },
                                 showDuration = false,
-                                isPlaying = playing && currentMediaId == song.id
                             )
                         }
                     }
@@ -327,7 +324,6 @@ fun QuickPicks(
                                 .animateItem(fadeInSpec = null, fadeOutSpec = null)
                                 .width(itemInHorizontalGridWidth),
                             showDuration = false,
-                            isPlaying = playing && currentMediaId == song.key
                         )
                     }
                 }

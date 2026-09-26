@@ -48,7 +48,6 @@ import app.pulse.android.ui.items.SongItemPlaceholder
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.forcePlay
 import app.pulse.android.utils.medium
-import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
 import app.pulse.core.ui.Dimensions
@@ -149,7 +148,6 @@ fun ArtistOverview(
                         }
                     }
 
-                    val (currentMediaId, playing) = playingSong(binder)
 
                     songs.forEach { song ->
                         SongItem(
@@ -175,7 +173,6 @@ fun ArtistOverview(
                                     }
                                 )
                                 .padding(endPaddingValues),
-                            isPlaying = playing && currentMediaId == song.key
                         )
                     }
                 }

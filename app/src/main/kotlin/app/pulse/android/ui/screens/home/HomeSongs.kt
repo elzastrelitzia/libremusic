@@ -82,7 +82,6 @@ import app.pulse.android.utils.center
 import app.pulse.android.utils.color
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.formatted
-import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
 import app.pulse.compose.persist.persistList
@@ -161,7 +160,6 @@ fun HomeSongs(
 
     val lazyListState = rememberLazyListState()
 
-    val (currentMediaId, playing) = playingSong(binder)
 
     Box {
     CollapsingHeader(
@@ -361,7 +359,6 @@ fun HomeSongs(
                             )
                         }
                     } else null,
-                    isPlaying = playing && currentMediaId == song.id
                 )
             }
         }

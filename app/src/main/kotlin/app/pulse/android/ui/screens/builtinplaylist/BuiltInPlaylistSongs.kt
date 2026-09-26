@@ -43,7 +43,6 @@ import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.enqueue
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
-import app.pulse.android.utils.playingSong
 import app.pulse.compose.persist.persistList
 import app.pulse.core.data.enums.BuiltInPlaylist
 import app.pulse.core.data.enums.SongSortBy
@@ -114,7 +113,6 @@ fun BuiltInPlaylistSongs(
 
     val lazyListState = rememberLazyListState()
 
-    val (currentMediaId, playing) = playingSong(binder)
 
     Box(modifier = modifier) {
         LazyColumn(
@@ -224,7 +222,6 @@ fun BuiltInPlaylistSongs(
                     song = song,
                     index = if (builtInPlaylist == BuiltInPlaylist.Top) index else null,
                     thumbnailSize = Dimensions.thumbnails.song,
-                    isPlaying = playing && currentMediaId == song.id
                 )
             }
         }

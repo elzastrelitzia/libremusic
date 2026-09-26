@@ -1,6 +1,5 @@
 package app.pulse.android.ui.items
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +49,6 @@ fun SongItem(
     modifier: Modifier = Modifier,
     showDuration: Boolean = true,
     clip: Boolean = true,
-    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) = SongItem(
     modifier = modifier,
@@ -63,7 +60,6 @@ fun SongItem(
     thumbnailSize = thumbnailSize,
     showDuration = showDuration,
     clip = clip,
-    isPlaying = isPlaying,
     hideExplicit = hideExplicit
 )
 
@@ -76,7 +72,6 @@ fun SongItem(
     trailingContent: (@Composable () -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
-    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val extras = remember(song) { song.mediaMetadata.extras?.songBundle }
@@ -93,8 +88,7 @@ fun SongItem(
         trailingContent = trailingContent,
         showDuration = showDuration,
         clip = clip,
-        isPlaying = isPlaying,
-        hideExplicit = hideExplicit
+            hideExplicit = hideExplicit
     )
 }
 
@@ -108,7 +102,6 @@ fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
-    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) = SongItem(
     modifier = modifier,
@@ -123,7 +116,6 @@ fun SongItem(
     trailingContent = trailingContent,
     showDuration = showDuration,
     clip = clip,
-    isPlaying = isPlaying,
     hideExplicit = hideExplicit
 )
 
@@ -141,7 +133,6 @@ private fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
-    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
@@ -197,8 +188,7 @@ private fun SongItem(
         trailingContent = trailingContent,
         showDuration = showDuration,
         clip = clip,
-        isPlaying = isPlaying,
-        hideExplicit = hideExplicit
+            hideExplicit = hideExplicit
     )
 }
 
@@ -214,21 +204,14 @@ private fun SongItem(
     trailingContent: @Composable (() -> Unit)? = null,
     showDuration: Boolean = true,
     clip: Boolean = true,
-    isPlaying: Boolean = false,
     hideExplicit: Boolean = AppearancePreferences.hideExplicit
 ) {
     val (colorPalette, typography) = LocalAppearance.current
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isPlaying) colorPalette.background2 else Color.Transparent,
-        label = ""
-    )
 
     if (!(hideExplicit && explicit)) ItemContainer(
         alternative = false,
         thumbnailSize = thumbnailSize,
         modifier = modifier
-            .background(backgroundColor)
             .let {
                 if (clip) Modifier.clip(LocalAppearance.current.thumbnailShape) then it
                 else it
