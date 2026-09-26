@@ -81,7 +81,6 @@ import app.pulse.android.utils.playingSong
 import app.pulse.android.utils.rememberSnapLayoutInfo
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
-import app.pulse.compose.persist.persist
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.utils.isLandscape
@@ -112,26 +111,20 @@ fun QuickPicks(
     val menuState = LocalMenuState.current
     val windowInsets = LocalPlayerAwareWindowInsets.current
 
-    var trending by persist<Song?>("home/trending")
+    // remember, not persist: the persist map is wiped whenever HomeScreen leaves
+    // composition, which swaps these state objects out from under a running effect.
+    // The disk cache carries the page and its seed, so a tab return restores from file.
+    var trending by remember { mutableStateOf<Song?>(null) }
+    var relatedPageResult by remember { mutableStateOf<Result<Innertube.RelatedPage?>?>(null) }
+    // The seed the page on screen was actually built from, which is not always
+    // trending: after the fallback retry the grid shows the fallback's page while
+    // trending still holds the wanted song. Collapsing the two would refetch the
+    // wanted song on every entry, so keep both.
+    var feedSeed by remember { mutableStateOf<String?>(null) }
 
-    var relatedPageResult by persist<Result<Innertube.RelatedPage?>?>(tag = "home/relatedPageResult")
-
-    // Seed the shown feed was built from. Persisted alongside the page because a tab
-    // change disposes this composable while the persist map survives, and a plain
-    // remember would come back null, which is exactly the value that makes shouldFetch
-    // refetch. The page came back and the seed did not, so every return to the tab paid
-    // for the same page twice.
-    var feedSeed by persist<String>(tag = "home/feedSeed")
-
-    // Restore the disk cache first so a cold open renders instantly and
-    // skips the network while the cache is fresh (TTL-configurable).
     val context = LocalContext.current.applicationContext
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    // Seed id for the related feed: current trending song, else charts head, else fallback.
-    suspend fun seedId(): String =
-        trending?.id ?: Innertube.trendingCharts()?.getOrNull()?.firstOrNull()?.key ?: FALLBACK_SEED
 
     // SongBundle only carries durationText and explicit (see Song.asMediaItem), so
     // the rest comes off the media metadata. Same shape the charts fallback builds
@@ -145,10 +138,19 @@ fun QuickPicks(
         explicit = mediaMetadata.extras?.songBundle?.explicit ?: false
     )
 
-    // force a fresh related page, bypassing the cache TTL.
-    suspend fun refreshRelated() {
-        val seed = seedId()
+    // Fetch the feed for one seed and publish it. Never substitutes a different
+    // seed's page over one that is already showing: that is what turned a stale
+    // seed into fifty requests in eight seconds.
+    suspend fun fetchRelated(seed: String, from: String) {
+        val hadSongs = !relatedPageResult?.getOrNull()?.songs.isNullOrEmpty()
         val first = Innertube.relatedPage(body = NextBody(videoId = seed))
+        // A fetch that came back empty must not replace a feed that is already
+        // showing something, or a refresh that lands on a dead seed empties the
+        // screen. Falling back here would only put a different song's page up.
+        if (hadSongs && first?.getOrNull()?.songs.isNullOrEmpty()) {
+            Log.d(TAG, "empty fetch for seed=$seed, keeping songs=${relatedPageResult?.getOrNull()?.songs?.size}")
+            return
+        }
         // An obscure seed can come back with no recommendations at all. Retry once
         // with the fallback seed, and only publish the final answer, so a dead
         // attempt never flashes the error message before the retry lands.
@@ -159,8 +161,8 @@ fun QuickPicks(
         relatedPageResult = result
         // the retry answered for the fallback, so that is the seed the feed belongs to
         feedSeed = if (retried) FALLBACK_SEED else seed
-        Log.d(TAG, "refreshed seed=$seed from=${feedSeed} songs=${result?.getOrNull()?.songs?.size} err=${result?.exceptionOrNull()}")
-        // only cache a page that actually has songs, so a bad refresh cannot
+        Log.d(TAG, "fetched by=$from seed=$seed for=$feedSeed songs=${result?.getOrNull()?.songs?.size} err=${result?.exceptionOrNull()}")
+        // only cache a page that actually has songs, so a bad fetch cannot
         // overwrite a good disk cache with an empty one.
         result?.getOrNull()?.takeIf { !it.songs.isNullOrEmpty() }?.let {
             HomeCache.saveRelated(context.filesDir, feedSeed, it)
@@ -168,75 +170,55 @@ fun QuickPicks(
         }
     }
 
+    // Resolve the seed and publish the feed. song is what the caller wants to
+    // recommend from, null means "whatever is already current". from only names the
+    // caller in the log, which is how we tell a dead now playing feed from two
+    // racing writers.
+    suspend fun handleSong(song: Song?, from: String) {
+        // trending is the song the feed was last built for, and a null song from the
+        // flow only means no history yet, not that trending is unknown.
+        var seedId = song?.id ?: trending?.id
+        if (seedId == null) {
+            Innertube.trendingCharts()
+                ?.getOrNull()
+                ?.firstOrNull()
+                ?.let { fallback ->
+                    seedId = fallback.key
+                    trending = Song(
+                        id = fallback.key,
+                        title = fallback.info?.name ?: "",
+                        durationText = fallback.durationText,
+                        thumbnailUrl = fallback.thumbnail?.url
+                    )
+                }
+        }
+        seedId = seedId ?: FALLBACK_SEED
+        // Compare the seed the feed was built from, not trending: trending is
+        // in-memory only, so it is null on a cold start exactly when a stale
+        // cache is most likely, and the old check then served the wrong feed.
+        val shouldFetch = relatedPageResult?.getOrNull()?.songs.isNullOrEmpty() ||
+            feedSeed != seedId
+        if (shouldFetch) {
+            fetchRelated(seedId, from)
+        } else {
+            Log.d(TAG, "served cache by=$from seed=$seedId for=$feedSeed songs=${relatedPageResult?.getOrNull()?.songs?.size}")
+        }
+        if (song != null) trending = song
+    }
+
     // binder is a key because it arrives from onServiceConnected, after this effect
     // has already started. LocalPlayerServiceBinder is a staticCompositionLocalOf, so
     // reading it here is not a snapshot read and cannot be waited on with snapshotFlow.
-    //
-    // relatedPageResult is a key too, and that is the load bearing one. persist builds
-    // its state inside remember(persistMap, tag) with getOrPut, so the object can be
-    // replaced while the composition lives on (PersistMapCleanup wipes the "home/"
-    // prefix). The running effect then holds the orphan and publishes into it, the
-    // render reads the fresh null, and the grid sits on the shimmer forever even
-    // though the fetch succeeded. Keying on the state restarts the effect against the
-    // object the render actually reads, and cancels the orphaned run so its in-flight
-    // request cannot land a duplicate answer.
-    LaunchedEffect(DataPreferences.quickPicksSource, binder, relatedPageResult) {
-        suspend fun handleSong(song: Song?) {
-            var seedId = song?.id
-            // No relatedPageResult check here: the restore publishes a page before this
-            // runs, so guarding on it skipped the charts cascade and left the hardcoded
-            // fallback seed, which has no recommendations of its own.
-            if (seedId == null && trending == null) {
-                val chartsResult = Innertube.trendingCharts()
-                chartsResult
-                    ?.getOrNull()
-                    ?.firstOrNull()
-                    ?.let { fallback ->
-                        seedId = fallback.key
-                        trending = Song(
-                            id = fallback.key,
-                            title = fallback.info?.name ?: "",
-                            durationText = fallback.durationText,
-                            thumbnailUrl = fallback.thumbnail?.url
-                        )
-                    }
-            }
-            seedId = seedId ?: FALLBACK_SEED
-            val cachedEmpty = relatedPageResult?.getOrNull()?.songs.isNullOrEmpty()
-            // Compare the seed the feed was built from, not trending: trending is
-            // in-memory only, so it is null on a cold start exactly when a stale
-            // cache is most likely, and the old check then served the wrong feed.
-            val shouldFetch = relatedPageResult == null || cachedEmpty || feedSeed != seedId
-            if (shouldFetch) {
-                relatedPageResult = Innertube.relatedPage(
-                    body = NextBody(videoId = seedId)
-                )
-                // if seed returned empty content, retry with fallback seed.
-                val retried = relatedPageResult?.getOrNull()?.songs.isNullOrEmpty() && seedId != FALLBACK_SEED
-                if (retried) {
-                    relatedPageResult = Innertube.relatedPage(
-                        body = NextBody(videoId = FALLBACK_SEED)
-                    )
-                }
-                // the retry answered for the fallback, so that is the seed the feed belongs to
-                feedSeed = if (retried) FALLBACK_SEED else seedId
-                Log.d(TAG, "fetched seed=$seedId from=$feedSeed songs=${relatedPageResult?.getOrNull()?.songs?.size} err=${relatedPageResult?.exceptionOrNull()}")
-                // only cache if we got actual songs back.
-                relatedPageResult?.getOrNull()?.takeIf { !it.songs.isNullOrEmpty() }?.let {
-                    HomeCache.saveRelated(context.filesDir, feedSeed, it)
-                    HomeCache.prefetchThumbs(context, null, it)
-                }
-            } else {
-                Log.d(TAG, "served cache seed=$seedId from=$feedSeed songs=${relatedPageResult?.getOrNull()?.songs?.size}")
-            }
-            if (song != null) trending = song
-        }
-
+    // relatedPageResult is deliberately not a key: it used to be, to survive the
+    // persist map swapping the state out, and a publish then restarted this effect.
+    LaunchedEffect(DataPreferences.quickPicksSource, binder) {
         val sourceFlow = when (DataPreferences.quickPicksSource) {
             DataPreferences.QuickPicksSource.Trending -> Database.trending().map { it.firstOrNull() }
             DataPreferences.QuickPicksSource.LastInteraction -> Database.events().map { it.firstOrNull()?.song?.toSong() }
         }.distinctUntilChanged { old, new -> old?.id == new?.id }
 
+        // Restore the disk cache first so a cold open renders instantly and
+        // skips the network while the cache is fresh (TTL-configurable).
         if (relatedPageResult == null) {
             val cached = HomeCache.restoreRelated(context.filesDir)
             val hit = cached?.getOrNull()
@@ -253,15 +235,6 @@ fun QuickPicks(
         // Warm the thumbnails so the cached feed renders fully offline.
         HomeCache.prefetchThumbs(context, null, relatedPageResult?.getOrNull())
 
-        // First paint must not wait on the DB flow. A fresh install has no history,
-        // and a swallowed throw in handleSong would leave relatedPageResult null and
-        // the shimmer up forever with nothing in the log to explain it.
-        runCatching { handleSong(trending) }
-            .onFailure {
-                if (it is kotlinx.coroutines.CancellationException) throw it
-                Log.e(TAG, "initial quick picks load failed", it)
-            }
-
         // Whatever is playing right now is the seed, so the feed follows the
         // listener instead of waiting for a track to finish and reach the Event
         // table. collectLatest so skipping through a queue cancels the fetch in
@@ -272,28 +245,36 @@ fun QuickPicks(
                 // A local file has no videoId, so there is no seed to ask YouTube
                 // about and nothing to star that can lead to a recommendation.
                 if (song.isLocal) return@collectLatest
+                // set before the skip below, otherwise a restored feed has no song
+                // to star
+                trending = song
                 // mediaItemState replays the current item to every new collector, so
                 // the binder restart replays it too. Skip when it already seeded the
                 // feed, otherwise the restart costs a request for the same song.
                 if (song.id == feedSeed) return@collectLatest
-                runCatching {
-                    trending = song
-                    refreshRelated()
-                }.onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    Log.e(TAG, "quick picks refresh failed for ${song.id}", it)
-                }
+                runCatching { handleSong(null, from = "now playing") }
+                    .onFailure {
+                        if (it is kotlinx.coroutines.CancellationException) throw it
+                        Log.e(TAG, "quick picks refresh failed for ${song.id}", it)
+                    }
             }
         }
 
         sourceFlow.collect { song ->
-            // No song means no history. The load above already covered that, and
-            // handleSong would refetch here because trending is set and song is not.
-            if (song == null) return@collect
             // An item already loaded wins, otherwise this races the collect
-            // above and the loser of the two fetches decides the feed.
+            // above and the loser of the two fetches decides the feed. The star is
+            // written after this guard on purpose: this flow is a most played
+            // ranking that re-emits on every play time write, so writing it while a
+            // track plays pulled the tile, and the refresh seed, back to an older
+            // song a few seconds after the feed had already moved on.
             if (binder?.mediaItemState?.value != null) return@collect
-            runCatching { handleSong(song) }
+            // A local file playing makes the other collector bail out too, so this is
+            // the only thing that fills the star tile in that case.
+            if (song != null) trending = song
+            // A null song is not a reason to skip. This flow emits on every
+            // collection, so it is what runs the charts cascade on a fresh install
+            // and what picks up the real seed once the DB has an answer.
+            runCatching { handleSong(song, from = "source") }
                 .onFailure {
                     if (it is kotlinx.coroutines.CancellationException) throw it
                     Log.e(TAG, "quick picks source update failed", it)
@@ -319,7 +300,11 @@ fun QuickPicks(
         onRefresh = {
             scope.launch {
                 isRefreshing = true
-                refreshRelated()
+                // refresh what the grid is showing, not what the star tile holds.
+                // feedSeed is non null whenever the grid has rows, because the disk
+                // restore and every fetch both set it, so this never re-resolves a
+                // different song behind the user's back.
+                fetchRelated(feedSeed ?: FALLBACK_SEED, "refresh")
                 isRefreshing = false
             }
         },
