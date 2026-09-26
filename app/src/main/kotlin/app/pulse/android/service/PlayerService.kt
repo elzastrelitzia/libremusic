@@ -648,6 +648,19 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
 
+        // media3 logs the load failure on the loader thread and only hands
+        // onPlayerError over much later, so this is the first line showing the app
+        // noticed. Log every cause, not just 403: a stall that never reaches the 403
+        // branch is still a stall, and the gap from the loader's printStackTrace to
+        // here is the part we do not control.
+        Log.w(
+            TAG,
+            "playback error ${error.errorCodeName} on " +
+                "${player.currentMediaItem?.mediaId?.videoId ?: "?"} " +
+                "state=${player.playbackState} position=${player.currentPosition} " +
+                "resolving=${recoveryJob?.isActive == true}"
+        )
+
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 416
         ) {
@@ -679,20 +692,22 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             // cancel any in-flight recovery for this mediaId
             recoveryJob?.cancel()
             recoveryJob = coroutineScope.launch {
-                if (mediaId != null) {
-                    withTimeoutOrNull(10_000L) {
-                        blockStreamClientOn403(mediaId)
-                        resolveVerifiedStream(mediaId)
-                    }
-                }
+                val freshUrl = mediaId != null && withTimeoutOrNull(10_000L) {
+                    blockStreamClientOn403(mediaId)
+                    resolveVerifiedStream(mediaId) != null
+                } == true
+                Log.w(TAG, "403 recovery ${mediaId ?: "?"} freshUrl=$freshUrl fading=$fading")
                 // Skip re-prepare if crossfade completed while resolving —
                 // the old player is now silent and will be re-prepared
                 // when it becomes audible again.
                 if (fading) return@launch
                 handler.post {
+                    // pause() clears playWhenReady, so read it first: a user pause
+                    // has to survive the recovery, play() would resume it.
+                    val resume = player.playWhenReady
                     player.pause()
                     player.prepare()
-                    player.play()
+                    if (resume) player.play()
                 }
             }
             return
