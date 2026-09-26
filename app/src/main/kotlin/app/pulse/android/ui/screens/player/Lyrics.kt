@@ -99,6 +99,7 @@ import app.pulse.android.utils.isInPip
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.semiBold
 import app.pulse.android.utils.toast
+import app.pulse.core.data.utils.formatDuration
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.onOverlay
 import app.pulse.core.ui.onOverlayShimmer
@@ -992,9 +993,7 @@ fun LrcLibSearchDialog(
             },
             valueText = {
                 "${it.artistName} - ${it.trackName} (${
-                    it.duration?.seconds?.toComponents { minutes, seconds, _ ->
-                        "$minutes:${seconds.toString().padStart(2, '0')}"
-                    } ?: "?:??"
+                    it.duration?.seconds?.let { duration -> formatDuration(duration) } ?: "?:??"
                 })"
             }
         )

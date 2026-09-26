@@ -30,6 +30,7 @@ import app.pulse.android.Database
 import app.pulse.android.R
 import app.pulse.core.data.models.Song
 import app.pulse.core.data.models.toEntity
+import app.pulse.core.data.utils.formatDuration
 import app.pulse.android.preferences.OrderPreferences
 import app.pulse.android.service.LOCAL_KEY_PREFIX
 import app.pulse.android.transaction
@@ -142,9 +143,7 @@ fun Context.musicFilesAsFlow(): StateFlow<List<Song>> = flow {
                                 id = "$LOCAL_KEY_PREFIX$id",
                                 title = name,
                                 artistsText = artist,
-                                durationText = duration.milliseconds.toComponents { minutes, seconds, _ ->
-                                    "$minutes:${seconds.toString().padStart(2, '0')}"
-                                },
+                                durationText = formatDuration(duration.milliseconds),
                                 thumbnailUrl = albumUri.toString()
                             )
                         )

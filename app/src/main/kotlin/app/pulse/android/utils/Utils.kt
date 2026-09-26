@@ -19,6 +19,7 @@ import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.service.LOCAL_KEY_PREFIX
 import app.pulse.android.service.isLocal
 import app.pulse.core.data.utils.SongBundleAccessor
+import app.pulse.core.data.utils.formatDuration
 import app.pulse.providers.innertube.Innertube
 import app.pulse.providers.innertube.models.bodies.ContinuationBody
 import app.pulse.providers.innertube.requests.playlistPage
@@ -99,9 +100,7 @@ val Playlist.Video.asMediaItem: MediaItem?
                     }
                     .setExtras(
                         SongBundleAccessor.bundle {
-                            durationText = duration.toComponents { minutes, seconds, _ ->
-                                "$minutes:${seconds.toString().padStart(2, '0')}"
-                            }
+                            durationText = formatDuration(duration)
                             artistNames = listOf(uploaderName)
                             artistIds = uploaderId?.let { listOf(it) }
                         }
