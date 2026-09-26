@@ -65,9 +65,6 @@ val LocalDockScrolled = staticCompositionLocalOf<MutableState<Boolean>> {
     mutableStateOf(false)
 }
 
-val LocalRadioAction = staticCompositionLocalOf<(() -> Unit)?> { null }
-val LocalRadioVisible = staticCompositionLocalOf<MutableState<Boolean>> { mutableStateOf(false) }
-
 @Composable
 fun Scaffold(
     key: String,

@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.util.Log
 import app.pulse.android.ui.screens.searchRoute
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
@@ -67,6 +68,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -90,6 +92,7 @@ import androidx.media3.common.Player
 import androidx.work.Configuration
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.preferences.DataPreferences
+import app.pulse.android.preferences.UIStatePreferences
 import app.pulse.android.service.PlayerService
 import app.pulse.android.service.ServiceNotifications
 import app.pulse.android.service.downloadState
@@ -99,7 +102,6 @@ import app.pulse.android.ui.components.rememberBottomSheetState
 import app.pulse.android.ui.components.themed.LinearProgressIndicator
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
-import app.pulse.android.ui.components.themed.LocalRadioAction
 import app.pulse.android.ui.components.themed.UpdateDialog
 import app.pulse.core.ui.utils.isLandscape
 
@@ -287,8 +289,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 LocalShimmerTheme provides shimmerTheme(),
                 LocalLayoutDirection provides LayoutDirection.Ltr,
                 LocalPersistMap provides Dependencies.application.persistMap,
-                LocalMonetCompat provides monet,
-                LocalRadioAction provides null
+                LocalMonetCompat provides monet
             ) {
 
                 content()
@@ -558,12 +559,30 @@ private fun FloatingDock(
     val navigationState = LocalNavigationState.current
     val isLandscape = isLandscape
     val progress = app.pulse.android.ui.components.themed.rememberDockMorphProgress()
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val scope = rememberCoroutineScope()
 
     app.pulse.android.ui.components.themed.MorphingDock(
         progress = progress,
         navigationState = navigationState.value,
         onPlayerClick = onPlayerClick,
         onSearchClick = onSearchClick,
+        onHomeClick = {
+            // Land on QuickPicks, then unwind every screen between here and home.
+            UIStatePreferences.homeScreenTabIndex = 0
+            scope.launch {
+                // Every RouteHandler registers its back callback with
+                // enabled = child != null, so no enabled callback means HomeScreen
+                // is the only screen left. Dispatching past that would hand the
+                // press to the system and quit the app, hence the guard.
+                while (backDispatcher?.hasEnabledCallbacks() == true) {
+                    backDispatcher?.onBackPressed()
+                    // A back press suspends until the predictive back gesture
+                    // finishes, so give it a frame to land on the parent handler.
+                    withFrameNanos { }
+                }
+            }
+        },
         isLandscape = isLandscape,
         modifier = modifier
     )

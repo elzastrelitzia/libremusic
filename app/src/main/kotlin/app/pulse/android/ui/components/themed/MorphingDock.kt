@@ -22,6 +22,7 @@ fun MorphingDock(
     navigationState: NavigationState?,
     onPlayerClick: () -> Unit,
     onSearchClick: () -> Unit,
+    onHomeClick: () -> Unit,
     isLandscape: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -33,7 +34,6 @@ fun MorphingDock(
     val dockOverscrollDip = if (compact) 12.dp else 16.dp
 
     val isSubPage = navigationState == null
-    val radioAction = LocalRadioAction.current
     val density = LocalDensity.current
     val (colorPalette) = LocalAppearance.current
 
@@ -194,7 +194,7 @@ fun MorphingDock(
             playerLandingWidth + (targetCompactWidth - playerLandingWidth) * entryProgress
         }
 
-        // radio button
+        // home button
         Box(
             modifier = Modifier
                 .size(currentCircleSize)
@@ -208,9 +208,9 @@ fun MorphingDock(
                     translationY = -liftDistance + commonDip
                 }
         ) {
-            RadioCircleButton(
+            HomeCircleButton(
                 modifier = Modifier.fillMaxSize(),
-                onClick  = { radioAction?.invoke() }
+                onClick = onHomeClick
             )
         }
 

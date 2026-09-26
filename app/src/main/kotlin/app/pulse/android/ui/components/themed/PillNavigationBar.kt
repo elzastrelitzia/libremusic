@@ -196,7 +196,7 @@ fun MorphingNavigationBar(
 
 
 @Composable
-fun RadioCircleButton(
+fun HomeCircleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -211,7 +211,7 @@ fun RadioCircleButton(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(R.drawable.radio),
+            painter = painterResource(R.drawable.home),
             contentDescription = null,
             colorFilter = ColorFilter.tint(colorPalette.accent),
             modifier = Modifier.size(iconSize)
