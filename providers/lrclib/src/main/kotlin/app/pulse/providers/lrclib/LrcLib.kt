@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-private const val AGENT = "Pulse (https://github.com/khuza08/Pulse)"
+private const val AGENT = "Pulse (https://github.com/elza/Pulse)"
 
 object LrcLib {
 
