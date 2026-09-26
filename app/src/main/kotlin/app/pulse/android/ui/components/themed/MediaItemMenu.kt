@@ -49,8 +49,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import app.pulse.android.Database
 import app.pulse.android.LocalPlayerServiceBinder
@@ -571,8 +573,12 @@ fun MediaItemMenu(
 
                         BasicText(
                             text = stringResource(R.string.set_sleep_timer),
-                            style = typography.s.semiBold,
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)
+                            style = typography.s.copy(
+                                color = colorPalette.text,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            ),
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
                         )
 
                         Row(
@@ -638,18 +644,23 @@ fun MediaItemMenu(
                         )
 
                         Row(
-                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            DialogTextButton(
+                            AppleDialogButton(
                                 text = stringResource(R.string.cancel),
+                                containerColor = colorPalette.background2,
+                                contentColor = colorPalette.text,
+                                modifier = Modifier.weight(1f),
                                 onClick = { isShowingSleepTimerDialog = false }
                             )
 
-                            DialogTextButton(
+                            AppleDialogButton(
                                 text = stringResource(R.string.set),
+                                containerColor = colorPalette.accent,
+                                contentColor = colorPalette.onAccent,
                                 enabled = amount > 0,
-                                primary = true,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     binder?.startSleepTimer(amount * 10 * 60 * 1000L)
                                     isShowingSleepTimerDialog = false

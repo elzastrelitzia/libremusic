@@ -926,7 +926,6 @@ fun LrcLibSearchDialog(
     modifier: Modifier = Modifier
 ) = DefaultDialog(
     onDismiss = onDismiss,
-    horizontalPadding = 0.dp,
     modifier = modifier
 ) {
     val (_, typography) = LocalAppearance.current

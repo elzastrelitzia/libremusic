@@ -203,8 +203,7 @@ inline fun NavigationRail(
     var editing by remember { mutableStateOf(false) }
 
     if (editing) DefaultDialog(
-        onDismiss = { editing = false },
-        horizontalPadding = 0.dp
+        onDismiss = { editing = false }
     ) {
         BasicText(
             text = tabsEditingTitle,

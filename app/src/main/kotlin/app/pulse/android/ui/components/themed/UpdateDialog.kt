@@ -69,13 +69,7 @@ fun UpdateDialog(
     var apkFile by remember { mutableStateOf<File?>(null) }
 
     Dialog(onDismissRequest = { if (state != DialogState.Downloading) onDismiss() }) {
-        Box(
-            modifier = Modifier
-                .width(320.dp)
-                .clip(RoundedCornerShape(40.dp))
-                .background(palette.background1)
-                .padding(14.dp),
-        ) {
+        AppleDialogSurface {
             Column(
                 modifier = Modifier.height(150.dp),
             ) {

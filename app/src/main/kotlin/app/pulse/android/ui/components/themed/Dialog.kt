@@ -6,17 +6,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -38,9 +41,10 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import app.pulse.android.R
 import app.pulse.android.utils.center
@@ -48,9 +52,26 @@ import app.pulse.android.utils.drawCircle
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.semiBold
 import app.pulse.core.ui.LocalAppearance
-import app.pulse.core.ui.utils.roundedShape
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
+
+/**
+ * The card every dialog in the app sits in: a fixed 320dp wide panel with a 40dp
+ * radius. Callers keep their own `Dialog` wrapper so they can decide what an
+ * outside tap does, which is the only thing that differs between them.
+ */
+@Composable
+internal fun AppleDialogSurface(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) = Column(
+    modifier = modifier
+        .width(320.dp)
+        .clip(RoundedCornerShape(40.dp))
+        .background(LocalAppearance.current.colorPalette.background1)
+        .padding(14.dp),
+    content = content
+)
 
 @Composable
 fun TextFieldDialog(
@@ -58,6 +79,7 @@ fun TextFieldDialog(
     onDismiss: () -> Unit,
     onAccept: (String) -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "",
     cancelText: String = stringResource(R.string.cancel),
     doneText: String = stringResource(R.string.done),
     initialTextInput: String = "",
@@ -66,12 +88,9 @@ fun TextFieldDialog(
     onCancel: () -> Unit = onDismiss,
     isTextInputValid: (String) -> Boolean = { it.isNotEmpty() },
     keyboardOptions: KeyboardOptions = KeyboardOptions()
-) = DefaultDialog(
-    onDismiss = onDismiss,
-    modifier = modifier
 ) {
+    val (palette, typography) = LocalAppearance.current
     val focusRequester = remember { FocusRequester() }
-    val (_, typography) = LocalAppearance.current
 
     var value by rememberSaveable(initialTextInput) { mutableStateOf(initialTextInput) }
 
@@ -80,47 +99,77 @@ fun TextFieldDialog(
         focusRequester.requestFocus()
     }
 
-    TextField(
-        value = value,
-        onValueChange = { value = it },
-        textStyle = typography.xs.semiBold.center,
-        singleLine = singleLine,
-        maxLines = maxLines,
-        hintText = hintText,
-        keyboardActions = KeyboardActions(
-            onDone = {
-                if (isTextInputValid(value)) {
-                    onDismiss()
-                    onAccept(value)
-                }
-            }
-        ),
-        keyboardOptions = keyboardOptions,
-        modifier = Modifier
-            .padding(all = 16.dp)
-            .weight(weight = 1f, fill = false)
-            .focusRequester(focusRequester)
-    )
+    fun accept() {
+        if (!isTextInputValid(value)) return
+        onDismiss()
+        onAccept(value)
+    }
 
-    Row(
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        DialogTextButton(
-            text = cancelText,
-            onClick = onCancel
-        )
-
-        DialogTextButton(
-            primary = true,
-            text = doneText,
-            onClick = {
-                if (isTextInputValid(value)) {
-                    onDismiss()
-                    onAccept(value)
-                }
+    Dialog(onDismissRequest = onDismiss) {
+        AppleDialogSurface(modifier = modifier) {
+            if (title.isNotEmpty()) {
+                BasicText(
+                    text = title,
+                    style = typography.s.copy(
+                        color = palette.text,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    ),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                )
+                Spacer(Modifier.height(12.dp))
             }
-        )
+
+            // A pill for a single line, a rounded rectangle for a block: a 50dp
+            // radius stretched over ten lines of lyrics reads as a mistake. The
+            // height cap keeps a multiline field from pushing the buttons off
+            // a short screen.
+            val fieldShape = RoundedCornerShape(if (singleLine) 50.dp else 14.dp)
+
+            TextField(
+                value = value,
+                onValueChange = { value = it },
+                textStyle = typography.xs.semiBold.center,
+                singleLine = singleLine,
+                maxLines = maxLines,
+                hintText = hintText,
+                keyboardActions = KeyboardActions(onDone = { accept() }),
+                keyboardOptions = keyboardOptions,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 200.dp)
+                    .background(palette.background2, fieldShape)
+                    .border(1.dp, palette.text.copy(alpha = 0.12f), fieldShape)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .focusRequester(focusRequester)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AppleDialogButton(
+                    text = cancelText,
+                    containerColor = palette.background2,
+                    contentColor = palette.text,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        onCancel()
+                        onDismiss()
+                    }
+                )
+                AppleDialogButton(
+                    text = doneText,
+                    containerColor = palette.accent,
+                    contentColor = palette.onAccent,
+                    enabled = isTextInputValid(value),
+                    modifier = Modifier.weight(1f),
+                    onClick = { accept() }
+                )
+            }
+        }
     }
 }
 
@@ -182,29 +231,36 @@ fun ColumnScope.ConfirmationDialogBody(
     confirmText: String = stringResource(R.string.confirm),
     onCancel: () -> Unit = onDismiss
 ) {
-    val (_, typography) = LocalAppearance.current
+    val (palette, typography) = LocalAppearance.current
 
     BasicText(
         text = text,
         style = typography.xs.medium.center,
-        modifier = Modifier.padding(all = 16.dp)
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     )
 
+    Spacer(Modifier.height(12.dp))
+
     Row(
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        DialogTextButton(
+        AppleDialogButton(
             text = cancelText,
+            containerColor = palette.background2,
+            contentColor = palette.text,
+            modifier = Modifier.weight(1f),
             onClick = {
                 onCancel()
                 onDismiss()
             }
         )
 
-        DialogTextButton(
+        AppleDialogButton(
             text = confirmText,
-            primary = true,
+            containerColor = palette.accent,
+            contentColor = palette.onAccent,
+            modifier = Modifier.weight(1f),
             onClick = {
                 onConfirm()
                 onDismiss()
@@ -217,24 +273,9 @@ fun ColumnScope.ConfirmationDialogBody(
 fun DefaultDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    horizontalPadding: Dp = 24.dp,
     content: @Composable ColumnScope.() -> Unit
 ) = Dialog(onDismissRequest = onDismiss) {
-    Column(
-        horizontalAlignment = horizontalAlignment,
-        modifier = modifier
-            .padding(all = 48.dp)
-            .background(
-                color = LocalAppearance.current.colorPalette.background1,
-                shape = 8.dp.roundedShape
-            )
-            .padding(
-                horizontal = horizontalPadding,
-                vertical = 16.dp
-            ),
-        content = content
-    )
+    AppleDialogSurface(modifier = modifier, content = content)
 }
 
 @Composable
@@ -247,21 +288,16 @@ fun <T> ValueSelectorDialog(
     modifier: Modifier = Modifier,
     valueText: @Composable (T) -> String = { it.toString() }
 ) = Dialog(onDismissRequest = onDismiss) {
-    ValueSelectorDialogBody(
-        onDismiss = onDismiss,
-        title = title,
-        selectedValue = selectedValue,
-        values = values,
-        onValueSelect = onValueSelect,
-        modifier = modifier
-            .padding(all = 48.dp)
-            .background(
-                color = LocalAppearance.current.colorPalette.background1,
-                shape = 8.dp.roundedShape
-            )
-            .padding(vertical = 16.dp),
-        valueText = valueText
-    )
+    AppleDialogSurface(modifier = modifier) {
+        ValueSelectorDialogBody(
+            onDismiss = onDismiss,
+            title = title,
+            selectedValue = selectedValue,
+            values = values,
+            onValueSelect = onValueSelect,
+            valueText = valueText
+        )
+    }
 }
 
 @Composable
@@ -278,11 +314,21 @@ fun <T> ValueSelectorDialogBody(
 
     BasicText(
         text = title,
-        style = typography.s.semiBold,
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)
+        style = typography.s.copy(
+            color = colorPalette.text,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
+        ),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
     )
 
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+    // weight with fill = false caps the list at whatever room the cancel button
+    // leaves, so a long list scrolls instead of pushing the button off screen.
+    Column(
+        modifier = Modifier
+            .weight(1f, fill = false)
+            .verticalScroll(rememberScrollState())
+    ) {
         values.forEach { value ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -294,7 +340,7 @@ fun <T> ValueSelectorDialogBody(
                             onValueSelect(value)
                         }
                     )
-                    .padding(vertical = 12.dp, horizontal = 24.dp)
+                    .padding(vertical = 12.dp, horizontal = 16.dp)
                     .fillMaxWidth()
             ) {
                 if (selectedValue == value) Canvas(
@@ -333,16 +379,15 @@ fun <T> ValueSelectorDialogBody(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .align(Alignment.End)
-            .padding(end = 24.dp)
-    ) {
-        DialogTextButton(
-            text = stringResource(R.string.cancel),
-            onClick = onDismiss
-        )
-    }
+    Spacer(Modifier.height(12.dp))
+
+    AppleDialogButton(
+        text = stringResource(R.string.cancel),
+        containerColor = colorPalette.background2,
+        contentColor = colorPalette.text,
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onDismiss
+    )
 }
 
 @Suppress("ModifierMissing") // intentional, I guess
@@ -362,7 +407,7 @@ fun ColumnScope.SliderDialogBody(
     if (label != null) BasicText(
         text = label,
         style = typography.xs.semiBold,
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
     )
 
     Slider(
@@ -374,7 +419,7 @@ fun ColumnScope.SliderDialogBody(
         modifier = Modifier
             .height(36.dp)
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 16.dp)
     )
 
     BasicText(
@@ -395,30 +440,27 @@ fun SliderDialog(
 ) = Dialog(onDismissRequest = onDismiss) {
     val (colorPalette, typography) = LocalAppearance.current
 
-    Column(
-        modifier = modifier
-            .padding(all = 48.dp)
-            .background(color = colorPalette.background1, shape = 8.dp.roundedShape)
-            .padding(vertical = 16.dp)
-    ) {
+    AppleDialogSurface(modifier = modifier) {
         BasicText(
             text = title,
-            style = typography.s.semiBold,
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)
+            style = typography.s.copy(
+                color = colorPalette.text,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            ),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
         )
 
         content()
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(end = 24.dp)
-        ) {
-            DialogTextButton(
-                text = stringResource(R.string.confirm),
-                onClick = onDismiss,
-                modifier = Modifier
-            )
-        }
+        Spacer(Modifier.height(12.dp))
+
+        AppleDialogButton(
+            text = stringResource(R.string.confirm),
+            containerColor = colorPalette.accent,
+            contentColor = colorPalette.onAccent,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onDismiss
+        )
     }
 }

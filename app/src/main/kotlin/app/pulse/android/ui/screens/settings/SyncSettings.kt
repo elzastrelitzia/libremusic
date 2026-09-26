@@ -37,11 +37,11 @@ import app.pulse.android.LocalCredentialManager
 import app.pulse.android.R
 import app.pulse.android.models.PipedSession
 import app.pulse.android.transaction
+import app.pulse.android.ui.components.themed.AppleDialogButton
 import app.pulse.android.ui.components.themed.CircularProgressIndicator
 import app.pulse.android.ui.components.themed.ConfirmationDialog
 import app.pulse.android.ui.components.themed.ConfirmationDialogBody
 import app.pulse.android.ui.components.themed.DefaultDialog
-import app.pulse.android.ui.components.themed.DialogTextButton
 import app.pulse.android.ui.components.themed.IconButton
 import app.pulse.android.ui.components.themed.TextField
 import app.pulse.android.ui.screens.Route
@@ -75,8 +75,7 @@ fun SyncSettings(
 
     var linkingPiped by remember { mutableStateOf(false) }
     if (linkingPiped) DefaultDialog(
-        onDismiss = { linkingPiped = false },
-        horizontalAlignment = Alignment.CenterHorizontally
+        onDismiss = { linkingPiped = false }
     ) {
         var isLoading by rememberSaveable { mutableStateOf(false) }
         var hasError by rememberSaveable { mutableStateOf(false) }
@@ -197,11 +196,13 @@ fun SyncSettings(
                             }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    DialogTextButton(
+                    AppleDialogButton(
                         text = stringResource(R.string.login),
-                        primary = true,
+                        containerColor = colorPalette.accent,
+                        contentColor = colorPalette.onAccent,
                         enabled = (customInstance?.isNotBlank() == true || selectedInstance != null) &&
                             username.isNotBlank() && password.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             @Suppress("Wrapping") // thank you ktlint
                             (customInstance?.let {
@@ -247,8 +248,7 @@ fun SyncSettings(
                                     linkingPiped = false
                                 }
                             }
-                        },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        }
                     )
                 }
             }
