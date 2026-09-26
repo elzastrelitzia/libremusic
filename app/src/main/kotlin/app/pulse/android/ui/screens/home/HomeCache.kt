@@ -29,7 +29,11 @@ object HomeCache {
     data class DiscoverData(val page: Innertube.DiscoverPage? = null)
 
     @Serializable
-    data class RelatedData(val page: Innertube.RelatedPage? = null)
+    data class RelatedData(val seed: String? = null, val page: Innertube.RelatedPage? = null)
+
+    /** A restored related page plus the seed it was built from, so the caller can
+     *  tell whether the cache still matches the song it wants to recommend from. */
+    data class CachedRelated(val seed: String?, val page: Innertube.RelatedPage?)
 
     private val ttlMs: Long
         get() = DataPreferences.homeFeedCacheDays.days.inWholeMilliseconds
@@ -39,14 +43,14 @@ object HomeCache {
         restore<DiscoverData, Innertube.DiscoverPage>(filesDir, "discover.json") { it.page }
 
     /** Restores a fresh cached related page, or null when absent/stale/disabled. */
-    suspend fun restoreRelated(filesDir: File): Result<Innertube.RelatedPage?>? =
-        restore<RelatedData, Innertube.RelatedPage>(filesDir, "related.json") { it.page }
+    suspend fun restoreRelated(filesDir: File): Result<CachedRelated>? =
+        restore<RelatedData, CachedRelated>(filesDir, "related.json") { CachedRelated(it.seed, it.page) }
 
     suspend fun saveDiscover(filesDir: File, page: Innertube.DiscoverPage) =
         save(filesDir, "discover.json", DiscoverData(page))
 
-    suspend fun saveRelated(filesDir: File, page: Innertube.RelatedPage) =
-        save(filesDir, "related.json", RelatedData(page))
+    suspend fun saveRelated(filesDir: File, seed: String?, page: Innertube.RelatedPage) =
+        save(filesDir, "related.json", RelatedData(seed, page))
 
     /**
      * Warms Coil's disk cache with every home-feed thumbnail so the cached feed
