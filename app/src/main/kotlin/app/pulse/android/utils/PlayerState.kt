@@ -46,6 +46,18 @@ fun Player?.DisposableListener(
             val listener = PlayerScope(this).currentListenerProvider()
 
             addListener(listener)
+            // Replay the state a listener derives from, not just the track. This
+            // effect re-runs whenever the Player instance changes, and a crossfade
+            // swaps it mid-song: completeCrossfade pauses and stops the outgoing
+            // player while the listener is still attached to it, so the last event
+            // it sees says paused. The incoming player is already playing and will
+            // not fire either callback again, so without the replay the cached flag
+            // stays wrong for the rest of the track.
+            listener.onPlayWhenReadyChanged(
+                /* playWhenReady = */ playWhenReady,
+                /* reason = */ Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST
+            )
+            listener.onPlaybackStateChanged(playbackState)
             listener.onMediaItemTransition(
                 /* mediaItem = */ currentMediaItem,
                 /* reason = */ Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
