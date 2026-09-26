@@ -64,8 +64,7 @@ fun AppearanceSettings() {
                     }
                 ) {
                     SettingsCategoryScreen(
-                        title = stringResource(R.string.appearance),
-                        onBackClick = pop
+                        title = stringResource(R.string.appearance)
                     ) {
                         SettingsGroup(title = stringResource(R.string.colors)) {
             val systemDark = isSystemInDarkTheme()

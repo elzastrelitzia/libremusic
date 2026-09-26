@@ -135,8 +135,7 @@ fun OtherSettings() {
             ) {
                 SettingsCategoryScreen(
                     title = stringResource(R.string.other),
-                    scrollState = scrollState,
-                    onBackClick = pop
+                    scrollState = scrollState
                 ) {
                     SettingsGroup(title = stringResource(R.string.android_auto)) {
                         SwitchSettingsEntry(

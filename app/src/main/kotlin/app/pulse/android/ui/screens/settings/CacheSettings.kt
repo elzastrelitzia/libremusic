@@ -61,8 +61,7 @@ fun CacheSettings() {
                     }
                 ) {
                     SettingsCategoryScreen(
-                        title = stringResource(R.string.cache),
-                        onBackClick = pop
+                        title = stringResource(R.string.cache)
                     ) {
                         SettingsDescription(text = stringResource(R.string.cache_description))
 

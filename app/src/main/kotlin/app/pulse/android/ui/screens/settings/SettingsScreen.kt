@@ -34,8 +34,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.pulse.android.R
-import app.pulse.android.ui.components.themed.Header
-import app.pulse.android.ui.components.themed.HeaderIconButton
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.Scaffold
 import app.pulse.android.LocalPlayerAwareWindowInsets
@@ -55,6 +53,11 @@ import app.pulse.android.utils.semiBold
 import app.pulse.compose.routing.RouteHandler
 import app.pulse.core.ui.LocalAppearance
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.foundation.layout.Box
+import app.pulse.android.ui.components.themed.CollapsingHeader
+import app.pulse.android.ui.components.themed.CollapsingHeaderContentSpacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 
 @Route
 @Composable
@@ -80,8 +83,7 @@ fun SettingsScreen() {
                 }
             ) {
                 MasterSettingsCategoryScreen(
-                    title = stringResource(R.string.settings),
-                    onBackClick = pop
+                    title = stringResource(R.string.settings)
                 ) {
                     MasterSettingsGroup(title = stringResource(R.string.appearance)) {
                         SettingsMenuEntry(
@@ -157,42 +159,37 @@ fun SettingsScreen() {
 @Composable
 fun MasterSettingsCategoryScreen(
     title: String,
-    description: String? = null,
-    onBackClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val (colorPalette, typography) = LocalAppearance.current
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(
-                LocalPlayerAwareWindowInsets.current
-                    .only(WindowInsetsSides.Vertical + WindowInsetsSides.End)
-                    .asPaddingValues()
-            )
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 80.dp)
-    ) {
-        Header(
-            title = title,
-            modifier = Modifier.padding(top = 16.dp),
-            onBackClick = onBackClick
+    CollapsingHeader(
+        title = title,
+        scrollState = scrollState,
+        modifier = Modifier.padding(
+            LocalPlayerAwareWindowInsets.current
+                .only(WindowInsetsSides.Bottom + WindowInsetsSides.End)
+                .asPaddingValues()
         )
-
-        if (description != null) {
-            BasicText(
-                text = description,
-                style = typography.s.secondary,
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 16.dp)
-                    .alpha(0.7f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp)
+        ) {
+            // CollapsingHeader draws its title over the content and pads itself for
+            // the status bar, so the spacer has to cover the header plus that inset
+            // or the first row starts underneath the title.
+            Spacer(
+                modifier = Modifier.height(
+                    CollapsingHeaderContentSpacer +
+                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                )
             )
-        }
 
-        content()
+            content()
+        }
     }
 }
 
@@ -266,29 +263,3 @@ fun SettingsMenuEntry(
     }
 }
 
-@Composable
-fun Header(
-    title: String,
-    modifier: Modifier = Modifier,
-    onBackClick: (() -> Unit)? = null
-) {
-    val (colorPalette, typography) = LocalAppearance.current
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        if (onBackClick != null) {
-            HeaderIconButton(
-                icon = R.drawable.chevron_back,
-                onClick = onBackClick
-            )
-        }
-
-        BasicText(
-            text = title,
-            style = typography.xxl.semiBold
-        )
-    }
-}

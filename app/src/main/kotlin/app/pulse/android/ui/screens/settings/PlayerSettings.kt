@@ -61,8 +61,7 @@ fun PlayerSettings() {
                     }
                 ) {
                     SettingsCategoryScreen(
-                        title = stringResource(R.string.player),
-                        onBackClick = pop
+                        title = stringResource(R.string.player)
                     ) {
                         SettingsGroup(title = stringResource(R.string.player)) {
                             SwitchSettingsEntry(

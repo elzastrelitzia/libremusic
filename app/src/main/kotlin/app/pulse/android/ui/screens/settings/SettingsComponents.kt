@@ -33,7 +33,6 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import app.pulse.android.LocalPlayerAwareWindowInsets
-import app.pulse.android.ui.components.themed.Header
 import app.pulse.android.ui.components.themed.NumberFieldDialog
 import app.pulse.android.ui.components.themed.Slider
 import app.pulse.android.ui.components.themed.Switch
@@ -44,6 +43,10 @@ import app.pulse.android.utils.semiBold
 import app.pulse.core.ui.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import app.pulse.android.ui.components.themed.CollapsingHeader
+import app.pulse.android.ui.components.themed.CollapsingHeaderContentSpacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 
 @Composable
 inline fun <reified T : Enum<T>> EnumValueSelectorSettingsEntry(
@@ -275,54 +278,49 @@ fun SettingsCategoryScreen(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
-    scrollState: ScrollState? = rememberScrollState(),
-    onBackClick: (() -> Unit)? = null,
+    scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit
 ) {
     val (colorPalette, typography) = LocalAppearance.current
 
-    Column(
+    CollapsingHeader(
+        title = title,
+        scrollState = scrollState,
         modifier = modifier
             .background(colorPalette.background0)
-            .fillMaxSize()
-            .let { if (scrollState != null) it.verticalScroll(state = scrollState) else it }
             .padding(
                 LocalPlayerAwareWindowInsets.current
-                    .only(WindowInsetsSides.Vertical + WindowInsetsSides.End)
+                    .only(WindowInsetsSides.Bottom + WindowInsetsSides.End)
                     .asPaddingValues()
             )
     ) {
-        // Updated to use the custom Header from SettingsScreen.kt that supports onBackClick
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 16.dp, end = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
         ) {
-            if (onBackClick != null) {
-                app.pulse.android.ui.components.themed.HeaderIconButton(
-                    icon = app.pulse.android.R.drawable.chevron_back,
-                    onClick = onBackClick
+            // CollapsingHeader draws its title over the content and pads itself for
+            // the status bar, so the spacer has to cover the header plus that inset
+            // or the first row starts underneath the title.
+            Spacer(
+                modifier = Modifier.height(
+                    CollapsingHeaderContentSpacer +
+                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                )
+            )
+
+            description?.let {
+                BasicText(
+                    text = it,
+                    style = typography.s.secondary,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .alpha(0.7f)
                 )
             }
-            
-            BasicText(
-                text = title,
-                style = typography.xxl.semiBold
-            )
-        }
 
-        description?.let {
-            BasicText(
-                text = it,
-                style = typography.s.secondary,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .alpha(0.7f)
-            )
+            content()
         }
-        SettingsGroupSpacer()
-
-        content()
     }
 }
 

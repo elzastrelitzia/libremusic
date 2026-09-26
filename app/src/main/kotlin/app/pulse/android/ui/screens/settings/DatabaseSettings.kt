@@ -106,8 +106,7 @@ fun DatabaseSettings() {
                     }
                 ) {
                     SettingsCategoryScreen(
-                        title = stringResource(R.string.database),
-                        onBackClick = pop
+                        title = stringResource(R.string.database)
                     ) {
                         SettingsGroup(title = stringResource(R.string.cleanup)) {
                             SwitchSettingsEntry(

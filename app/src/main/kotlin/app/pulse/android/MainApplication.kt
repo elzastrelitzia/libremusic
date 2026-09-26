@@ -332,16 +332,24 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 initialAnchor = BottomSheetState.Anchor.Dismissed
             )
 
+            val dockHiddenCount by LocalDockHiddenCount.current
             val playerAwareWindowInsets = remember(
                 bottomDp,
                 animatedBottomDp,
                 playerBottomSheetState.value,
                 imeVisible,
                 imeBottomDp,
-                AppearancePreferences.compactDock
+                AppearancePreferences.compactDock,
+                dockHiddenCount
             ) {
-                val dockHeight = if (AppearancePreferences.compactDock) Dimensions.items.collapsedPlayerHeight else 64.dp
-                val baseBottom = animatedBottomDp + dockHeight + 16.dp + 80.dp
+                // A hidden dock draws nothing, so reserving room for it leaves every
+                // screen that hides it with an empty band along the bottom edge.
+                val dockClearance = when {
+                    dockHiddenCount > 0 -> 0.dp
+                    AppearancePreferences.compactDock -> Dimensions.items.collapsedPlayerHeight + 96.dp
+                    else -> 160.dp
+                }
+                val baseBottom = animatedBottomDp + dockClearance
                 val bottom =
                     if (imeVisible) imeBottomDp.coerceAtLeast(playerBottomSheetState.value)
                     else playerBottomSheetState.value.coerceAtLeast(baseBottom)
@@ -398,8 +406,6 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                                     .align(Alignment.TopCenter)
                             )
                         }
-
-                        val dockHiddenCount by LocalDockHiddenCount.current
 
                         AnimatedVisibility(
                             visible = dockHiddenCount == 0,

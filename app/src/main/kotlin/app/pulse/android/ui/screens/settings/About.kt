@@ -104,8 +104,7 @@ fun About() {
                     description = stringResource(
                         R.string.format_version_credits,
                         VERSION_NAME
-                    ),
-                    onBackClick = pop
+                    )
                 ) {
                     val (_, typography) = LocalAppearance.current
                     val uriHandler = LocalUriHandler.current

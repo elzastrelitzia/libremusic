@@ -288,8 +288,7 @@ fun SyncSettings(
                 }
             ) {
                 SettingsCategoryScreen(
-                    title = stringResource(R.string.sync),
-                    onBackClick = pop
+                    title = stringResource(R.string.sync)
                 ) {
                     SettingsDescription(text = stringResource(R.string.sync_description))
 
