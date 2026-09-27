@@ -1,6 +1,6 @@
 <div align="center">
     <img src="./app/src/main/banner.png" height="400" style="display: block; margin: 0 auto"/>
-    <h1 style="display: inline;">Pulse</h1>
+    <h1 style="display: inline;">libremusic</h1>
     <p style="display: inline;">Music streaming for everyone</p>
 </div>
 
@@ -22,7 +22,7 @@
 - Listen from your car using Android Auto
 - Open YouTube/YouTube Music links (`watch`, `playlist`, `channel`, etc.) with Pulse
 - Ridiculously lightweight APK
-- will add linux support soon
+- linux and windows still wip
 
 ## Security
 
@@ -30,7 +30,7 @@
 
 ## Installation
 
-[<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/elzastrelitzia/Pulse/releases/latest)
+[<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/elzastrelitzia/libremusic/releases/latest)
 
 ## Acknowledgments
 
