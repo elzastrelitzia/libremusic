@@ -9,9 +9,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-export JAVA_HOME=/usr/lib/jvm/java-26-openjdk # ts my setup vro
-export ANDROID_HOME=/home/huza/sdk # configure ur shi here
-
 ACTION="${1:-run}"
 
 case "$ACTION" in
