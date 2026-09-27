@@ -1,0 +1,71 @@
+name: Build Minimal ffmpeg
+
+# Builds the audio-only ffmpeg the desktop app bundles, tests that it can still
+# decode every format the app might meet, and uploads the binary.
+#
+# The test is not optional. --disable-everything removes hundreds of components,
+# and a missing one is a runtime failure, not a configure failure. Three were
+# caught this way already: the fd protocol (broke all uncached playback), the mov
+# demuxer, and the pcm_s16le and alac decoders.
+#
+# Binaries are gitignored, so the artifact here is the only copy. Download it into
+# core/data/src/jvmMain/resources/native/<os>/ffmpeg to use it locally.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/build-ffmpeg-minimal.sh'
+      - 'desktop/test-ffmpeg-minimal.sh'
+      - '.github/workflows/build_ffmpeg.yml'
+  pull_request:
+    paths:
+      - 'desktop/build-ffmpeg-minimal.sh'
+      - 'desktop/test-ffmpeg-minimal.sh'
+      - '.github/workflows/build_ffmpeg.yml'
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            runner: ubuntu-latest
+          - os: macos
+            runner: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Needed only to generate the test fixtures. The binary under test cannot
+      # encode anything, by design, so it cannot make its own test inputs.
+      - name: Install full ffmpeg for fixtures
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+        if: runner.os == 'Linux'
+      - name: Install full ffmpeg for fixtures
+        run: brew install ffmpeg
+        if: runner.os == 'macOS'
+
+      - name: Build
+        env:
+          # Set to a fork URL to build patched source. Nothing needs patching
+          # today, so this stays empty and the official tarball is used.
+          FFMPEG_REPO: ${{ vars.FFMPEG_REPO }}
+          FFMPEG_REF: ${{ vars.FFMPEG_REF }}
+        run: bash desktop/build-ffmpeg-minimal.sh 8.1.3
+
+      - name: Test
+        run: bash desktop/test-ffmpeg-minimal.sh
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-${{ matrix.os }}
+          path: core/data/src/jvmMain/resources/native/${{ matrix.os }}/ffmpeg
+          if-no-files-found: error
