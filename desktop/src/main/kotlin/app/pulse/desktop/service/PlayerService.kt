@@ -299,12 +299,17 @@ class PlayerService {
     }
 
 
+    /**
+     * Report a playback failure so the UI can show it. e.message is often null or blank,
+     * which would store an error the listener never sees, so fall back to the type name.
+     */
+    private fun fail(cause: Throwable) {
+        val message = cause.message?.takeIf { it.isNotBlank() } ?: cause.javaClass.simpleName
+        _state.update { it.copy(isLoading = false, error = message) }
+    }
+
     private fun playInternal(song: Song, startMs: Long = 0L) {
         val videoId = song.id
-        if (videoId == null) {
-            _state.update { it.copy(isLoading = false, error = "No video ID") }
-            return
-        }
 
         // debounce: skip if already loading/playing same video
         val s = _state.value
@@ -349,7 +354,7 @@ class PlayerService {
                 throw e
             } catch (e: Exception) {
                 log("play error: ${e.message}")
-                _state.update { it.copy(isLoading = false, error = e.message) }
+                fail(e)
             }
         }
     }
@@ -495,6 +500,15 @@ class PlayerService {
                 val ffmpegBin = NativeBinaries.ffmpeg()
                 val url = "https://www.youtube.com/watch?v=$videoId"
 
+                // Name the binaries and their sizes.
+                log(
+                    "pipeline[$pipelineId] ffmpeg=${File(ffmpegBin).name} " +
+                        "at ${File(ffmpegBin).absolutePath} " +
+                        "(${(File(ffmpegBin).length() / 1024 / 1024.0).toInt()} MB), " +
+                        "yt-dlp at ${File(ytDlpBin).absolutePath} " +
+                        "(${(File(ytDlpBin).length() / 1024 / 1024.0).toInt()} MB)"
+                )
+
                 val cacheFile = File(cacheDir, videoId)
                 val cacheDone = File(cacheDir, "${videoId}.done")
 
@@ -600,7 +614,7 @@ class PlayerService {
                 // only report error if we're still active pipeline
                 if (myGen == currentPipelineGen) {
                     log("pipeline[$pipelineId] error: ${e.message}")
-                    _state.update { it.copy(isLoading = false, error = e.message) }
+                    fail(e)
                 }
             }
         }
@@ -710,7 +724,8 @@ class PlayerService {
         val buffer = ByteArray(4096)
         var totalBytes = 0L
 
-        _state.update { it.copy(isLoading = false, isPlaying = true) }
+        // audio is genuinely flowing, so any earlier failure no longer applies
+        _state.update { it.copy(isLoading = false, isPlaying = true, error = null) }
         isPaused = false
 
         while (isActive) {

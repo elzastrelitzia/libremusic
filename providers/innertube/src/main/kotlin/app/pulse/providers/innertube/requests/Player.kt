@@ -45,7 +45,18 @@ private suspend fun Innertube.tryContexts(
                 parameter("t", generateNonce(12))
                 header("X-Goog-Api-Format-Version", "2")
                 parameter("id", body.videoId)
-            }.body<PlayerResponse>().also { logger.info("Got $it") }
+            }.body<PlayerResponse>().also {
+                // Not "Got $it": toString() on PlayerResponse dumps every signed
+                // googlevideo URL, which is ~15 KB per request and no use to read.
+                val formats = it.streamingData?.adaptiveFormats.orEmpty()
+                logger.info(
+                    "Got status=${it.playabilityStatus?.status} " +
+                        "reason=${it.playabilityStatus?.reason} " +
+                        "formats=${formats.size} " +
+                        "audio=${formats.count { f -> f.mimeType?.startsWith("audio") == true }} " +
+                        "loudnessDb=${it.playerConfig?.audioConfig?.loudnessDb}"
+                )
+            }
         }
             ?.getOrNull()
             ?.takeIf { checkIsValid && it.isValid }

@@ -135,10 +135,11 @@ fun MiniPlayer(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    song.artistsText?.let { author ->
+                    val error = state.error
+                    (error ?: song.artistsText)?.let { sub ->
                         Text(
-                            text = author,
-                            color = dim,
+                            text = sub,
+                            color = if (error != null) Color(0xFFE05252) else dim,
                             fontSize = (Sizes.miniPlayerIconSub * s).sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
