@@ -22,7 +22,7 @@ android {
     namespace = "app.pulse.android"
     compileSdk = 37
 
-    val abis = listOf("arm64-v8a", "x86_64")
+    val abis = listOf("arm64-v8a")
     val cmakeVersion = "4.1.2"
     ndkVersion = "29.0.14206865"
 
@@ -38,7 +38,6 @@ android {
         multiDexEnabled = true
 
         ndk {
-            //noinspection ChromeOsAbiSupport
             abiFilters += abis
         }
 
