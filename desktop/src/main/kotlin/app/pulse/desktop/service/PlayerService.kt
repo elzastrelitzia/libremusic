@@ -58,12 +58,10 @@ class PlayerService {
 
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var playbackJob: Job? = null
-    private var backgroundDownloadJob: Job? = null
     private var line: SourceDataLine? = null
     private var stream: AudioInputStream? = null
     private var decodeProcess: Process? = null
     private var ytDlpProcess: Process? = null
-    private var backgroundProcess: Process? = null
 
     @Volatile
     private var isPaused = false
@@ -321,9 +319,6 @@ class PlayerService {
         }
 
         playbackJob?.cancel()
-        backgroundDownloadJob?.cancel()
-        backgroundProcess?.destroyForcibly()
-        backgroundProcess = null
         stopAudio()
         currentPipelineGen++
 
@@ -397,9 +392,6 @@ class PlayerService {
 
     fun stop() {
         playbackJob?.cancel()
-        backgroundDownloadJob?.cancel()
-        backgroundProcess?.destroyForcibly()
-        backgroundProcess = null
         playbackJob = null
         stopAudio()
         maybeSaveQueue()
@@ -545,67 +537,28 @@ class PlayerService {
                     return@launch
                 }
 
-                if (startMs == 0L) {
-                    log("pipeline[$pipelineId] download FULL, tee to cache")
-                    cacheDir.mkdirs()
-                    val ytPb = ProcessBuilder(ytDlpBin, "-f", "bestaudio", "-o", "-", "-q", url)
-                    ytPb.redirectError(ProcessBuilder.Redirect.DISCARD)
-                    val ytDlp = ytPb.start()
-                    ytDlpProcess = ytDlp
 
-                    val ffPb = ProcessBuilder(
-                        ffmpegBin, "-loglevel", "error",
-                        "-i", "-",
-                        "-acodec", "pcm_s16le", "-f", "wav", "-"
-                    )
-                    ffPb.redirectError(ProcessBuilder.Redirect.INHERIT)
-                    val ffmpeg = ffPb.start()
-                    decodeProcess = ffmpeg
-
-                    startTeeThread(ytDlp, ffmpeg, cacheFile, videoId, pipelineId, cache = true)
-
-                    if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
-                        advanceOrStop()
-                    }
-                    return@launch
-                }
-
-                val startSec = startMs / 1000
-                val endSec = format?.approxDurationMs?.let { it / 1000 } ?: 99999L
-                log("pipeline[$pipelineId] download section ${startSec}-${endSec}s (no cache)")
-
-                // Start background download of full song so future seeks are instant
-                if (backgroundDownloadJob?.isActive != true) {
-                    val cacheDone = File(cacheDir, "${videoId}.done")
-                    if (!cacheDone.exists()) {
-                        log("pipeline[$pipelineId] starting background download")
-                        backgroundDownloadJob = scope.launch(Dispatchers.IO) {
-                            downloadFullSong(videoId, pipelineId)
-                        }
-                    }
-                }
-
-                val ytPb = ProcessBuilder(
-                    ytDlpBin, "-f", "bestaudio", "-o", "-", "-q",
-                    "--download-sections", "*${startSec}-${endSec}",
-                    url
-                )
+                log("pipeline[$pipelineId] download FULL, tee to cache")
+                cacheDir.mkdirs()
+                val ytPb = ProcessBuilder(ytDlpBin, "-f", "bestaudio", "-o", "-", "-q", url)
                 ytPb.redirectError(ProcessBuilder.Redirect.DISCARD)
-                ytDlpProcess = ytPb.start()
+                val ytDlp = ytPb.start()
+                ytDlpProcess = ytDlp
 
                 val ffPb = ProcessBuilder(
                     ffmpegBin, "-loglevel", "error",
+
+                    *(if (startMs > 0) arrayOf("-ss", (startMs / 1000f).toString()) else emptyArray()),
                     "-i", "-",
                     "-acodec", "pcm_s16le", "-f", "wav", "-"
                 )
                 ffPb.redirectError(ProcessBuilder.Redirect.INHERIT)
-                decodeProcess = ffPb.start()
+                val ffmpeg = ffPb.start()
+                decodeProcess = ffmpeg
 
-                val ytLocal = ytDlpProcess!!
-                val ffLocal = decodeProcess!!
-                startTeeThread(ytLocal, ffLocal, null, videoId, pipelineId, cache = false)
+                startTeeThread(ytDlp, ffmpeg, cacheFile, videoId, pipelineId, cache = true)
 
-                if (playViaStream(ffLocal.inputStream, false) == StreamEnd.COMPLETED) {
+                if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
                     advanceOrStop()
                 }
             } catch (e: CancellationException) {
@@ -617,46 +570,6 @@ class PlayerService {
                     fail(e)
                 }
             }
-        }
-    }
-
-    private suspend fun downloadFullSong(videoId: String, pipelineId: String) = withContext(Dispatchers.IO) {
-        val ytDlpBin = NativeBinaries.ytDlp()
-        val tmpFile = File(cacheDir, "${videoId}.tmp")
-        val cacheFile = File(cacheDir, videoId)
-        val cacheDone = File(cacheDir, "${videoId}.done")
-
-        var proc: Process? = null
-        try {
-            cacheDir.mkdirs()
-            val pb = ProcessBuilder(
-                ytDlpBin, "-f", "bestaudio", "-q", "--output", tmpFile.absolutePath,
-                "https://www.youtube.com/watch?v=$videoId"
-            )
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD)
-            val p = pb.start()
-            proc = p
-            backgroundProcess = p
-            p.waitFor()
-
-            if (p.exitValue() == 0 && tmpFile.exists() && tmpFile.length() > 0) {
-                tmpFile.renameTo(cacheFile)
-                cacheDone.createNewFile()
-                log("bgdl[$pipelineId] complete: $videoId (${cacheFile.length()} bytes)")
-            } else {
-                tmpFile.delete()
-                log("bgdl[$pipelineId] failed exit=${p.exitValue()}: $videoId")
-            }
-        } catch (e: CancellationException) {
-            proc?.destroyForcibly()
-            tmpFile.delete()
-            log("bgdl[$pipelineId] cancelled: $videoId")
-            throw e
-        } catch (e: Exception) {
-            tmpFile.delete()
-            log("bgdl[$pipelineId] error: ${e.message}")
-        } finally {
-            backgroundProcess = null
         }
     }
 
@@ -904,7 +817,6 @@ class PlayerService {
 
     fun dispose() {
         stop()
-        backgroundDownloadJob?.cancel()
         scope.cancel()
         QueueDatabase.close()
         log("dispose")
