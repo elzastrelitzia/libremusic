@@ -3,9 +3,9 @@ package app.pulse.core.data.repository
 import app.pulse.core.data.models.Song
 import app.pulse.core.data.models.PlaybackState
 import app.pulse.core.data.models.LoopMode
+import app.pulse.core.data.utils.AppDirs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 
@@ -19,12 +19,6 @@ object QueueDatabase {
         explicitNulls = false
         encodeDefaults = true
         classDiscriminator = "#class"
-    }
-
-    private const val DB_NAME = "pulse_queue.db"
-    private val dbDir: File by lazy {
-        val userHome = System.getProperty("user.home")
-        File(userHome, ".pulse").also { it.mkdirs() }
     }
 
     private var connection: Connection? = null
@@ -50,7 +44,7 @@ object QueueDatabase {
     /** Ensure DB + table exist. Called once at app start. */
     fun init() {
         Class.forName("org.sqlite.JDBC")
-        val dbFile = File(dbDir, DB_NAME)
+        val dbFile = AppDirs.queueDb
         val conn = DriverManager.getConnection("jdbc:sqlite:${dbFile.absolutePath}")
         connection = conn
 

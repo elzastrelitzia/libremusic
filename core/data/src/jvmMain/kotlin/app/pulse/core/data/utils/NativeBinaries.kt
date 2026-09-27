@@ -73,9 +73,7 @@ object NativeBinaries {
 
     private fun extractFromJar(resourcePath: String, binName: String): String {
         synchronized(extractLock) {
-            val tempDir = File(System.getProperty("java.io.tmpdir"), "pulse-native")
-            tempDir.mkdirs()
-            val extracted = File(tempDir, binName)
+            val extracted = File(AppDirs.native, binName)
 
             if (!extracted.exists()) {
                 try {

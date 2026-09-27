@@ -16,7 +16,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
-import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import javax.sound.sampled.AudioFormat
@@ -38,7 +37,6 @@ class PlayerRepositoryImpl : PlayerRepository {
     private var decodeProcess: Process? = null
     private var ytDlpProcess: Process? = null
 
-    private val cacheDir = File(System.getProperty("java.io.tmpdir"), "pulse-cache")
     private var isPaused = false
     private var seekBaseMs = 0L
     private var currentPipelineGen = 0L

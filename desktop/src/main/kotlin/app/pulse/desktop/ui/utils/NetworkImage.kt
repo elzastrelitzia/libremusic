@@ -14,11 +14,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.loadImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import app.pulse.core.data.utils.AppDirs
 import java.io.File
 import java.net.URL
 import java.security.MessageDigest
 
-private val imageCacheDir = File(System.getProperty("java.io.tmpdir"), "pulse-image-cache")
+private val imageCacheDir = AppDirs.images
 private const val DEFAULT_THUMB_SIZE = 1080
 
 /**

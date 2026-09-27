@@ -3,6 +3,7 @@ package app.pulse.desktop.service
 import app.pulse.core.data.models.Song
 import app.pulse.core.data.models.LoopMode
 import app.pulse.core.data.repository.QueueDatabase
+import app.pulse.core.data.utils.AppDirs
 import app.pulse.core.data.utils.NativeBinaries
 import app.pulse.core.data.utils.toSong
 import app.pulse.desktop.ui.utils.log as sharedLog
@@ -79,7 +80,7 @@ class PlayerService {
     private var radioJob: Job? = null
 
     companion object {
-        private val cacheDir = File(System.getProperty("java.io.tmpdir"), "pulse-cache")
+        private val cacheDir = AppDirs.audio
 
         /** max cache size in bytes (500 MB). */
         private const val MAX_CACHE_BYTES = 500L * 1024 * 1024

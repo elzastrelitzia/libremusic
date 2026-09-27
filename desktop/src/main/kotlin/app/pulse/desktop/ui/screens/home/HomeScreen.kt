@@ -61,6 +61,7 @@ import app.pulse.desktop.ui.components.NewReleasesSkeleton
 import app.pulse.desktop.ui.components.QuickPicksSkeleton
 import app.pulse.desktop.ui.components.TrendingSkeleton
 import app.pulse.desktop.ui.utils.log
+import app.pulse.core.data.utils.AppDirs
 import app.pulse.providers.innertube.Innertube
 import app.pulse.providers.innertube.models.bodies.NextBody
 import app.pulse.providers.innertube.requests.discoverPage
@@ -83,7 +84,7 @@ private object HomeCache {
     var discover: Result<Innertube.DiscoverPage>? = null
     var related: Result<Innertube.RelatedPage?>? = null
 
-    private val cacheDir = File(System.getProperty("java.io.tmpdir"), "pulse-home")
+    private val cacheDir = AppDirs.home
     private val discoverFile = File(cacheDir, "discover.json")
     private val relatedFile = File(cacheDir, "related.json")
     private val ttlMs = 30L * 60 * 1000 // ttl 30 min
