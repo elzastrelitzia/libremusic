@@ -83,6 +83,14 @@ jobs:
           path: desktop/build/compose/binaries/appimage/*.AppImage
           if-no-files-found: error
 
+      - name: Upload AppImage to buzzheavier
+        env:
+          BUZZHEAVIER_ACCOUNT_ID: ${{ secrets.BUZZHEAVIER_ACCOUNT_ID }}
+        run: |
+          FILE=$(ls desktop/build/compose/binaries/appimage/*.AppImage)
+          bash desktop/upload-buzzheavier.sh "$FILE" \
+            "libremusic-linux-x86_64-r${{ github.run_number }}.AppImage"
+
   windows-zip:
     name: windows x64
     runs-on: windows-latest
@@ -144,3 +152,11 @@ jobs:
           name: libremusic-windows-x64
           path: desktop/build/compose/binaries/windows/*.zip
           if-no-files-found: error
+
+      - name: Upload zip to buzzheavier
+        env:
+          BUZZHEAVIER_ACCOUNT_ID: ${{ secrets.BUZZHEAVIER_ACCOUNT_ID }}
+        run: |
+          FILE=$(ls desktop/build/compose/binaries/windows/*.zip)
+          bash desktop/upload-buzzheavier.sh "$FILE" \
+            "libremusic-windows-x64-r${{ github.run_number }}.zip"
