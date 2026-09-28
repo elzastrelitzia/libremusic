@@ -28,6 +28,9 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
@@ -45,6 +48,15 @@ private fun log(msg: String) {
 
 /** yt-dlp hands out media URLs that intermittently 403. A fresh run gets a fresh URL. */
 private const val DOWNLOAD_ATTEMPTS = 3
+
+/**
+ * How long to wait for yt-dlp's first byte before giving up on starting ffmpeg.
+ *
+ * generous, because a cold yt-dlp.exe on Windows plus a slow network can take a
+ * while, and a wrong guess here costs a retry of the whole download. Lower it only if a real
+ * slow-start log ever shows this firing.
+ */
+private const val FIRST_BYTE_TIMEOUT_MS = 30_000L
 
 /** return value from playViaStream to inform the caller what action to take. */
 private enum class StreamEnd {
@@ -568,6 +580,13 @@ class PlayerService {
                 drainStderr(ytDlp, "yt-dlp")
                 ytDlpProcess = ytDlp
 
+                // ffmpeg is NOT started here. startTeeThread starts it on the first byte
+                // from yt-dlp, because ffmpeg probing an empty stdin gives up and exits:
+                // measured, a 0.25s gap before the first byte already fails with
+                // "Invalid data found when processing input", while the same bytes buffered
+                // before ffmpeg starts decode fine. A cold yt-dlp.exe on Windows takes
+                // seconds to produce anything, so eager start meant every uncached track
+                // failed there and only there.
                 val ffPb = ProcessBuilder(
                     ffmpegBin, "-loglevel", "error",
 
@@ -576,14 +595,30 @@ class PlayerService {
                     "-acodec", "pcm_s16le", "-f", "wav", "-"
                 )
                 ffPb.redirectError(ProcessBuilder.Redirect.PIPE)
-                val ffmpeg = ffPb.start()
-                drainStderr(ffmpeg, "ffmpeg")
-                decodeProcess = ffmpeg
 
                 fedBytes.set(0L)
-                startTeeThread(ytDlp, ffmpeg, cacheFile, videoId, pipelineId, cache = true)
+                // The tee counts the latch down on the first byte, and a plain var is enough
+                // for ffmpeg because that latch is also the memory barrier. Deliberately empty:
+                // the tee does nothing but start the process here, because anything that costs
+                // time delays the first write and ffmpeg loses if it probes an empty pipe.
+                var ffmpegStarted: Process? = null
+                val ffmpegReady = startTeeThread(ytDlp, ffPb, cacheFile, videoId, pipelineId, cache = true) { pb ->
+                    val p = pb.start()
+                    ffmpegStarted = p
+                    decodeProcess = p
+                    p
+                }
 
                 try {
+                    // playViaStream needs the ffmpeg process, which the tee starts on the
+                    // first byte. The throw below stays INSIDE this try on purpose: fedBytes is
+                    // then 0, which is what arms the 403 retry. Throwing outside it would
+                    // report a dead yt-dlp as a hard failure with no retry.
+                    if (!ffmpegReady.await(FIRST_BYTE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                        log("pipeline[$pipelineId] no audio from yt-dlp within ${FIRST_BYTE_TIMEOUT_MS}ms")
+                    }
+                    val ffmpeg = ffmpegStarted ?: throw IOException("yt-dlp produced no audio")
+
                     if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
                         advanceOrStop()
                     }
@@ -628,14 +663,30 @@ class PlayerService {
         }.apply { isDaemon = true }.start()
     }
 
+    /**
+     * Pull yt-dlp's stdout into ffmpeg's stdin and the cache file, starting ffmpeg on the
+     * first real chunk via [startFfmpeg]. Returns a latch that opens on the first byte, or on
+     * the producer dying, whichever comes first.
+     *
+     * Deferring the start is the whole point. ffmpeg run against an empty stdin probes it,
+     * gives up and exits before a slow producer ever writes, and the app reports that as
+     * "Stream of unsupported format". Holding ffmpeg back until there is a byte to read
+     * fixes it for the tee path, the cache path, and every platform, with no timing knob.
+     *
+     * The latch opens on exit as well, not just on the first byte. A yt-dlp that dies from a
+     * 403 produces nothing, so without this the caller would wait out the whole timeout before
+     * reporting a failure that was already known in milliseconds.
+     */
     private fun startTeeThread(
         ytDlp: Process,
-        ffmpeg: Process,
+        ffPb: ProcessBuilder,
         cacheFile: File?,
         videoId: String,
         pipelineId: String,
-        cache: Boolean
-    ) {
+        cache: Boolean,
+        startFfmpeg: (ProcessBuilder) -> Process
+    ): CountDownLatch {
+        val ready = CountDownLatch(1)
         val localCacheFile = cacheFile  // capture local
         Thread {
             val cacheOut = if (cache && localCacheFile != null) {
@@ -644,19 +695,40 @@ class PlayerService {
 
             try {
                 ytDlp.inputStream.use { input ->
-                    ffmpeg.outputStream.use { output ->
-                        val buf = ByteArray(8192)
-                        while (true) {
-                            val n = runCatching { input.read(buf) }.getOrNull()
-                            if (n == null || n == -1) break
-                            fedBytes.addAndGet(n.toLong())
-                            runCatching { output.write(buf, 0, n) }
-                            runCatching { cacheOut?.write(buf, 0, n) }
+                    var ffmpeg: Process? = null
+                    var wroteFirst = false
+                    val buf = ByteArray(8192)
+                    while (true) {
+                        val n = runCatching { input.read(buf) }.getOrNull()
+                        if (n == null || n == -1) break
+                        if (ffmpeg == null) {
+                            ffmpeg = runCatching { startFfmpeg(ffPb) }.getOrNull()
+                            if (ffmpeg == null) break
+                            ready.countDown()
                         }
+                        fedBytes.addAndGet(n.toLong())
+                        val target = ffmpeg ?: break
+                        // The first chunk goes in before anything else, because ffmpeg probes
+                        // its input the moment it starts and gives up on an empty pipe. Measured:
+                        // a 5ms gap between starting ffmpeg and this write already fails, and
+                        // drainStderr plus log() together cost more than that. So both moved
+                        // below the write.
+                        runCatching { target.outputStream.write(buf, 0, n) }
+                        runCatching { target.outputStream.flush() }
+                        if (!wroteFirst) {
+                            wroteFirst = true
+                            drainStderr(target, "ffmpeg")
+                            log("pipeline[$pipelineId] ffmpeg started on first ${n} bytes")
+                        }
+                        runCatching { cacheOut?.write(buf, 0, n) }
                     }
+                    // Closing ffmpeg's stdin is how it learns the stream ended. Skip it when
+                    // ffmpeg never started, and when the caller already closed it.
+                    runCatching { ffmpeg?.outputStream?.close() }
                 }
             } finally {
                 runCatching { cacheOut?.close() }
+                ready.countDown()
                 val fed = fedBytes.get()
                 if (fed == 0L) {
                     // exitValue throws if the process has not been reaped yet.
@@ -665,6 +737,7 @@ class PlayerService {
                 }
             }
         }.apply { isDaemon = true }.start()
+        return ready
     }
 
     private suspend fun playViaStream(inputStream: java.io.InputStream, isFullDownload: Boolean): StreamEnd =

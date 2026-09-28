@@ -80,8 +80,17 @@ cd ffmpeg
 # pcm_s16le and alac are decoders, not just codecs to pass through. The cache is a
 # directory of extensionless files, so ffmpeg has to be able to identify and decode
 # whatever it finds there. Dropping these two cost 2 of 11 formats in testing.
+#
+# --disable-shared is not optional either, and it is the one that broke Windows. Without
+# it ffmpeg's configure defaults to shared on Windows, so the exe links against
+# libavcodec-61.dll and libavformat-61.dll while only the exe gets installed. The result
+# is an ffmpeg.exe that dies during loader startup in about 12ms, prints nothing useful,
+# and makes every uncached track fail as "Stream of unsupported format". Linux hides the
+# same mistake: ldd on its binary shows no libav dependency at all, so it runs standalone
+# and playback works there, which is why this survived as a "Windows-only" bug.
 ./configure \
   --disable-everything \
+  --disable-shared --enable-static \
   --disable-ffplay --disable-ffprobe --disable-doc \
   --disable-x86asm \
   --enable-protocol=file,pipe,fd \
@@ -96,6 +105,17 @@ make -j"$(nproc 2>/dev/null || sysctl -n hw.ncpu)"
 
 mkdir -p "$NATIVE_DIR"
 install -m 755 ffmpeg "$NATIVE_DIR/$BIN"
+
+# A binary that builds but cannot start is the failure worth catching, and it is exactly
+# what shipped: ffmpeg.exe linked against libav*.dll with only the exe installed, so every
+# Windows playback died in ~12ms with nothing in the log. Linux hid it because its binary
+# has no libav dependency at all. The -version echo below cannot catch this, since a failing
+# command substitution does not fail the echo, so check it where the failure can stop us.
+if ! "$NATIVE_DIR/$BIN" -version >/dev/null 2>&1; then
+  echo "==> FATAL: $BIN was built but will not run. Missing shared libraries?" >&2
+  "$NATIVE_DIR/$BIN" -version || true
+  exit 1
+fi
 
 echo ""
 echo "==> Built $("$NATIVE_DIR/$BIN" -version | head -1)"
