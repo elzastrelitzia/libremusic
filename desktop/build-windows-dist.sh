@@ -56,6 +56,17 @@ mapfile -t LAUNCHERS < <(find "$APP_DIR" -maxdepth 1 -type f -name '*.exe')
     echo "expected exactly one launcher exe in $APP_DIR, found ${#LAUNCHERS[@]}" >&2
     exit 1
 }
+# Named after nativeDistributions.packageName, not the project. The cfg the launcher
+# reads is named after it too, so a mismatch here means the pulse.native.dir line below
+# is about to be written to a file nobody reads.
+[ "$(basename "${LAUNCHERS[0]}")" = "$APP_ID.exe" ] || {
+    echo "expected launcher $APP_ID.exe, found $(basename "${LAUNCHERS[0]}")" >&2
+    exit 1
+}
+[ -f "$APP_DIR/app/$APP_ID.cfg" ] || {
+    echo "no $APP_ID.cfg in $APP_DIR/app, so the launcher will not read it" >&2
+    exit 1
+}
 
 # Drop the sqlite-jdbc natives for the platforms this build cannot run on.
 #
@@ -96,12 +107,72 @@ for jar in sys.argv[1:]:
         print(f"    {n}")
 PY
 
-# ffmpeg and yt-dlp stay in the jar here, unlike the AppImage. NativeBinaries extracts
-# them to %USERPROFILE%\.libremusic\native on first run, which costs 42 MB of home disk
-# once. The AppImage avoids that by pointing pulse.native.dir at the in-image copies from
-# AppRun, and there is no equivalent hook on Windows: the jpackage launcher is a bare
-# .exe the user double-clicks, with nothing to inject an environment variable from. Not
-# worth a .bat wrapper the user has to launch instead of the app.
+# Same trick as the AppImage, different hook. There is no AppRun on Windows, but the
+# jpackage launcher reads app/<name>.cfg and expands $APPDIR in it, so one java-options
+# line points pulse.native.dir at in-tree copies. Without it NativeBinaries finds ffmpeg
+# and yt-dlp only as jar resources and unpacks 42 MB into %USERPROFILE%\.libremusic\native
+# on first run. jpackage's own AppLauncherSubstTest covers this substitution.
+#
+# One python3 block for all three jobs. MSYS2 base-devel does not ship unzip, and the
+# sqlite rewrite above already made python3 a dependency of this script.
+python3 - "$APP_DIR/app/data-jvm-"*.jar "$APP_DIR/app/$APP_ID.cfg" <<'PY'
+import os, sys, zipfile
+
+data_jar, cfg = sys.argv[1], sys.argv[-1]
+KEEP = "native/windows/"
+BINS = [KEEP + "ffmpeg.exe", KEEP + "yt-dlp.exe"]
+
+# The override is a leaf directory holding the binaries, not the parent: NativeBinaries
+# joins the bare file name onto it, unlike the jar resource path, which carries the OS
+# segment.
+native_dir = os.path.join(os.path.dirname(data_jar), *KEEP.split("/"))
+os.makedirs(native_dir, exist_ok=True)
+
+# Keep only native/windows/, minus the two binaries now living on disk. A checkout that
+# also built the Linux ffmpeg would otherwise ship it to Windows, and the AppImage has the
+# same problem in reverse. Directory entries and .gitkeep files stay.
+def keep(name):
+    if name in BINS:
+        return False
+    return not name.startswith("native/") or name.startswith(KEEP)
+
+
+with zipfile.ZipFile(data_jar) as src:
+    found = {n: src.read(n) for n in src.namelist() if n in BINS}
+    entries = [(i, src.read(i.filename)) for i in src.infolist() if keep(i.filename)]
+
+missing = sorted(set(BINS) - found.keys())
+if missing:
+    raise SystemExit(f"{data_jar} has no {missing}, the build_ffmpeg artifact never landed")
+for name, data in found.items():
+    with open(os.path.join(native_dir, os.path.basename(name)), "wb") as f:
+        f.write(data)
+
+with zipfile.ZipFile(data_jar, "w", zipfile.ZIP_DEFLATED) as out:
+    for info, data in entries:
+        out.writestr(info, data)
+
+with zipfile.ZipFile(data_jar) as check:
+    left = [n for n in check.namelist()
+            if n.startswith("native/") and not n.startswith(KEEP)]
+    gone = [n for n in BINS if n in check.namelist()]
+if gone:
+    raise SystemExit(f"{data_jar} still holds {gone}")
+if [n for n in left if not n.endswith("/") and not n.endswith(".gitkeep")]:
+    raise SystemExit(f"{data_jar} still holds foreign natives {[n for n in left]}")
+
+line = "java-options=-Dpulse.native.dir=$APPDIR/native/windows"
+with open(cfg) as f:
+    text = f.read()
+if line not in text:
+    if "[JavaOptions]" not in text:
+        raise SystemExit(f"{cfg} has no [JavaOptions] section, refusing to guess")
+    with open(cfg, "w") as f:
+        f.write(text.rstrip("\n") + "\n" + line + "\n")
+
+print(f"  natives in {native_dir}")
+print(f"  {os.path.basename(cfg)}: {line}")
+PY
 
 mkdir -p "$OUT_DIR"
 ZIP="$(cd "$OUT_DIR" && pwd)/$APP_ID-$VERSION-windows-x64.zip"

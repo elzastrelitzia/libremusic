@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 
 APP_ID="libremusic"
 VERSION="$(./gradlew :desktop:properties --no-configuration-cache -q 2>/dev/null | awk -F': ' '/^version: /{print $2}')"
-DIST="desktop/build/compose/binaries/main-release/app/desktop"
+DIST="desktop/build/compose/binaries/main-release/app/$APP_ID"
 # appimagetool is a binary, not something this repo should carry. It lives next to the
 # repo checkout; override if yours is elsewhere.
 APPIMAGE_TOOL="${APPIMAGE_TOOL:-../appimagetool-x86_64.appimage}"
@@ -26,7 +26,7 @@ trap 'rm -rf "$APPDIR"' EXIT
 
 [ -n "$VERSION" ] || { echo "could not read project version" >&2; exit 1; }
 [ -x "$APPIMAGE_TOOL" ] || { echo "$APPIMAGE_TOOL not found or not executable" >&2; exit 1; }
-[ -x "$DIST/bin/desktop" ] || { echo "no release build at $DIST, run ./gradlew :desktop:createReleaseDistributable" >&2; exit 1; }
+[ -x "$DIST/bin/$APP_ID" ] || { echo "no release build at $DIST, run ./gradlew :desktop:createReleaseDistributable" >&2; exit 1; }
 
 # The jpackage launcher locates its own runtime relative to itself and has no RPATH, so
 # the whole tree just has to stay together.
@@ -84,7 +84,7 @@ cat > "$APPDIR/AppRun" <<EOF
 # unlike the jar resource path and the working-dir path, which both include the OS name.
 HERE="\$(dirname "\$(readlink -f "\$0")")"
 export JAVA_TOOL_OPTIONS="\${JAVA_TOOL_OPTIONS:+\$JAVA_TOOL_OPTIONS }-Dpulse.native.dir=\$HERE/usr/lib/$APP_ID/native/linux"
-exec "\$HERE/usr/lib/$APP_ID/bin/desktop" "\$@"
+exec "\$HERE/usr/lib/$APP_ID/bin/$APP_ID" "\$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 

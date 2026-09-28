@@ -105,6 +105,10 @@ compose.desktop {
         // java.sql, so the app died on startup with NoClassDefFoundError: java/sql/Driver.
         // List produced by ./gradlew :desktop:suggestRuntimeModules, minus the defaults.
         nativeDistributions {
+            // Unset, so jpackage gets --name from project.name, which is "desktop". The
+            // Windows launcher was desktop.exe and the AppImage AppRun had to exec
+            // usr/lib/libremusic/bin/desktop. One name for every platform now.
+            packageName = "libremusic"
             modules("java.instrument", "java.management", "java.sql", "jdk.unsupported")
         }
     }
