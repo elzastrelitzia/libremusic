@@ -1,0 +1,146 @@
+name: Build Desktop
+
+# Packages the desktop app for Linux and Windows.
+#
+# The native binaries are gitignored, so a clean checkout has neither ffmpeg nor yt-dlp
+# and the app silently falls through to a PATH lookup at runtime. yt-dlp is a single
+# download, ffmpeg has to be compiled, so both jobs run build-ffmpeg-minimal.sh
+# themselves.
+#
+# ponytail: that recompiles ffmpeg on every push, which the Build Minimal ffmpeg
+# workflow already does. Sharing its artifact instead needs gh plus a documented
+# "run that workflow first" ordering, and it broke on a fresh run and on fork PRs.
+# Revisit if the compile time ever becomes the problem.
+
+# Manual only. A push that touches desktop/** would otherwise cost two ffmpeg compiles
+# and a Gradle build per push, for a packaging check that only matters before a release.
+on:
+  workflow_dispatch:
+
+jobs:
+  linux-appimage:
+    name: linux AppImage
+    runs-on: ubuntu-latest
+    env:
+      NATIVE_DIR: core/data/src/jvmMain/resources/native/linux
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # build-essential and xz-utils are for the ffmpeg compile below. No full ffmpeg is
+      # needed: only the test script makes fixtures, and this job does not run it.
+      # No squashfs-tools: appimagetool ships its own mksquashfs and puts it first on PATH.
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential xz-utils
+
+      - name: Build minimal ffmpeg
+        run: bash desktop/build-ffmpeg-minimal.sh
+
+      - name: Fetch yt-dlp
+        run: |
+          curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+            -o "$NATIVE_DIR/yt-dlp"
+          chmod +x "$NATIVE_DIR/yt-dlp"
+
+      - name: Fetch appimagetool
+        run: |
+          # AppImage/appimagetool, NOT AppImage/AppImageKit. Both publish a file at this
+          # path, and AppImageKit's has been frozen at a 2023-03-08 build that rejects
+          # every compression except gzip and xz, so it exits 1 on the --comp=zstd below
+          # with only a "Only gzip ... and xz" line and no error.
+          curl -fsSL -o appimagetool-x86_64.AppImage \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          # GitHub runners have no FUSE, so appimagetool cannot mount itself. This makes
+          # it unpack into a temp dir and run from there instead. Needed for --version
+          # below too, not just for the packaging step.
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
+          APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage --version
+
+      - name: Build distributable
+        run: ./gradlew :desktop:createReleaseDistributable --no-configuration-cache
+
+      - name: Package AppImage
+        run: bash desktop/build-appimage.sh
+        env:
+          APPIMAGE_TOOL: appimagetool-x86_64.AppImage
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: libremusic-linux-x86_64
+          path: desktop/build/compose/binaries/appimage/*.AppImage
+          if-no-files-found: error
+
+  windows-zip:
+    name: windows x64
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      NATIVE_DIR: core/data/src/jvmMain/resources/native/windows
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Same toolchain as the ffmpeg job, so the two agree on what a Windows build is.
+      # The mingw-native python, not the msys one, because the shell is MINGW64.
+      # nasm and pkgconf are for ffmpeg's configure; base-devel alone cannot build it.
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: >-
+            base-devel
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-pkgconf
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build minimal ffmpeg
+        run: bash desktop/build-ffmpeg-minimal.sh
+
+      - name: Fetch yt-dlp
+        run: |
+          curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe \
+            -o "$NATIVE_DIR/yt-dlp.exe"
+
+      - name: Build distributable
+        run: ./gradlew :desktop:createReleaseDistributable --no-configuration-cache
+
+      - name: Package zip
+        run: bash desktop/build-windows-dist.sh
+        env:
+          # python3, not zip(1). MSYS2 base does not ship zip, and build-windows-dist.sh
+          # already needs python3 to rewrite the sqlite-jdbc jar.
+          PYTHONUTF8: '1'
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: libremusic-windows-x64
+          path: desktop/build/compose/binaries/windows/*.zip
+          if-no-files-found: error

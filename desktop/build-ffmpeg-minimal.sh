@@ -21,6 +21,10 @@
 #
 # Per-OS: run this on each target OS. The result is dynamically linked against
 # that OS's libc, so a Linux build is not portable to macOS or Windows.
+#
+# On Windows run it under MSYS2 (mingw-w64), not cmd or WSL. WSL reports Linux and
+# would produce an .exe linked against glibc, which is a silent trap rather than a
+# loud one.
 set -euo pipefail
 
 VERSION="${1:-8.1.3}"
@@ -30,7 +34,15 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 case "$(uname -s)" in
   Linux*)  OS=linux ;;
   Darwin*) OS=macos ;;
+  MINGW*|MSYS*|CYGWIN*) OS=windows ;;
   *) echo "ERROR: build on the target OS, not cross-compiling." >&2; exit 1 ;;
+esac
+
+# NativeBinaries.exe() appends .exe on Windows, so the file has to be named to match or
+# resolve never finds it. Keep this in step with the $OS case above.
+case "$OS" in
+  windows) BIN=ffmpeg.exe ;;
+  *)       BIN=ffmpeg ;;
 esac
 
 NATIVE_DIR="$REPO_DIR/core/data/src/jvmMain/resources/native/$OS"
@@ -83,8 +95,8 @@ cd ffmpeg
 make -j"$(nproc 2>/dev/null || sysctl -n hw.ncpu)"
 
 mkdir -p "$NATIVE_DIR"
-install -m 755 ffmpeg "$NATIVE_DIR/ffmpeg"
+install -m 755 ffmpeg "$NATIVE_DIR/$BIN"
 
 echo ""
-echo "==> Built $("$NATIVE_DIR/ffmpeg" -version | head -1)"
-echo "==> Size: $(du -h "$NATIVE_DIR/ffmpeg" | cut -f1) at $NATIVE_DIR/ffmpeg"
+echo "==> Built $("$NATIVE_DIR/$BIN" -version | head -1)"
+echo "==> Size: $(du -h "$NATIVE_DIR/$BIN" | cut -f1) at $NATIVE_DIR/$BIN"

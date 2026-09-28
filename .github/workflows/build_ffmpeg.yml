@@ -10,25 +10,25 @@ name: Build Minimal ffmpeg
 #
 # Binaries are gitignored, so the artifact here is the only copy. Download it into
 # core/data/src/jvmMain/resources/native/<os>/ffmpeg to use it locally.
+#
+# Manual only. This compiles ffmpeg three times, once per OS, and nothing consumes the
+# artifacts, so a push that touches the build script would buy 30 minutes for a check
+# that matters before a release rather than on every commit.
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'desktop/build-ffmpeg-minimal.sh'
-      - 'desktop/test-ffmpeg-minimal.sh'
-      - '.github/workflows/build_ffmpeg.yml'
-  pull_request:
-    paths:
-      - 'desktop/build-ffmpeg-minimal.sh'
-      - 'desktop/test-ffmpeg-minimal.sh'
-      - '.github/workflows/build_ffmpeg.yml'
 
 jobs:
   build:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.runner }}
+    # Per-step "shell:" cannot hold an expression. steps.shell is the one step key left
+    # out of GitHub's context-availability table, so runner.os and matrix.os are both
+    # rejected there and the whole file fails to parse. defaults.run does accept matrix,
+    # so the OS choice goes here and covers every run step at once.
+    defaults:
+      run:
+        shell: ${{ matrix.os == 'windows' && 'msys2 {0}' || 'bash' }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,10 +37,30 @@ jobs:
             runner: ubuntu-latest
           - os: macos
             runner: macos-latest
+          - os: windows
+            runner: windows-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      # Windows needs a real mingw-w64 toolchain. WSL is not a substitute: it reports
+      # Linux to uname, so the build script would produce an ffmpeg.exe linked against
+      # glibc and every playback would fail on a machine without MSYS2 alongside it.
+      - name: Set up MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          # ffmpeg's configure needs a shell, make, and a compiler. nasm is there so a
+          # future build can drop --disable-x86asm. ffmpeg is the full one, used only to
+          # generate test fixtures.
+          install: >-
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-ffmpeg
 
       # Needed only to generate the test fixtures. The binary under test cannot
       # encode anything, by design, so it cannot make its own test inputs.
@@ -67,5 +87,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-${{ matrix.os }}
-          path: core/data/src/jvmMain/resources/native/${{ matrix.os }}/ffmpeg
+          path: core/data/src/jvmMain/resources/native/${{ matrix.os }}/ffmpeg${{ matrix.os == 'windows' && '.exe' || '' }}
           if-no-files-found: error

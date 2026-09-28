@@ -15,6 +15,10 @@ DIST="desktop/build/compose/binaries/main-release/app/desktop"
 # appimagetool is a binary, not something this repo should carry. It lives next to the
 # repo checkout; override if yours is elsewhere.
 APPIMAGE_TOOL="${APPIMAGE_TOOL:-../appimagetool-x86_64.appimage}"
+# A name with no slash in it is a command to look up on PATH, not a file to run. Without
+# this, a bare filename passes the -x check below, which resolves against the cwd, and
+# then fails at the invocation with "command not found" and exit 127.
+case "$APPIMAGE_TOOL" in */*) ;; *) APPIMAGE_TOOL="./$APPIMAGE_TOOL" ;; esac
 OUT_DIR="${OUT_DIR:-desktop/build/compose/binaries/appimage}"
 APPDIR="$(mktemp -d "${TMPDIR:-/tmp}/libremusic.AppDir.XXXXXX")"
 
@@ -109,4 +113,6 @@ ARCH=x86_64 "$APPIMAGE_TOOL" \
 chmod +x "$OUT_DIR/$APP_ID-$VERSION-x86_64.AppImage"
 echo
 echo "built $OUT_DIR/$APP_ID-$VERSION-x86_64.AppImage"
-du -h "$OUT_DIR/$APP_ID-$VERSION-x86_64.AppImage"
+# --apparent-size, because plain du reports allocated blocks and mksquashfs over-
+# allocates, so it prints about 20% more than the download is actually worth.
+du -h --apparent-size "$OUT_DIR/$APP_ID-$VERSION-x86_64.AppImage" | cut -f1

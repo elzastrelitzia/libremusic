@@ -16,12 +16,23 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 case "$(uname -s)" in
   Linux*)  OS=linux ;;
   Darwin*) OS=macos ;;
+  MINGW*|MSYS*|CYGWIN*) OS=windows ;;
   *) echo "unsupported host" >&2; exit 1 ;;
 esac
 
-FFMPEG="${1:-$REPO_DIR/core/data/src/jvmMain/resources/native/$OS/ffmpeg}"
+case "$OS" in
+  windows) BIN=ffmpeg.exe ;;
+  *)       BIN=ffmpeg ;;
+esac
+
+FFMPEG="${1:-$REPO_DIR/core/data/src/jvmMain/resources/native/$OS/$BIN}"
 command -v ffmpeg >/dev/null || { echo "need a full ffmpeg on PATH to make fixtures" >&2; exit 1; }
-[ -x "$FFMPEG" ] || { echo "no binary at $FFMPEG" >&2; exit 1; }
+# On Windows canExecute is not the test, the extension is, same as NativeBinaries.
+if [ "$OS" = windows ]; then
+  [ -f "$FFMPEG" ] || { echo "no binary at $FFMPEG" >&2; exit 1; }
+else
+  [ -x "$FFMPEG" ] || { echo "no binary at $FFMPEG" >&2; exit 1; }
+fi
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
