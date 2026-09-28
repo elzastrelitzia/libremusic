@@ -33,6 +33,8 @@ import app.pulse.desktop.ui.LayoutShell
 import app.pulse.desktop.ui.View
 import app.pulse.desktop.ui.components.QueuePanel
 import app.pulse.desktop.ui.screens.player.PlayerScreen
+import app.pulse.desktop.ui.utils.logSystemInfo
+import app.pulse.desktop.ui.utils.startFileLogging
 import app.pulse.providers.innertube.Innertube.DiscoverPage
 
 /** detect UI scale, make effective resolution ~1920px wide when OS reports no scale (X11) */
@@ -55,6 +57,9 @@ private fun detectDpiScale(window: java.awt.Window): Float {
 }
 
 fun main() {
+    startFileLogging()
+    logSystemInfo()
+
     val os = System.getProperty("os.name").lowercase()
     if (os.contains("nix") || os.contains("nux")) {
         System.setProperty("sun.awt.noerasebackground", "true")

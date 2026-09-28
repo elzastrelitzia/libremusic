@@ -11,6 +11,7 @@ object AppDirs {
     val native: File = dir("native")
 
     val queueDb: File = File(root, "queue.db")
+    val log: File = File(root, "log.txt")
 
     private fun dir(name: String) = File(root, name).also { it.mkdirs() }
 }
