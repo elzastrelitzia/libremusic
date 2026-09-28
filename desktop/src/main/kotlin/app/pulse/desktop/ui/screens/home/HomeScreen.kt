@@ -613,7 +613,13 @@ private fun AlbumCard(
         endPad = CardSizes.cardEndPad.dp,                        thumbClipShape = RoundedCornerShape(topStart = Sizes.radiusMd.dp, topEnd = Sizes.radiusMd.dp),
         thumbnail = {
             album.thumbnail?.let { thumb ->
-                NetworkImage(url = thumb.url, modifier = Modifier.fillMaxSize())
+                val density = LocalDensity.current
+                val thumbPx = with(density) { CardSizes.cardW.dp.toPx().toInt() }
+                NetworkImage(
+                    url = thumb.url,
+                    modifier = Modifier.fillMaxSize(),
+                    requestedSize = thumbPx
+                )
             }
         },
         title = {
@@ -654,7 +660,13 @@ private fun ArtistCard(
         thumbClipShape = CircleShape,
         thumbnail = {
             artist.thumbnail?.let { thumb ->
-                NetworkImage(url = thumb.url, modifier = Modifier.fillMaxSize())
+                val density = LocalDensity.current
+                val thumbPx = with(density) { CardSizes.cardW.dp.toPx().toInt() }
+                NetworkImage(
+                    url = thumb.url,
+                    modifier = Modifier.fillMaxSize(),
+                    requestedSize = thumbPx
+                )
             }
         },
         title = {
@@ -686,7 +698,13 @@ private fun PlaylistCard(
         endPad = CardSizes.cardEndPad.dp,                        thumbClipShape = RoundedCornerShape(topStart = Sizes.radiusMd.dp, topEnd = Sizes.radiusMd.dp),
         thumbnail = {
             playlist.thumbnail?.let { thumb ->
-                NetworkImage(url = thumb.url, modifier = Modifier.fillMaxSize())
+                val density = LocalDensity.current
+                val thumbPx = with(density) { CardSizes.cardW.dp.toPx().toInt() }
+                NetworkImage(
+                    url = thumb.url,
+                    modifier = Modifier.fillMaxSize(),
+                    requestedSize = thumbPx
+                )
             }
         },
         title = {
