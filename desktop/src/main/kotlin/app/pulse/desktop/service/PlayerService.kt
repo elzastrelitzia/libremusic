@@ -536,8 +536,9 @@ class PlayerService {
                         )
                     }
                     val pb = ProcessBuilder(cmd)
-                    pb.redirectError(ProcessBuilder.Redirect.INHERIT)
+                    pb.redirectError(ProcessBuilder.Redirect.PIPE)
                     decodeProcess = pb.start()
+                    drainStderr(decodeProcess!!, "ffmpeg")
                     when (playViaStream(decodeProcess!!.inputStream, false)) {
                         StreamEnd.COMPLETED -> advanceOrStop()
                         StreamEnd.INCOMPLETE_CACHE -> {
@@ -556,10 +557,15 @@ class PlayerService {
                 log("pipeline[$pipelineId] download FULL, tee to cache")
                 cacheDir.mkdirs()
                 val ytPb = ProcessBuilder(ytDlpBin, "-f", "bestaudio", "-o", "-", "-q", url)
-                // INHERIT, not DISCARD. DISCARD threw away the only clue when yt-dlp
-                // failed with a 403 and the user saw ffmpeg's downstream complaint instead.
-                ytPb.redirectError(ProcessBuilder.Redirect.INHERIT)
+                // PIPE, not INHERIT and not DISCARD. DISCARD threw away the only clue when
+                // yt-dlp failed with a 403, but INHERIT is no better here: it hands the child
+                // the JVM's OS stderr handle, which bypasses the System.setErr that
+                // startFileLogging() installs, so nothing a child writes ever reached log.txt.
+                // That is why a Windows run showed "Stream of unsupported format" with no
+                // ffmpeg error anywhere. PIPE plus drainStderr puts it in the log.
+                ytPb.redirectError(ProcessBuilder.Redirect.PIPE)
                 val ytDlp = ytPb.start()
+                drainStderr(ytDlp, "yt-dlp")
                 ytDlpProcess = ytDlp
 
                 val ffPb = ProcessBuilder(
@@ -569,8 +575,9 @@ class PlayerService {
                     "-i", "-",
                     "-acodec", "pcm_s16le", "-f", "wav", "-"
                 )
-                ffPb.redirectError(ProcessBuilder.Redirect.INHERIT)
+                ffPb.redirectError(ProcessBuilder.Redirect.PIPE)
                 val ffmpeg = ffPb.start()
+                drainStderr(ffmpeg, "ffmpeg")
                 decodeProcess = ffmpeg
 
                 fedBytes.set(0L)
@@ -603,6 +610,22 @@ class PlayerService {
                 }
             }
         }
+    }
+
+    /**
+     * Copy a child process's stderr into log, one line at a time, and keep the pipe
+     * drained.
+     *
+     * Reading it matters as much as logging it. A child that fills an undrained stderr pipe
+     * blocks on write, so switching to PIPE without a reader would deadlock ffmpeg instead
+     * of just muting it.
+     */
+    private fun drainStderr(process: Process, tag: String) {
+        Thread {
+            process.errorStream.bufferedReader().use { reader ->
+                reader.forEachLine { log("$tag: $it") }
+            }
+        }.apply { isDaemon = true }.start()
     }
 
     private fun startTeeThread(
