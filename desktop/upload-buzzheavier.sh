@@ -14,4 +14,4 @@ RESP=$(curl -fsS --retry 3 -X PUT \
 ID=$(printf '%s' "$RESP" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["id"])')
 
 echo "uploaded ${NAME}  $(( $(stat -c%s "$FILE") / 1048576 )) MB  location ${LOCATION}"
-echo "https://buzzheavier.com/d/${ID}"
+echo "https://buzzheavier.com/${ID}"
