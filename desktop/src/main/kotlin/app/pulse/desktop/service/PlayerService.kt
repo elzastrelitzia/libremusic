@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.atomic.AtomicLong
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
@@ -41,6 +42,9 @@ import kotlin.math.roundToLong
 private fun log(msg: String) {
     sharedLog("PlayerService", msg)
 }
+
+/** yt-dlp hands out media URLs that intermittently 403. A fresh run gets a fresh URL. */
+private const val DOWNLOAD_ATTEMPTS = 3
 
 /** return value from playViaStream to inform the caller what action to take. */
 private enum class StreamEnd {
@@ -62,6 +66,9 @@ class PlayerService {
     private var stream: AudioInputStream? = null
     private var decodeProcess: Process? = null
     private var ytDlpProcess: Process? = null
+
+    /** Bytes yt-dlp fed the tee. Zero means the download failed, not that the track is short. */
+    private val fedBytes = AtomicLong(0L)
 
     @Volatile
     private var isPaused = false
@@ -463,7 +470,15 @@ class PlayerService {
             gain.value = db
         } catch (_: IllegalArgumentException) { }
     }
-    private fun startPipeline(videoId: String, playerResponse: PlayerResponse?, startMs: Long) {
+    private fun startPipeline(
+        videoId: String,
+        playerResponse: PlayerResponse?,
+        startMs: Long,
+        // yt-dlp gets an intermittent "HTTP Error 403: Forbidden" on the media URL and
+        // writes nothing to stdout. A fresh run gets a fresh URL, so retry a couple of
+        // times before telling the user anything.
+        downloadAttempt: Int = 0
+    ) {
         playbackJob?.cancel()
         stopAudio()
 
@@ -541,7 +556,9 @@ class PlayerService {
                 log("pipeline[$pipelineId] download FULL, tee to cache")
                 cacheDir.mkdirs()
                 val ytPb = ProcessBuilder(ytDlpBin, "-f", "bestaudio", "-o", "-", "-q", url)
-                ytPb.redirectError(ProcessBuilder.Redirect.DISCARD)
+                // INHERIT, not DISCARD. DISCARD threw away the only clue when yt-dlp
+                // failed with a 403 and the user saw ffmpeg's downstream complaint instead.
+                ytPb.redirectError(ProcessBuilder.Redirect.INHERIT)
                 val ytDlp = ytPb.start()
                 ytDlpProcess = ytDlp
 
@@ -556,10 +573,25 @@ class PlayerService {
                 val ffmpeg = ffPb.start()
                 decodeProcess = ffmpeg
 
+                fedBytes.set(0L)
                 startTeeThread(ytDlp, ffmpeg, cacheFile, videoId, pipelineId, cache = true)
 
-                if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
-                    advanceOrStop()
+                try {
+                    if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
+                        advanceOrStop()
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // A 403 gives zero bytes, so ffmpeg never opens a stream and
+                    // playViaStream throws. Retry the download, not the decode.
+                    if (fedBytes.get() == 0L && downloadAttempt < DOWNLOAD_ATTEMPTS - 1) {
+                        log("pipeline[$pipelineId] yt-dlp delivered 0 bytes, retry ${downloadAttempt + 1}/$DOWNLOAD_ATTEMPTS")
+                        cacheFile.delete()
+                        startPipeline(videoId, playerResponse, startMs, downloadAttempt + 1)
+                        return@launch
+                    }
+                    throw e
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -594,6 +626,7 @@ class PlayerService {
                         while (true) {
                             val n = runCatching { input.read(buf) }.getOrNull()
                             if (n == null || n == -1) break
+                            fedBytes.addAndGet(n.toLong())
                             runCatching { output.write(buf, 0, n) }
                             runCatching { cacheOut?.write(buf, 0, n) }
                         }
@@ -601,9 +634,14 @@ class PlayerService {
                 }
             } finally {
                 runCatching { cacheOut?.close() }
+                val fed = fedBytes.get()
+                if (fed == 0L) {
+                    // exitValue throws if the process has not been reaped yet.
+                    val exit = runCatching { ytDlp.exitValue() }.getOrElse { -1 }
+                    log("tee[$pipelineId] yt-dlp produced no data, exit=$exit")
+                }
             }
         }.apply { isDaemon = true }.start()
-
     }
 
     private suspend fun playViaStream(inputStream: java.io.InputStream, isFullDownload: Boolean): StreamEnd =
