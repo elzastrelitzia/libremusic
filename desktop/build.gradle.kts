@@ -88,5 +88,24 @@ tasks.named("downloadNativeBinaries") {
 compose.desktop {
     application {
         mainClass = "app.pulse.desktop.MainKt"
+
+        // ProGuard is left off on purpose. Shrinking removed three ServiceLoader providers
+        // one at a time and each failed silently rather than loudly: slf4j-simple vanished
+        // so the app ran on a NOP logger with no log output at all, sqlite-jdbc lost
+        // org.sqlite.Function and died on startup, and ktor lost its JSON extension
+        // provider. Every fix was another -keep rule and the next one is only findable by
+        // running the app. Shrinking bought 18 MB, which is not worth a failure class that
+        // deletes a library's entry point without saying so.
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
+
+        // The release runtime is jlinked, and Compose's default module list is only
+        // java.base, java.desktop, java.logging and jdk.crypto.ec. sqlite-jdbc needs
+        // java.sql, so the app died on startup with NoClassDefFoundError: java/sql/Driver.
+        // List produced by ./gradlew :desktop:suggestRuntimeModules, minus the defaults.
+        nativeDistributions {
+            modules("java.instrument", "java.management", "java.sql", "jdk.unsupported")
+        }
     }
 }
