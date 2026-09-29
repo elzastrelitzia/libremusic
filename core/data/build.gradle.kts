@@ -36,6 +36,12 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.sqlite.jdbc)
         }
+        jvmTest.dependencies {
+            // implementation(...) is required. A bare kotlin("test") builds the notation and
+            // adds it to no configuration, so the test compile classpath silently has no
+            // kotlin-test on it and every import fails with "Unresolved reference 'test'".
+            implementation(kotlin("test"))
+        }
     }
 
     compilerOptions {

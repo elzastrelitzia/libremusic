@@ -5,6 +5,7 @@ import app.pulse.core.data.models.LoopMode
 import app.pulse.core.data.repository.QueueDatabase
 import app.pulse.core.data.utils.AppDirs
 import app.pulse.core.data.utils.NativeBinaries
+import app.pulse.core.data.utils.resolvePosition
 import app.pulse.core.data.utils.toSong
 import app.pulse.desktop.ui.utils.log as sharedLog
 import app.pulse.providers.innertube.Innertube
@@ -786,10 +787,19 @@ class PlayerService {
             audioLine.write(buffer, 0, bytesRead)
             totalBytes += bytesRead
 
-            if (bytesPerMs > 0) {
-                _state.update {
-                    it.copy(currentPositionMs = seekBaseMs + (totalBytes / bytesPerMs).roundToLong())
-                }
+            // Clamp against duration only once it is known. The WAV header is not fully
+            // parsed when the loop starts, so clamping early truncates position to near zero.
+            val dur = _state.value.durationMs
+            _state.update {
+                it.copy(
+                    currentPositionMs = resolvePosition(
+                        lineMicros = audioLine.microsecondPosition,
+                        bytesWritten = totalBytes,
+                        bytesPerMs = bytesPerMs,
+                        seekBaseMs = seekBaseMs,
+                        durationMs = if (dur > 0) dur else 0L
+                    )
+                )
             }
         }
 
@@ -800,7 +810,9 @@ class PlayerService {
         _state.update { it.copy(isPlaying = false) }
 
         val completed = isActive && !isPaused
-        val finalPos = seekBaseMs + (totalBytes / bytesPerMs).roundToLong()
+        // The line is closed by this point, so force the byte path: microsecondPosition is
+        // undefined after close and the byte count is final anyway.
+        val finalPos = resolvePosition(0L, totalBytes, bytesPerMs, seekBaseMs, _state.value.durationMs)
         val dur = _state.value.durationMs
 
         val result = when {
