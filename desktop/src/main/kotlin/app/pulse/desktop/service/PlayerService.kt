@@ -1,5 +1,6 @@
 package app.pulse.desktop.service
 
+import app.pulse.core.data.models.PlaybackState
 import app.pulse.core.data.models.Song
 import app.pulse.core.data.models.LoopMode
 import app.pulse.core.data.repository.QueueDatabase
@@ -966,16 +967,7 @@ class PlayerService {
     private fun maybeSaveQueue() {
         val s = _state.value
         if (s.queue.isEmpty()) return
-        QueueDatabase.save(
-            app.pulse.core.data.models.PlaybackState(
-                queue = s.queue,
-                currentIndex = s.currentIndex,
-                loopMode = s.loopMode,
-                volume = s.volume,
-                currentPositionMs = s.currentPositionMs,
-                durationMs = s.durationMs
-            )
-        )
+        QueueDatabase.save(s)
         log("queue saved (${s.queue.size} items, idx=${s.currentIndex}, pos=${s.currentPositionMs}ms)")
     }
 
