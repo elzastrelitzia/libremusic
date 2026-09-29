@@ -758,16 +758,15 @@ class PlayerService {
         )
         bytesPerMs = decodedFormat.sampleRate * decodedFormat.frameSize / 1000.0
 
-        val lineInfo = DataLine.Info(SourceDataLine::class.java, decodedFormat)
-        val audioLine = AudioSystem.getLine(lineInfo) as SourceDataLine
+        val (audioLine, lineFormat) = negotiateLine(decodedFormat)
         line = audioLine
 
-        audioLine.open(decodedFormat)
+        audioLine.open(lineFormat)
         applyVolume()
         audioLine.start()
         log("playViaStream audio ready")
 
-        val decodedStream = AudioSystem.getAudioInputStream(decodedFormat, audioStream)
+        val decodedStream = AudioSystem.getAudioInputStream(lineFormat, audioStream)
         val buffer = ByteArray(4096)
         var totalBytes = 0L
 
@@ -830,6 +829,72 @@ class PlayerService {
         }
 
         return@withContext result
+    }
+
+    /**
+     * Ask for [wanted] and fall back to the nearest format some mixer actually supports.
+     *
+     * AudioSystem.getLine throws when no device advertises the exact format, and YouTube
+     * always delivers Opus at 48000 Hz, so the app asked for PCM_SIGNED 48000/16/stereo
+     * every single time. Linux never hit it because PipeWire resamples in software; a
+     * Windows driver that does not do 48 kHz stereo refuses outright.
+     *
+     * Returns the opened-together pair of line and the format it was opened with, because
+     * the stream conversion below has to target the same format or the bytes will not match.
+     * Caller still calls open(), since that is where the line actually gets the format.
+     */
+    private fun negotiateLine(wanted: AudioFormat): Pair<SourceDataLine, AudioFormat> {
+        fun open(fmt: AudioFormat): SourceDataLine? = runCatching {
+            AudioSystem.getLine(DataLine.Info(SourceDataLine::class.java, fmt)) as SourceDataLine
+        }.getOrNull()
+
+        open(wanted)?.let { return it to wanted }
+
+        // No device takes what we asked for, so ask what they do take. A mixer reports wildly
+        // vague entries alongside real ones, for example "PCM_SIGNED unknown sample rate,
+        // 8 bit, 128 channels", and picking the nearest of those hands open() garbage and
+        // fails later with a worse message. Only concrete, usable formats are candidates.
+        val all = AudioSystem.getMixerInfo().flatMap { info ->
+            runCatching {
+                val mixer = AudioSystem.getMixer(info)
+                (mixer.getSourceLineInfo() + mixer.getTargetLineInfo())
+                    .filterIsInstance<DataLine.Info>()
+                    .filter { it.lineClass == SourceDataLine::class.java }
+                    .flatMap { it.formats.toList() }
+            }.getOrDefault(emptyList())
+        }
+        val usable = all.filter { f ->
+            f.encoding == AudioFormat.Encoding.PCM_SIGNED &&
+                f.sampleRate > 0 && !f.sampleRate.isNaN() &&
+                f.channels in 1..2 &&
+                f.sampleSizeInBits == 16
+        }
+        log("no line for $wanted; ${all.size} listed, ${usable.size} usable")
+        for (f in usable) log("  supported: $f")
+        if (all.isEmpty()) {
+            throw IOException(
+                "No audio output device on this machine. Java Sound listed no SourceDataLine " +
+                    "at all, so nothing can be played until one exists."
+            )
+        }
+        if (usable.isEmpty()) {
+            throw IOException(
+                "Audio devices exist but none support 16-bit signed PCM: $all"
+            )
+        }
+
+        // Nearest wins: same channel count first, because resampling channels sounds worse
+        // than resampling rate, then smallest sample-rate gap. The usable filter already
+        // fixed encoding, bit depth and endianness, so the only remaining choice is rate
+        // and channels.
+        val best = usable.minByOrNull { f ->
+            (if (f.channels == wanted.channels) 0L else 1L shl 40) +
+                kotlin.math.abs(f.sampleRate - wanted.sampleRate)
+        }!!
+        log("falling back to $best")
+        val line = open(best)
+            ?: throw IOException("Found formats but none could be opened: $usable")
+        return line to best
     }
 
     private fun endSong() {
