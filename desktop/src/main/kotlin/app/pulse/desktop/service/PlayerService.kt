@@ -109,7 +109,77 @@ class PlayerService {
         if (gen == currentPipelineGen) _state.update(block)
     }
 
+    /**
+     * Download the next track to the audio cache while the current one plays, so skipping to it
+     * hits the cache path at startPipeline and starts instantly instead of waiting on yt-dlp.
+     *
+     * Deliberately downloads the audio file, not a stream URL. The engine never holds a URL:
+     * yt-dlp is invoked with `-o -` and streams bytes into ffmpeg stdin, so there is nothing
+     * to cache. Writing the file instead reuses the existing cache-hit path unchanged, which is
+     * why this is a small change and a URL cache would have been a pipeline rewrite.
+     */
+    private fun maybePrefetchNext() {
+        val s = _state.value
+        if (s.currentIndex < 0) return
+        val nextId = s.queue.getOrNull(s.currentIndex + 1)?.id ?: return
+        if (nextId.isBlank() || nextId == s.currentSong?.id) return
+
+        val cacheFile = File(cacheDir, nextId)
+        if (File(cacheDir, "$nextId.done").exists() && cacheFile.length() > 0) return
+
+        prefetchJob?.cancel()
+        prefetchJob = scope.launch {
+            // Delay so this does not compete with the playing track's own yt-dlp for the
+            // network and the disk. A cold yt-dlp takes around 3s to first byte, so starting the
+            // prefetch immediately just makes both slower.
+            delay(1_500)
+            // Re-read the queue may have been changed or the track skipped during the delay.
+            val stillNext = _state.value.queue.getOrNull(_state.value.currentIndex + 1)?.id
+            if (stillNext != nextId) return@launch
+            prefetchTrack(nextId)
+        }
+    }
+
+    /**
+     * Fetch one track's audio into the cache and mark it done. Never throws a failed prefetch
+     * must not disturb playback, and the next play of that track falls back to a live resolve.
+     */
+    private fun prefetchTrack(videoId: String) {
+        val target = File(cacheDir, videoId)
+        val done = File(cacheDir, "$videoId.done")
+        // write to a temp name and rename on success, so an interrupted prefetch cannot leave a
+        // partial file that the cache-hit path would then read as a complete track.
+        val temp = File(cacheDir, "$videoId.part")
+        runCatching {
+            cacheDir.mkdirs()
+            runCatching { temp.delete() }
+            val pb = ProcessBuilder(
+                NativeBinaries.ytDlp(),
+                "-f", "bestaudio", "-o", temp.absolutePath, "-q",
+                "https://www.youtube.com/watch?v=$videoId"
+            )
+            // DISCARD, not PIPE; nothing reads a prefetch's stderr, and an undrained PIPE
+            // deadlocks yt-dlp once the pipe buffer fills. PIPE is only required on the playback
+            // path, where drainStderr exists to surface the error.
+            pb.redirectError(ProcessBuilder.Redirect.DISCARD)
+            val p = pb.start()
+            val exit = p.waitFor()
+            if (exit != 0) error("yt-dlp exit=$exit")
+            if (temp.length() == 0L) error("empty download")
+            if (!temp.renameTo(target)) {
+                temp.copyTo(target, overwrite = true)
+                runCatching { temp.delete() }
+            }
+            done.createNewFile()
+            log("prefetch cached $videoId (${target.length()} bytes)")
+        }.onFailure {
+            runCatching { temp.delete() }
+            log("prefetch failed for $videoId: ${it.message}")
+        }
+    }
+
     private var radioJob: Job? = null
+    private var prefetchJob: Job? = null
 
     companion object {
         private val cacheDir = AppDirs.audio
@@ -806,6 +876,7 @@ class PlayerService {
         // audio is genuinely flowing, so any earlier failure no longer applies
         updateIfCurrent(gen) { it.copy(isLoading = false, isPlaying = true, error = null) }
         isPaused = false
+        maybePrefetchNext()
 
         while (isActive) {
             if (isPaused) {
