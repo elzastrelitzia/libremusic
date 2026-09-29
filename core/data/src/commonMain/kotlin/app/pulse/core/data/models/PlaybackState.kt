@@ -1,6 +1,7 @@
 package app.pulse.core.data.models
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class PlaybackState(
@@ -14,5 +15,8 @@ data class PlaybackState(
     val currentPositionMs: Long = 0L,
     val durationMs: Long = 0L,
     val volume: Float = 1f,
-    val error: String? = null
+    // Transient: error is UI state, not persistence state. QueueDatabase stores individual
+    // fields, not the whole object, so this never needs to be serialized.
+    @Transient
+    val error: PlaybackError? = null
 )

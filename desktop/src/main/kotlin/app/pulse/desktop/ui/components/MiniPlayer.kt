@@ -136,7 +136,7 @@ fun MiniPlayer(
                         overflow = TextOverflow.Ellipsis
                     )
                     val error = state.error
-                    (error ?: song.artistsText)?.let { sub ->
+                    (error?.describe(song.artistsText ?: "") ?: song.artistsText)?.let { sub ->
                         Text(
                             text = sub,
                             color = if (error != null) Color(0xFFE05252) else dim,

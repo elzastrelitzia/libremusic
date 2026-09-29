@@ -1,5 +1,6 @@
 package app.pulse.desktop.service
 
+import app.pulse.core.data.models.PlaybackError
 import app.pulse.core.data.models.PlaybackState
 import app.pulse.core.data.models.Song
 import app.pulse.core.data.models.LoopMode
@@ -332,12 +333,17 @@ class PlayerService {
 
 
     /**
-     * Report a playback failure so the UI can show it. e.message is often null or blank,
-     * which would store an error the listener never sees, so fall back to the type name.
+     * Report a playback failure so the UI can show it. Maps the throwable to a named
+     * [PlaybackError] at the call site, where the context exists to tell them apart.
      */
     private fun fail(cause: Throwable) {
-        val message = cause.message?.takeIf { it.isNotBlank() } ?: cause.javaClass.simpleName
-        _state.update { it.copy(isLoading = false, error = message) }
+        val msg = cause.message
+        val error = when {
+            msg?.contains("yt-dlp produced no audio") == true -> PlaybackError.NoStreamUrl(msg)
+            cause is java.io.IOException -> PlaybackError.Unknown(msg ?: "IO error")
+            else -> PlaybackError.Unknown(msg ?: cause.javaClass.simpleName)
+        }
+        _state.update { it.copy(isLoading = false, error = error) }
     }
 
     private fun playInternal(song: Song, startMs: Long = 0L) {
