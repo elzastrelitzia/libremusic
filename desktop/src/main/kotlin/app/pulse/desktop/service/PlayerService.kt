@@ -172,6 +172,10 @@ class PlayerService {
             }
             done.createNewFile()
             log("prefetch cached $videoId (${target.length()} bytes)")
+            // The sweeper only ran at launch, so a long session would otherwise grow past the
+            // cap with nothing reclaiming it. Protect the playing track: it is the one file
+            // whose deletion would break the current session.
+            cleanCache(protect = currentVideoId)
         }.onFailure {
             runCatching { temp.delete() }
             log("prefetch failed for $videoId: ${it.message}")
@@ -190,18 +194,35 @@ class PlayerService {
         /** max age in milliseconds (24 hours). */
         private const val MAX_CACHE_AGE_MS = 24L * 60 * 60 * 1000
 
-        /** run cache cleanup on JVM load. */
-        fun cleanCache() {
+        /**
+         * run cache cleanup on JVM load, and after a prefetch so a long session cannot grow
+         * past [MAX_CACHE_BYTES] without waiting for the next launch.
+         *
+         * @param protect id of a file that must survive. The currently playing track is read
+         * through an open handle, so deleting it mid-playback is at best a wasted decode and on
+         * Windows is a failed delete that leaves the .done marker behind and desynchronises the
+         * two. Cheaper to skip one candidate than to reason about handle lifetimes.
+         */
+        fun cleanCache(protect: String? = null) {
             val dir = cacheDir
             if (!dir.isDirectory) return
 
             val now = System.currentTimeMillis()
-            val files = dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".done") }?.toMutableList()
+            // .done is a marker, not audio. .part is a prefetch in progress: counting a partial
+            // file against the cap would let it evict a real track, and deleting it would kill
+            // the download that is writing it. The prefetch cleans up its own .part on failure.
+            val files = dir.listFiles()
+                ?.filter { it.isFile && !it.name.endsWith(".done") && !it.name.endsWith(".part") }
+                ?.toMutableList()
                 ?: return
 
             val expired = mutableListOf<File>()
             val kept = mutableListOf<File>()
             for (f in files) {
+                if (f.name == protect) {
+                    kept.add(f)
+                    continue
+                }
                 if (now - f.lastModified() > MAX_CACHE_AGE_MS) expired.add(f)
                 else kept.add(f)
             }
@@ -319,6 +340,9 @@ class PlayerService {
             }
             s.copy(queue = q, currentIndex = newIdx, currentSong = q.getOrNull(newIdx))
         }
+        // The prefetch re-reads the queue after its delay, so this only matters for a prefetch
+        // already past that line, which would otherwise keep downloading a removed track.
+        prefetchJob?.cancel()
         maybeSaveQueue()
     }
 
@@ -338,6 +362,9 @@ class PlayerService {
             }
             s.copy(queue = q, currentIndex = adjIdx)
         }
+        // A reorder can change which track is next, so the running prefetch is now for the
+        // wrong song even if the user did not remove anything.
+        prefetchJob?.cancel()
         maybeSaveQueue()
     }
 
@@ -1126,6 +1153,11 @@ class PlayerService {
         line = null
         stream = null
         isPaused = false
+        // ponytail: cancelling the coroutine does not kill a running yt-dlp child, so a rapid
+        // skip or a close can leave an orphan writing a .part file nobody will read. Harmless
+        // because each prefetch owns its own per-id file and nothing is shared. Track the
+        // PIDs and destroy them here if orphans ever show up in `ps`.
+        prefetchJob?.cancel()
     }
 
     fun dispose() {
