@@ -266,6 +266,8 @@ class PlayerService {
         if (queue.isEmpty()) return
         val idx = index.coerceIn(0, queue.lastIndex)
         _state.update { it.copy(queue = queue, currentIndex = idx) }
+        // A different queue means the running prefetch is for the wrong track.
+        prefetchJob?.cancel()
         maybeSaveQueue()
         playInternal(queue[idx])
     }
@@ -280,6 +282,9 @@ class PlayerService {
             }
         }
         _state.update { it.copy(currentIndex = nextIdx) }
+        // Skipping forward leaves the prefetch downloading the track just left, competing with
+        // the one now playing for the same network and disk.
+        prefetchJob?.cancel()
         maybeSaveQueue()
         playInternal(s.queue[nextIdx])
     }
@@ -300,6 +305,7 @@ class PlayerService {
             LoopMode.NONE -> (s.currentIndex - 1).coerceAtLeast(0)
         }
         _state.update { it.copy(currentIndex = prevIdx) }
+        prefetchJob?.cancel()
         maybeSaveQueue()
         playInternal(s.queue[prevIdx])
     }
