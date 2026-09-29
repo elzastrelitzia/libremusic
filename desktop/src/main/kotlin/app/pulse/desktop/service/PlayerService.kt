@@ -97,6 +97,17 @@ class PlayerService {
     @Volatile
     private var currentPipelineGen = 0L
 
+    /**
+     * Apply a state update only when [gen] is still the current pipeline.
+     *
+     * A pipeline that has been replaced must not write state. `stopAudio()` closes the line but
+     * does not cancel a coroutine that is mid-`write`, so a late write from a dying pipeline can
+     * land after the next one has already started and clear its flags.
+     */
+    private fun updateIfCurrent(gen: Long, block: (PlaybackState) -> PlaybackState) {
+        if (gen == currentPipelineGen) _state.update(block)
+    }
+
     private var radioJob: Job? = null
 
     companion object {
@@ -563,7 +574,7 @@ class PlayerService {
                     pb.redirectError(ProcessBuilder.Redirect.PIPE)
                     decodeProcess = pb.start()
                     drainStderr(decodeProcess!!, "ffmpeg")
-                    when (playViaStream(decodeProcess!!.inputStream, false)) {
+                    when (playViaStream(decodeProcess!!.inputStream, false, myGen)) {
                         StreamEnd.COMPLETED -> advanceOrStop()
                         StreamEnd.INCOMPLETE_CACHE -> {
                             log("pipeline[$pipelineId] cache was INCOMPLETE, re-downloading")
@@ -631,7 +642,7 @@ class PlayerService {
                     }
                     val ffmpeg = ffmpegStarted ?: throw IOException("yt-dlp produced no audio")
 
-                    if (playViaStream(ffmpeg.inputStream, true) == StreamEnd.COMPLETED) {
+                    if (playViaStream(ffmpeg.inputStream, true, myGen) == StreamEnd.COMPLETED) {
                         advanceOrStop()
                     }
                 } catch (e: CancellationException) {
@@ -752,7 +763,11 @@ class PlayerService {
         return ready
     }
 
-    private suspend fun playViaStream(inputStream: java.io.InputStream, isFullDownload: Boolean): StreamEnd =
+    private suspend fun playViaStream(
+        inputStream: java.io.InputStream,
+        isFullDownload: Boolean,
+        gen: Long
+    ): StreamEnd =
         withContext(Dispatchers.IO) {
         log("playViaStream start")
         val audioStream = AudioSystem.getAudioInputStream(BufferedInputStream(inputStream))
@@ -783,7 +798,7 @@ class PlayerService {
         var totalBytes = 0L
 
         // audio is genuinely flowing, so any earlier failure no longer applies
-        _state.update { it.copy(isLoading = false, isPlaying = true, error = null) }
+        updateIfCurrent(gen) { it.copy(isLoading = false, isPlaying = true, error = null) }
         isPaused = false
 
         while (isActive) {
@@ -801,7 +816,7 @@ class PlayerService {
             // Clamp against duration only once it is known. The WAV header is not fully
             // parsed when the loop starts, so clamping early truncates position to near zero.
             val dur = _state.value.durationMs
-            _state.update {
+            updateIfCurrent(gen) {
                 it.copy(
                     currentPositionMs = resolvePosition(
                         lineMicros = audioLine.microsecondPosition,
@@ -818,7 +833,7 @@ class PlayerService {
             audioLine.drain()
             audioLine.close()
         }
-        _state.update { it.copy(isPlaying = false) }
+        updateIfCurrent(gen) { it.copy(isPlaying = false) }
 
         val completed = isActive && !isPaused
         // The line is closed by this point, so force the byte path: microsecondPosition is
@@ -921,10 +936,11 @@ class PlayerService {
     }
 
     private fun endSong() {
+        val gen = currentPipelineGen
         playbackJob?.cancel()
         playbackJob = null
         stopAudio()
-        _state.update {
+        updateIfCurrent(gen) {
             it.copy(
                 isPlaying = false,
                 isEnded = true,
@@ -936,6 +952,7 @@ class PlayerService {
     }
 
     private fun advanceOrStop() {
+        val gen = currentPipelineGen
         val s = _state.value
         val nextAction = when (s.loopMode) {
             LoopMode.NONE -> if (s.currentIndex + 1 < s.queue.size) "next-in-queue" else "endSong"
@@ -947,7 +964,7 @@ class PlayerService {
             LoopMode.NONE -> {
                 val next = s.currentIndex + 1
                 if (next < s.queue.size) {
-                    _state.update { it.copy(currentIndex = next) }
+                    updateIfCurrent(gen) { it.copy(currentIndex = next) }
                     maybeSaveQueue()
                     playInternal(s.queue[next])
                 } else {
@@ -959,7 +976,7 @@ class PlayerService {
             }
             LoopMode.ALL -> {
                 val next = (s.currentIndex + 1) % s.queue.size
-                _state.update { it.copy(currentIndex = next) }
+                updateIfCurrent(gen) { it.copy(currentIndex = next) }
                 maybeSaveQueue()
                 playInternal(s.queue[next])
             }
