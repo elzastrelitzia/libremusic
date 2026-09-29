@@ -342,16 +342,20 @@ class PlayerService {
         stopAudio()
         currentPipelineGen++
 
+        // copy, not a fresh PlaybackState. A constructor here hand-copies every field it
+        // knows about and silently resets the rest to their defaults, so a field added to
+        // the class later is dropped on every track change and reads back as its default
+        // forever. Nothing warns you.
         _state.update {
-            PlaybackState(
-                queue = it.queue,
-                currentIndex = it.currentIndex,
-                loopMode = it.loopMode,
+            it.copy(
                 currentSong = song,
-                volume = it.volume,
                 isLoading = true,
-                currentPositionMs = it.currentPositionMs,
-                durationMs = it.durationMs
+                // error and isEnded are deliberately carried over: error is cleared by the
+                // first successful write in the read loop, and isEnded is only ever set in
+                // endSong(). Clearing either here would flash a stale error or a stale
+                // "ended" flag at the start of every track.
+                error = it.error,
+                isEnded = it.isEnded
             )
         }
 
@@ -416,10 +420,14 @@ class PlayerService {
         stopAudio()
         maybeSaveQueue()
         _state.update {
-            PlaybackState(
-                queue = it.queue,
-                loopMode = it.loopMode,
-                volume = it.volume
+            it.copy(
+                isPlaying = false,
+                currentSong = null,
+                isLoading = false,
+                currentPositionMs = 0L,
+                durationMs = 0L,
+                error = null,
+                isEnded = false
             )
         }
         log("stop")
@@ -990,12 +998,18 @@ class PlayerService {
         log("restore: ${songs.size} songs, index=${saved.currentIndex}, pos=${saved.positionMs}ms")
 
         _state.update {
-            PlaybackState(
+            it.copy(
                 queue = songs,
                 currentIndex = saved.currentIndex.coerceIn(0, songs.lastIndex),
                 loopMode = saved.loopMode,
                 volume = saved.volume,
-                durationMs = saved.durationMs
+                durationMs = saved.durationMs,
+                currentSong = songs.getOrNull(saved.currentIndex.coerceIn(0, songs.lastIndex)),
+                isPlaying = false,
+                isLoading = false,
+                currentPositionMs = saved.positionMs,
+                error = null,
+                isEnded = false
             )
         }
 
