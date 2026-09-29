@@ -6,6 +6,7 @@ import app.pulse.core.data.models.LoopMode
 import app.pulse.core.data.repository.QueueDatabase
 import app.pulse.core.data.utils.AppDirs
 import app.pulse.core.data.utils.NativeBinaries
+import app.pulse.core.data.utils.mergeById
 import app.pulse.core.data.utils.resolvePosition
 import app.pulse.core.data.utils.toSong
 import app.pulse.desktop.ui.utils.log as sharedLog
@@ -292,12 +293,13 @@ class PlayerService {
             val page = response?.getOrNull() ?: return@launch
             val songs = page.itemsPage?.items?.map { it.toSong() } ?: return@launch
             if (songs.isEmpty()) return@launch
-            _state.update { s ->
-                val existingIds = s.queue.mapNotNull { it.id }.toSet()
-                val newSongs = songs.filter { it.id !in existingIds }
-                s.copy(queue = s.queue + newSongs)
-            }
-            val added = _state.value.queue.size - s.queue.size
+            // before is read immediately before the update and nothing awaits in between, so it
+            // cannot go stale the way a snapshot taken before the network call does. The old code
+            // subtracted a pre-fetch snapshot from a post-update read, so the count was wrong
+            // whenever the queue changed during the fetch.
+            val before = _state.value.queue.size
+            _state.update { s -> s.copy(queue = mergeById(s.queue, songs) { song -> song.id }) }
+            val added = _state.value.queue.size - before
             log("radio: added $added new songs to queue (${songs.size} fetched, ${songs.size - added} dupes)")
         }
     }
