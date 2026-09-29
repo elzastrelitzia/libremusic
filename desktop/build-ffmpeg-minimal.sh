@@ -1,40 +1,39 @@
 #!/usr/bin/env bash
-# Builds an audio-only ffmpeg for libremusic Desktop and drops it in the native dir.
+# Fetches the prebuilt audio-only ffmpeg and drops it in the native dir.
 #
-# The BtbN builds are ~166 MB because they carry every video codec, filter and
-# hardware encoder. The app only ever asks ffmpeg to decode to raw PCM:
+# The binaries are built and released by elzastrelitzia/FFmpeg, one ffmpeg repo for
+# everything. Nothing here configures or compiles ffmpeg: that is the whole point, because
+# this file used to carry a second copy of the fork's configure list and the two drifted.
+# The drift shipped a broken ffmpeg.exe twice, once needing libavcodec-61.dll and once
+# needing libwinpthread-1.dll and libiconv-2.dll, both of which die in the Windows loader
+# before main. One build, one place it can be wrong.
 #
-#   ffmpeg -loglevel error [-ss N] -i FILE|- -acodec pcm_s16le -f wav -
-#
-# so everything below the audio path is dead weight. This configures ffmpeg with
-# only that path, which is a configure-time decision and needs no source patch.
-#
-# Usage: bash build-ffmpeg-minimal.sh [version]
-#   version - ffmpeg release to build (default: 8.1.3)
+# Usage: bash build-ffmpeg-minimal.sh
 #
 # Environment:
-#   FFMPEG_REPO - git URL to build from instead of the ffmpeg.org tarball.
-#                 Set this to a fork when you need patched source. Nothing here
-#                 needs patching today, so the default is the official tarball
-#                 and a fork would only add a monthly merge.
-#   FFMPEG_REF  - tag or commit to check out (default: n$VERSION).
+#   FFMPEG_RELEASE - release tag to fetch, or latest (default). The fork tags builds
+#                   build-16, build-17 and so on, and latest follows them with no edit
+#                   here. Pin a tag to reproduce a build:
+#                     FFMPEG_RELEASE=build-16 bash desktop/build-ffmpeg-minimal.sh
+#   FFMPEG_REPO    - owner/repo holding the release (default: elzastrelitzia/FFmpeg)
 #
-# Per-OS: run this on each target OS. The result is dynamically linked against
-# that OS's libc, so a Linux build is not portable to macOS or Windows.
-#
-# On Windows run it under MSYS2 (mingw-w64), not cmd or WSL. WSL reports Linux and
-# would produce an .exe linked against glibc, which is a silent trap rather than a
-# loud one.
+# Per-OS: the release carries a Linux and a Windows binary, so each job fetches its own.
+# There is no macOS asset, so Darwin fails loudly instead of shipping nothing.
 set -euo pipefail
 
-VERSION="${1:-8.1.3}"
+# The default is the literal path segment "latest", so the URL is built as
+# /releases/latest/download/$BIN. Note the order: "download/latest/$BIN" is wrong, because
+# that reads "latest" as a tag name and 404s, and it is the reason this script failed the
+# first time it was run with a moving version.
+FFMPEG_RELEASE="${FFMPEG_RELEASE:-latest}"
+FFMPEG_REPO="${FFMPEG_REPO:-elzastrelitzia/FFmpeg}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 case "$(uname -s)" in
   Linux*)  OS=linux ;;
-  Darwin*) OS=macos ;;
   MINGW*|MSYS*|CYGWIN*) OS=windows ;;
+  Darwin*) OS=macos ;;
   *) echo "ERROR: build on the target OS, not cross-compiling." >&2; exit 1 ;;
 esac
 
@@ -42,81 +41,86 @@ esac
 # resolve never finds it. Keep this in step with the $OS case above.
 case "$OS" in
   windows) BIN=ffmpeg.exe ;;
-  *)       BIN=ffmpeg ;;
+  macos)
+    echo "ERROR: the $FFMPEG_RELEASE release has no macOS asset." >&2
+    echo "  Add a macos entry to the matrix in the fork's build.yml, or point" >&2
+    echo "  FFMPEG_RELEASE at a tag that has one." >&2
+    exit 1 ;;
+  *) BIN=ffmpeg ;;
 esac
 
 NATIVE_DIR="$REPO_DIR/core/data/src/jvmMain/resources/native/$OS"
-WORK_DIR="$(mktemp -d)"
-trap 'rm -rf "$WORK_DIR"' EXIT
-
-echo "==> ffmpeg $VERSION for $OS"
-cd "$WORK_DIR"
-
-if [ -n "${FFMPEG_REPO:-}" ]; then
-  git clone --depth 1 --branch "${FFMPEG_REF:-n$VERSION}" "$FFMPEG_REPO" ffmpeg
+if [ "$FFMPEG_RELEASE" = latest ]; then
+  URL="https://github.com/$FFMPEG_REPO/releases/latest/download/$BIN"
 else
-  curl -fsSL "https://ffmpeg.org/releases/ffmpeg-$VERSION.tar.xz" -o ffmpeg.tar.xz
-  tar -xf ffmpeg.tar.xz
-  mv "ffmpeg-$VERSION" ffmpeg
+  URL="https://github.com/$FFMPEG_REPO/releases/download/$FFMPEG_RELEASE/$BIN"
 fi
-cd ffmpeg
 
-# --disable-everything turns off all 566 decoders, 378 demuxers and 564 filters
-# at once. Each --enable below turns one back on. Keep this list in sync with the
-# ffmpeg command lines in PlayerService.startPipeline and downloadFullSong.
-#
-# anull is not optional: ffmpeg auto-inserts it into the filter graph, and
-# aresample is auto-inserted for the fltp -> s16 conversion. Both fail at runtime,
-# not at configure time, if missing.
-#
-# fd is not optional either. In ffmpeg 8.x "-i -" resolves to the fd protocol, not
-# pipe, so without it every uncached track fails with "Protocol not found". That
-# is the tee path at PlayerService.kt:548 and :588, i.e. all normal playback.
-#
-# mov is the m4a/mp4 demuxer. yt-dlp usually serves webm/opus, but not always, and
-# the cache file is named by video ID with no extension, so a single m4a download
-# would be unplayable with no way to tell from the filename.
-#
-# pcm_s16le and alac are decoders, not just codecs to pass through. The cache is a
-# directory of extensionless files, so ffmpeg has to be able to identify and decode
-# whatever it finds there. Dropping these two cost 2 of 11 formats in testing.
-#
-# --disable-shared is not optional either, and it is the one that broke Windows. Without
-# it ffmpeg's configure defaults to shared on Windows, so the exe links against
-# libavcodec-61.dll and libavformat-61.dll while only the exe gets installed. The result
-# is an ffmpeg.exe that dies during loader startup in about 12ms, prints nothing useful,
-# and makes every uncached track fail as "Stream of unsupported format". Linux hides the
-# same mistake: ldd on its binary shows no libav dependency at all, so it runs standalone
-# and playback works there, which is why this survived as a "Windows-only" bug.
-./configure \
-  --disable-everything \
-  --disable-shared --enable-static \
-  --disable-ffplay --disable-ffprobe --disable-doc \
-  --disable-x86asm \
-  --enable-protocol=file,pipe,fd \
-  --enable-demuxer=matroska,ogg,mp3,wav,aac,flac,mov \
-  --enable-parser=opus,vorbis,aac,mpegaudio,flac \
-  --enable-decoder=opus,aac,vorbis,mp3,flac,alac,pcm_s16le \
-  --enable-muxer=wav \
-  --enable-encoder=pcm_s16le \
-  --enable-filter=anull,aresample,aformat
-
-make -j"$(nproc 2>/dev/null || sysctl -n hw.ncpu)"
-
+echo "==> $BIN from $FFMPEG_REPO@$FFMPEG_RELEASE for $OS"
 mkdir -p "$NATIVE_DIR"
-install -m 755 ffmpeg "$NATIVE_DIR/$BIN"
 
-# A binary that builds but cannot start is the failure worth catching, and it is exactly
-# what shipped: ffmpeg.exe linked against libav*.dll with only the exe installed, so every
-# Windows playback died in ~12ms with nothing in the log. Linux hid it because its binary
-# has no libav dependency at all. The -version echo below cannot catch this, since a failing
-# command substitution does not fail the echo, so check it where the failure can stop us.
+# Download to a temp name and move into place last, so an interrupted run cannot leave a
+# half-written file at the path gradle is about to package.
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+# -fL because the asset redirects to a CDN, and the script is fatal-on-error so a failed
+# fetch cannot leave a 14-byte file that looks like a binary.
+#
+# --retry because releases/latest intermittently answers 404 for a few seconds while the
+# release is being published, which would otherwise fail a build over a network hiccup
+# rather than a real problem. The retry is on the failure, not on success, so a genuine
+# 404 for a tag that does not exist still fails immediately after its retries.
+curl -fL --retry 5 --retry-delay 3 --retry-connrefused -sS "$URL" -o "$TMP"
+
+# A truncated download is the failure mode that matters: the file exists, gradle packages
+# it, and the app dies on a user machine. 1 MB is far below the real 4.0 and 6.4 MB.
+SIZE=$(wc -c < "$TMP")
+[ "$SIZE" -gt 1000000 ] || {
+    echo "==> FATAL: $BIN is $SIZE bytes, that is not a build" >&2
+    exit 1
+}
+# The exec bit does not survive a fresh download on every platform, and the packaging
+# scripts preserve it, so set it here rather than debugging a permission error later.
+chmod +x "$TMP"
+install -m 755 "$TMP" "$NATIVE_DIR/$BIN"
+
+# A binary that cannot start is the failure worth catching, and it is what shipped twice.
+# Running it here cannot prove it on Windows, because the build host has the missing DLLs
+# on PATH, so read the import table instead. That does not execute anything.
+if [ "$OS" = windows ] && command -v objdump >/dev/null 2>&1; then
+  foreign=$(objdump -p "$NATIVE_DIR/$BIN" | sed -n 's/.*DLL Name: //p' \
+            | tr -d '\r' | sed 's/[[:space:]]*$//' | sort -u \
+            | grep -viE '^(bcrypt|bcryptprimitives|gdi32|imm32|kernel32|msvcrt|ntdll|ole32|psapi|secur32|shell32|shlwapi|user32|version|winmm|ws2_32)\.dll$' || true)
+  if [ -n "$foreign" ]; then
+    echo "==> FATAL: $BIN imports non-system libraries, it will not start without MSYS2:" >&2
+    printf '%s\n' "$foreign" | sed 's/^/    /' >&2
+    exit 1
+  fi
+  echo "==> Imports are system-only, so $BIN is standalone"
+fi
+
 if ! "$NATIVE_DIR/$BIN" -version >/dev/null 2>&1; then
-  echo "==> FATAL: $BIN was built but will not run. Missing shared libraries?" >&2
+  echo "==> FATAL: $BIN downloaded but will not run here." >&2
   "$NATIVE_DIR/$BIN" -version || true
   exit 1
 fi
 
 echo ""
-echo "==> Built $("$NATIVE_DIR/$BIN" -version | head -1)"
-echo "==> Size: $(du -h "$NATIVE_DIR/$BIN" | cut -f1) at $NATIVE_DIR/$BIN"
+echo "==> Got $("$NATIVE_DIR/$BIN" -version | head -1)"
+# wc -c, not du -h: the exact size is the thing worth reporting, and du rounds.
+echo "==> Size: $SIZE bytes at $NATIVE_DIR/$BIN"
+# "latest" is a moving label, so name the tag it resolved to or the build is not
+# reproducible from its own log.
+#
+# No -L on this request, and that is the whole trick: with -L curl follows the chain to
+# the CDN and then reports an empty %{redirect_url}, because there is no final redirect
+# left. Without -L it reports the first hop, which is the one that names the tag. An
+# earlier version used -L here and printed "could not resolve" for every successful build.
+echo "==> From: $URL"
+tag=$(curl -sSI -o /dev/null -w '%{redirect_url}' "$URL" 2>/dev/null | sed -n 's#.*/releases/download/\([^/]*\)/.*#\1#p')
+if [ -n "$tag" ]; then
+  echo "==> Release: $tag"
+  [ "$tag" = "$FFMPEG_RELEASE" ] || echo "==> Resolved from '$FFMPEG_RELEASE'; pin with FFMPEG_RELEASE=$tag to reproduce."
+else
+  echo "==> Release: $FFMPEG_RELEASE (could not re-resolve the tag, using it as given)"
+fi

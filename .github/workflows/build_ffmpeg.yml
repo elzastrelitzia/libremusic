@@ -78,7 +78,7 @@ jobs:
           # today, so this stays empty and the official tarball is used.
           FFMPEG_REPO: ${{ vars.FFMPEG_REPO }}
           FFMPEG_REF: ${{ vars.FFMPEG_REF }}
-        run: bash desktop/build-ffmpeg-minimal.sh 8.1.3
+        run: bash desktop/build-ffmpeg-minimal.sh
 
       - name: Test
         run: bash desktop/test-ffmpeg-minimal.sh
