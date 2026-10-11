@@ -14,8 +14,8 @@ workmanager = "2.11.2"
 credentials = "1.5.0"
 coil = "3.4.0"
 cloudy = "0.6.1"
-mlkit_translate = "16.1.2"
-mlkit_language_id = "16.1.1"
+mlkit_translate = "17.0.3"
+mlkit_language_id = "17.0.6"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }

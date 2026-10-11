@@ -124,8 +124,13 @@ private suspend fun translateLrcLines(
             .build()
     )
     try {
-        // ~30MB model; downloadModelIfNeeded no-ops when already on device
-        if (downloadModelIfNeeded(translator) == null) return LyricsTranslation.Failure
+        // ~30MB model; downloadModelIfNeeded no-ops when already on device.
+        // Without this gate the model would be missing and every line's
+        // translate() call would throw "model files not found".
+        if (!downloadModelIfNeeded(translator)) {
+            Log.w(TAG, "model download failed for $sourceTag -> $targetLang")
+            return LyricsTranslation.Failure
+        }
 
         // sequential: one translator instance, and a slow first run is cached
         var translatable = 0
@@ -206,6 +211,9 @@ private suspend fun <T> Task<T>.awaitOrNull(): T? = suspendCancellableCoroutine 
 
 private suspend fun Task<Void>.awaitSuccess(): Boolean = suspendCancellableCoroutine { cont ->
     addOnCompleteListener {
+        if (!it.isSuccessful) {
+            Log.w(TAG, "task failed: ${it.exception?.javaClass?.simpleName}: ${it.exception?.message}")
+        }
         if (cont.isActive) cont.resume(it.isSuccessful)
     }
 }
