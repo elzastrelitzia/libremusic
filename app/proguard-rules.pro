@@ -54,3 +54,8 @@
 -keep class org.slf4j.** { *; }
 -dontwarn ch.qos.logback.**
 -dontwarn org.slf4j.**
+
+# R8 strips the prebuilt language-id native registrar wiring in release
+# getClient() then NPEs on a null LanguageIdentificationJni holder.
+# so lyrics translation crashed on release version
+-keep class com.google.mlkit.nl.languageid.internal.** { *; }
