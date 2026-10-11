@@ -115,7 +115,7 @@ inline fun <T : Innertube.Item> ItemsPage(
         .only(WindowInsetsSides.Top)
         .asPaddingValues()
         .calculateTopPadding()
-    val headerHeight = topInset + 52.dp
+    val headerHeight = topInset + 64.dp
 
     Box(modifier = modifier) {
         LazyColumn(

@@ -94,6 +94,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp)
                         .padding(bottom = 8.dp)
                         .fillMaxWidth()
                         .clip(pillShape)
