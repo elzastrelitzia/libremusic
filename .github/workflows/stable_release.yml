@@ -43,24 +43,26 @@ jobs:
 
           git fetch --tags --force
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Android changelog only: drop desktop commits tagged with the desktop prefix
+          DESKTOP_FILTER=(--invert-grep --grep='^desktop')
 
           if [ -z "$PREVIOUS_TAG" ]; then
             COMMIT_RANGE="--max-count=20"
             HAS_MORE=false
           else
             COMMIT_RANGE="$PREVIOUS_TAG..HEAD"
-            TOTAL_COMMITS=$(git rev-list --count $COMMIT_RANGE)
+            TOTAL_COMMITS=$(git rev-list --count "${DESKTOP_FILTER[@]}" $COMMIT_RANGE)
             if [ $TOTAL_COMMITS -gt 20 ]; then HAS_MORE=true; else HAS_MORE=false; fi
           fi
 
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "full_changelog<<$EOF" >> $GITHUB_OUTPUT
-          git log $COMMIT_RANGE --pretty=format:"- %s" >> $GITHUB_OUTPUT
+          git log $COMMIT_RANGE "${DESKTOP_FILTER[@]}" --pretty=format:"- %s" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
           echo "truncated_changelog<<$EOF" >> $GITHUB_OUTPUT
-          git log $COMMIT_RANGE -n 20 --pretty=format:"- %s" >> $GITHUB_OUTPUT
+          git log $COMMIT_RANGE "${DESKTOP_FILTER[@]}" -n 20 --pretty=format:"- %s" >> $GITHUB_OUTPUT
           if [ "$HAS_MORE" = "true" ]; then
             echo -e "\n\n... and more! See the full changelog at:" >> $GITHUB_OUTPUT
             echo "https://github.com/${{ github.repository }}/releases/tag/v$VERSION" >> $GITHUB_OUTPUT
