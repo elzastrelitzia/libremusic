@@ -211,7 +211,6 @@
     <string name="lyrics_keep_screen_awake_description">Keeps the screen awake while the lyrics are showing</string>
     <string name="lyrics_font_size">Lyrics text size</string>
     <string name="lyrics_font_size_description">Text size while lyrics are shown</string>
-    <string name="hide_translation">Hide translation</string>
     <string name="device_language">Device language</string>
     <string name="error_lyrics_translation">Couldn\'t translate lyrics</string>
     <string name="lyrics_translation_same_language">Lyrics already in your language</string>

@@ -789,20 +789,6 @@ private fun TranslationLanguageDialog(
                         .weight(1f)
                         .background(colorPalette.background1)
                 ) {
-                if (translationActive) Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onHide() }
-                        .padding(vertical = 10.dp, horizontal = 16.dp)
-                ) {
-                    BasicText(
-                        text = stringResource(R.string.hide_translation),
-                        style = typography.m.semiBold.copy(color = colorPalette.accent),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
                 val unsupported = LyricsTranslationLanguage.entries.firstOrNull {
                     it != LyricsTranslationLanguage.Device && !isMlKitSupportedLang(it.langCode)
                 }
@@ -841,7 +827,8 @@ private fun TranslationLanguageDialog(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { onSelectLanguage(lang) }
+                                    // re-tapping the active language turns translation off
+                                    .clickable { if (isCurrent) onHide() else onSelectLanguage(lang) }
                                     .padding(vertical = 14.dp, horizontal = 16.dp)
                             ) {
                                 BasicText(
