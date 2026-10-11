@@ -100,19 +100,26 @@ private suspend fun translateLrcLines(
         return LyricsTranslation.Failure
     }
 
-    // detect the lyric language from a sample of the first lines, on-device
-    val sourceTag = detectLanguage(contents.take(10).joinToString(" ").take(600))
-        ?: return LyricsTranslation.Failure
-    val source = languageOf(sourceTag) ?: run {
-        Log.w(TAG, "unsupported source: $sourceTag")
-        return LyricsTranslation.Failure
-    }
     val target = languageOf(targetLang) ?: run {
         Log.w(TAG, "unsupported target: $targetLang")
         return LyricsTranslation.Failure
     }
-    // same-language lyrics need no translation (this also kills en->en waste)
-    if (source.substringBefore('-') == target.substringBefore('-')) {
+    // Detect over the whole lyrics, not the first lines: an English intro or
+    // hook must not decide the song's language. Keep every candidate ML Kit
+    // translate can actually use, strongest first.
+    val sample = contents.joinToString(" ").take(4000)
+    val detected = detectLanguages(sample)
+        .mapNotNull { (tag, confidence) -> languageOf(tag)?.let { it to confidence } }
+    if (detected.isEmpty()) {
+        Log.w(TAG, "no supported source language in ${sample.length} chars")
+        return LyricsTranslation.Failure
+    }
+    // strongest language that is not already the target becomes the source, so
+    // the song still translates instead of claiming already in your language.
+    val source = detected
+        .firstOrNull { it.first.substringBefore('-') != target.substringBefore('-') }
+        ?.first
+    if (source == null) {
         Log.d(TAG, "lyrics already in target language ($targetLang)")
         return LyricsTranslation.SameLanguage
     }
@@ -128,7 +135,7 @@ private suspend fun translateLrcLines(
         // Without this gate the model would be missing and every line's
         // translate() call would throw "model files not found".
         if (!downloadModelIfNeeded(translator)) {
-            Log.w(TAG, "model download failed for $sourceTag -> $targetLang")
+            Log.w(TAG, "model download failed for $source -> $targetLang")
             return LyricsTranslation.Failure
         }
 
@@ -158,7 +165,7 @@ private suspend fun translateLrcLines(
             Log.w(TAG, "translated $succeeded/$translatable lines, not caching")
             return LyricsTranslation.Failure
         }
-        Log.d(TAG, "translated $translatable lines $sourceTag -> $targetLang")
+        Log.d(TAG, "translated $translatable lines $source -> $targetLang")
         return LyricsTranslation.Done(translatedLines.joinToString("\n"))
     } finally {
         translator.close()
@@ -181,12 +188,19 @@ private fun languageOf(tag: String): String? {
     }.getOrNull()?.takeIf { it.isNotBlank() }
 }
 
-private suspend fun detectLanguage(sample: String): String? {
+// Ranked on-device identification over the whole lyric sample. The floor drops
+// stray low-confidence guesses so they cannot hijack the source language;
+// raise it if a genuinely mixed song is misread as monolingual.
+// ponytail: fixed 0.2 floor, per-song tuning only if a real case is missed.
+private suspend fun detectLanguages(sample: String): List<Pair<String, Float>> {
     val identifier = LanguageIdentification.getClient(
         LanguageIdentificationOptions.Builder().setConfidenceThreshold(0.5f).build()
     )
     return try {
-        identifier.identifyLanguage(sample).awaitOrNull()
+        identifier.identifyPossibleLanguages(sample).awaitOrNull()
+            ?.map { it.languageTag to it.confidence }
+            ?.filter { it.second >= 0.2f }
+            ?: emptyList()
     } finally {
         identifier.close()
     }
