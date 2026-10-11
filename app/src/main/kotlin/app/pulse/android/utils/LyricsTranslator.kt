@@ -46,8 +46,11 @@ fun currentLyricsTargetLang(context: Context): String {
 
 fun translationCacheFile(context: Context, mediaId: String, lang: String): File {
     val dir = File(context.filesDir, "lyrics_translations").apply { mkdirs() }
+    // version tag in the key. Bumped to invalidate entries written before
+    // the stale-lyrics fix, which cached a previous song's translation. Bump again
+    // if the translation format ever changes.
     val key = MessageDigest.getInstance("MD5")
-        .digest("$mediaId|$lang".toByteArray())
+        .digest("v2|$mediaId|$lang".toByteArray())
         .joinToString("") { "%02x".format(it) }
     return File(dir, "$key.lrc")
 }

@@ -263,7 +263,9 @@ fun Lyrics(
 
     val pip = isInPip()
 
-    var lyrics by remember { mutableStateOf<Lyrics?>(LyricsCache[mediaId]) }
+    // keyed by mediaId, without it the previous song's Lyrics object lingers on song
+    // change and the translation effect below translates/caches the wrong song
+    var lyrics by remember(mediaId) { mutableStateOf<Lyrics?>(LyricsCache[mediaId]) }
     var translatedText by remember(mediaId) { mutableStateOf<String?>(null) }
 
     val showSynchronizedLyrics = remember(shouldShowSynchronizedLyrics, lyrics) {

@@ -77,6 +77,7 @@ object PlayerPreferences : GlobalPreferencesHolder() {
     var lyricsFontSize by int(24)
     var lyricsShowSystemBars by boolean(true)
     var lyricsTranslationLanguage by enum(LyricsTranslationLanguage.Device)
+    var lyricsTranslationEnabled by boolean(false)
 
     var skipOnError by boolean(false)
     var handleAudioFocus by boolean(true)

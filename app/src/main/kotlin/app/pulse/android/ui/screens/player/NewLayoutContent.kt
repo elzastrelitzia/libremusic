@@ -174,7 +174,11 @@ fun NewLayoutContent(
     val uiMedia = remember(mediaId, duration) { mediaItem.toUiMedia(duration) }
 
     var lyricsReady by remember(mediaId) { mutableStateOf(LyricsCache[mediaId] != null) }
-    var showTranslation by remember(mediaId) { mutableStateOf(false) }
+    // seeded from the persisted toggle so translation survives song changes
+    // auto-disable (same language / failure) only affects the current song
+    var showTranslation by remember(mediaId) {
+        mutableStateOf(PlayerPreferences.lyricsTranslationEnabled)
+    }
     var translationBusy by remember(mediaId) { mutableStateOf(false) }
     var showingTranslatorDialog by remember { mutableStateOf(false) }
 
@@ -183,10 +187,12 @@ fun NewLayoutContent(
         onDismiss = { showingTranslatorDialog = false },
         onSelectLanguage = {
             PlayerPreferences.lyricsTranslationLanguage = it
+            PlayerPreferences.lyricsTranslationEnabled = true
             showTranslation = true
             showingTranslatorDialog = false
         },
         onHide = {
+            PlayerPreferences.lyricsTranslationEnabled = false
             showTranslation = false
             showingTranslatorDialog = false
         }
