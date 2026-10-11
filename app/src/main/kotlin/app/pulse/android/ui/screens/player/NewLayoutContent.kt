@@ -773,7 +773,13 @@ private fun TranslationLanguageDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -781,6 +787,11 @@ private fun TranslationLanguageDialog(
                     .fillMaxHeight(0.5f)
                     .align(Alignment.Center)
                     .clip(RoundedCornerShape(40.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    )
             ) {
 
                 Column(
