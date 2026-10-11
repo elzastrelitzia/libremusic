@@ -14,6 +14,8 @@ import kotlinx.parcelize.Parcelize
 sealed class Route : Parcelable {
     abstract val tag: String
 
+    open val transition: RouteTransition get() = RouteTransition.Slide
+
     override fun equals(other: Any?) = when {
         this === other -> true
         other is Route -> tag == other.tag
@@ -41,7 +43,10 @@ sealed class Route : Parcelable {
 }
 
 @Immutable
-class Route0(override val tag: String) : Route() {
+class Route0(
+    override val tag: String,
+    override val transition: RouteTransition = RouteTransition.Slide
+) : Route() {
     context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable () -> Unit) {
@@ -53,7 +58,10 @@ class Route0(override val tag: String) : Route() {
 }
 
 @Immutable
-class Route1<P0>(override val tag: String) : Route() {
+class Route1<P0>(
+    override val tag: String,
+    override val transition: RouteTransition = RouteTransition.Slide
+) : Route() {
     context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0) -> Unit) {
@@ -65,7 +73,10 @@ class Route1<P0>(override val tag: String) : Route() {
 }
 
 @Immutable
-class Route2<P0, P1>(override val tag: String) : Route() {
+class Route2<P0, P1>(
+    override val tag: String,
+    override val transition: RouteTransition = RouteTransition.Slide
+) : Route() {
     context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1) -> Unit) {
@@ -83,7 +94,10 @@ class Route2<P0, P1>(override val tag: String) : Route() {
 }
 
 @Immutable
-class Route3<P0, P1, P2>(override val tag: String) : Route() {
+class Route3<P0, P1, P2>(
+    override val tag: String,
+    override val transition: RouteTransition = RouteTransition.Slide
+) : Route() {
     context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1, P2) -> Unit) {
@@ -102,7 +116,10 @@ class Route3<P0, P1, P2>(override val tag: String) : Route() {
 }
 
 @Immutable
-class Route4<P0, P1, P2, P3>(override val tag: String) : Route() {
+class Route4<P0, P1, P2, P3>(
+    override val tag: String,
+    override val transition: RouteTransition = RouteTransition.Slide
+) : Route() {
     context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1, P2, P3) -> Unit) {

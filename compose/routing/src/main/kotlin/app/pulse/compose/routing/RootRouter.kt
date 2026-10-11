@@ -24,10 +24,11 @@ typealias TransitionScope<T> = AnimatedContentTransitionScope<T>
 typealias TransitionSpec<T> = TransitionScope<T>.() -> ContentTransform
 
 private val defaultTransitionSpec: TransitionSpec<Route?> = {
+    val transition = (targetState ?: initialState)?.transition ?: RouteTransition.Slide
     when {
-        isStacking -> defaultStacking
-        isStill -> defaultStacking
-        else -> defaultUnstacking
+        isStacking -> transition.stacking
+        isStill -> transition.stacking
+        else -> transition.unstacking
     }
 }
 

@@ -33,6 +33,7 @@ import app.pulse.compose.routing.Route1
 import app.pulse.compose.routing.Route3
 import app.pulse.compose.routing.Route4
 import app.pulse.compose.routing.RouteHandlerScope
+import app.pulse.compose.routing.RouteTransition
 import app.pulse.core.data.enums.BuiltInPlaylist
 import io.ktor.http.Url
 import java.util.UUID
@@ -53,8 +54,8 @@ val logsRoute = Route0("logsRoute")
 val pipedPlaylistRoute = Route3<String, String, String>("pipedPlaylistRoute")
 val playlistRoute = Route4<String, String?, Int?, Boolean>("playlistRoute")
 val moodRoute = Route1<Mood>("moodRoute")
-val searchResultRoute = Route1<String>("searchResultRoute")
-val searchRoute = Route1<String>("searchRoute")
+val searchResultRoute = Route1<String>("searchResultRoute", RouteTransition.Fade)
+val searchRoute = Route1<String>("searchRoute", RouteTransition.Fade)
 val settingsRoute = Route0("settingsRoute")
 val appearanceSettingsRoute = Route0("appearanceSettingsRoute")
 val playerSettingsRoute = Route0("playerSettingsRoute")
