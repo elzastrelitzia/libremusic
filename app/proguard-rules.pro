@@ -55,7 +55,12 @@
 -dontwarn ch.qos.logback.**
 -dontwarn org.slf4j.**
 
-# R8 strips the prebuilt language-id native registrar wiring in release
-# getClient() then NPEs on a null LanguageIdentificationJni holder.
-# so lyrics translation crashed on release version
--keep class com.google.mlkit.nl.languageid.internal.** { *; }
+# ML Kit discovers ComponentRegistrar classes by reflection from manifest
+# metadata, so R8 full mode strips their no-arg constructors as unused
+# (firebase-components 16.0.0 keeps only the class, not the ctor). Then
+# discovery silently skips the registrar, the component registry ends up
+# empty, and LanguageIdentification.getClient() returns a null Factory
+# which NPEs. This is Google's fix from firebase-components 19.0, applied
+# to both the language-id and translate registrars.
+-keep class * implements com.google.firebase.components.ComponentRegistrar { void <init>(); }
+-keep,allowshrinking interface com.google.firebase.components.ComponentRegistrar
