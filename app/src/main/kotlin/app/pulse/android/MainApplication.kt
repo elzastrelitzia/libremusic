@@ -740,11 +740,16 @@ object Dependencies {
     }
 
     fun upgradeYoutubeDl(packageName: String = "yt-dlp"): Boolean {
-        val success = runCatching { module.callAttr("upgrade", packageName) }
-            .also { it.exceptionOrNull()?.printStackTrace() }
-            .isSuccess
-        if (!success) Log.e("Python", "Upgrading $packageName resulted in non-zero exit code!")
-        return success
+        // The Python helper returns True/False and raises on hard failure, so the
+        // reported result is honest. Step-by-step detail is printed to logcat
+        // under python.stdout / python.stderr.
+        return runCatching { module.callAttr("upgrade", packageName).toBoolean() }
+            .onSuccess { Log.i("MusicEngine", "yt-dlp upgrade succeeded=$it") }
+            .onFailure {
+                it.printStackTrace()
+                Log.e("MusicEngine", "yt-dlp upgrade failed", it)
+            }
+            .getOrDefault(false)
     }
 
     val credentialManager by lazy { CredentialManager.create(application) }
