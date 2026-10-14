@@ -79,6 +79,7 @@ import app.pulse.android.utils.isCached
 import app.pulse.android.utils.launchYouTubeMusic
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.semiBold
+import app.pulse.android.utils.shareToInstagramStory
 import app.pulse.android.utils.toast
 import app.pulse.core.data.enums.PlaylistSortBy
 import app.pulse.core.data.enums.SortOrder
@@ -254,6 +255,9 @@ fun BaseMediaItemMenu(
 
             context.startActivity(Intent.createChooser(sendIntent, null))
         },
+        onShareToInstagramStory = if (mediaItem.isLocal) null else {
+            { shareToInstagramStory(context, mediaItem) }
+        },
         onRemoveFromQuickPicks = onRemoveFromQuickPicks,
         onShowSpeedDialog = onShowSpeedDialog,
         onShowNormalizationDialog = onShowNormalizationDialog,
@@ -267,6 +271,7 @@ fun MediaItemMenu(
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     modifier: Modifier = Modifier,
+    onShareToInstagramStory: (() -> Unit)? = null,
     onGoToEqualizer: (() -> Unit)? = null,
     onShowSleepTimer: (() -> Unit)? = null,
     onStartRadio: (() -> Unit)? = null,
@@ -463,6 +468,17 @@ fun MediaItemMenu(
                     .alpha(0.5f)
                     .padding(vertical = 8.dp)
             )
+
+            onShareToInstagramStory?.let {
+                MenuEntry(
+                    icon = R.drawable.share_social,
+                    text = stringResource(R.string.share_to_instagram_story),
+                    onClick = {
+                        onDismiss()
+                        onShareToInstagramStory()
+                    }
+                )
+            }
 
             onPlayNext?.let {
                 MenuEntry(

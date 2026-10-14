@@ -275,6 +275,7 @@
     <string name="troubleshooting">Troubleshooting</string>
     <string name="troubleshooting_warning">Caution: use these buttons as a last resort when audio playback fails</string>
     <string name="components">Components</string>
+    <string name="share_to_instagram_story">Share to Instagram story</string>
     <string name="yt_dlp_updates">yt-dlp updates</string>
     <string name="yt_dlp_update_required">yt-dlp update required</string>
     <string name="yt_dlp_update_available_description">New yt-dlp version is available and must be installed to keep playback working.</string>
