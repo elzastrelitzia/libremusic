@@ -15,8 +15,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -98,6 +100,7 @@ import app.pulse.android.utils.color
 import app.pulse.android.utils.isInPip
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.semiBold
+import app.pulse.android.utils.shareToInstagramStory
 import app.pulse.android.utils.toast
 import app.pulse.core.data.utils.formatDuration
 import app.pulse.core.ui.LocalAppearance
@@ -227,6 +230,7 @@ internal suspend fun fetchLyricsParallel(
     fixedDef.await() to syncedDef.await()
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Lyrics(
     mediaId: String,
@@ -714,11 +718,28 @@ fun Lyrics(
                                     scaleY = scale
                                 }
                                 .padding(vertical = 12.dp, horizontal = 48.dp)
-                                .clickable(
+                                .combinedClickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
                                         binder?.player?.seekTo(synchronizedLyrics.sentences.keys.elementAt(index))
+                                    },
+                                    onLongClick = if (sentence.isBlank()) null else {
+                                        {
+                                            val mediaItem = binder?.player?.currentMediaItem
+                                            if (mediaItem != null) menuState.display {
+                                                Menu {
+                                                    MenuEntry(
+                                                        icon = R.drawable.share_social,
+                                                        text = stringResource(R.string.share_to_instagram_story),
+                                                        onClick = {
+                                                            menuState.hide()
+                                                            shareToInstagramStory(context, mediaItem, sentence)
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 )
                         ) {

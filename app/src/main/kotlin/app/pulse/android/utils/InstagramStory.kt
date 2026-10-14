@@ -37,6 +37,7 @@ private const val INSTAGRAM_PACKAGE = "com.instagram.android"
 private const val CARD_WIDTH = 1080
 private const val CARD_HEIGHT = 1920
 
+// no lyrics card
 private const val CARD_SCALE = 1.8f
 private const val REF_CARD_WIDTH = 384f
 private const val REF_CARD_HEIGHT = 512f
@@ -53,6 +54,26 @@ private const val REF_FOOTER_TOP = 461f
 private const val REF_LOGO_SIZE = 24f
 private const val REF_LOGO_GAP = 8f
 
+// lyrics card
+private const val LYRICS_CARD_SCALE = 1.5f
+private const val REF_LYRICS_CARD_WIDTH = 580f
+private const val REF_LYRICS_CARD_HEIGHT = 395f
+private const val REF_LYRICS_CARD_RADIUS = 24f
+private const val REF_LYRICS_PADDING = 30f
+private const val REF_LYRICS_ART = 128f
+private const val REF_LYRICS_ART_RADIUS = 12f
+private const val REF_LYRICS_TEXT_LEFT = 178f
+private const val REF_LYRICS_TITLE_SIZE = 32f
+private const val REF_LYRICS_TITLE_TOP = 30f
+private const val REF_LYRICS_ARTIST_SIZE = 30f
+private const val REF_LYRICS_ARTIST_TOP = 71f
+private const val REF_LYRICS_FOOTER_SIZE = 28f
+private const val REF_LYRICS_FOOTER_TOP = 124f
+private const val REF_LYRICS_LYRIC_SIZE = 44f
+private const val REF_LYRICS_LYRIC_WIDTH = 473f
+private const val REF_LYRICS_LYRIC_TOP = 198f
+private const val REF_LYRICS_LYRIC_LINES = 3
+
 private const val SHOW_FOOTER_LOGO = false
 
 // The song menu is dismissed before the render
@@ -61,16 +82,17 @@ private val storyScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
 /**
  * Render a story card for [mediaItem] and hand it to Instagram Stories.
+ * With [lyric] the card carries that lyric line, otherwise it is the plain card.
  */
-fun shareToInstagramStory(context: Context, mediaItem: MediaItem) {
+fun shareToInstagramStory(context: Context, mediaItem: MediaItem, lyric: String? = null) {
     storyScope.launch {
-        runCatching { share(context, mediaItem) }
+        runCatching { share(context, mediaItem, lyric) }
             .onFailure { Log.e("InstagramStory", "story share failed", it) }
     }
 }
 
-private suspend fun share(context: Context, mediaItem: MediaItem) {
-    val uri = renderStoryCard(context, mediaItem)
+private suspend fun share(context: Context, mediaItem: MediaItem, lyric: String?) {
+    val uri = renderStoryCard(context, mediaItem, lyric)
 
     val stories = Intent("com.instagram.share.ADD_TO_STORY").apply {
         setPackage(INSTAGRAM_PACKAGE)
@@ -93,16 +115,24 @@ private suspend fun share(context: Context, mediaItem: MediaItem) {
     }
 }
 
-private suspend fun renderStoryCard(context: Context, mediaItem: MediaItem): Uri =
+private suspend fun renderStoryCard(context: Context, mediaItem: MediaItem, lyric: String?): Uri =
     withContext(Dispatchers.IO) {
         val density = context.resources.displayMetrics.density
-        val card = drawNoLyricsCard(
-            art = loadArtwork(context, mediaItem),
-            title = mediaItem.mediaMetadata.title?.toString().orEmpty(),
-            artist = mediaItem.mediaMetadata.artist?.toString().orEmpty(),
-            blurRadius = 32f * density,
-            logo = if (SHOW_FOOTER_LOGO) context.getDrawable(R.drawable.app_icon_transparent) else null,
-        )
+        val blurRadius = 32f * density
+        val art = loadArtwork(context, mediaItem)
+        val title = mediaItem.mediaMetadata.title?.toString().orEmpty()
+        val artist = mediaItem.mediaMetadata.artist?.toString().orEmpty()
+        val card = if (lyric != null) {
+            drawLyricsCard(art, title, artist, lyric, blurRadius)
+        } else {
+            drawNoLyricsCard(
+                art = art,
+                title = title,
+                artist = artist,
+                blurRadius = blurRadius,
+                logo = if (SHOW_FOOTER_LOGO) context.getDrawable(R.drawable.app_icon_transparent) else null,
+            )
+        }
 
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
         val file = File(dir, "story.png")
@@ -135,16 +165,7 @@ private fun drawNoLyricsCard(
 ): Bitmap {
     val out = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(out)
-
-    if (art != null) {
-        val cover = RectF(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat())
-        val cropped = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
-        Canvas(cropped).drawBitmap(art, null, coverRect(art, cover), filterPaint())
-        canvas.drawBitmap(blur(cropped, blurRadius), 0f, 0f, null)
-        canvas.drawColor(Color.argb(128, 0, 0, 0))
-    } else {
-        canvas.drawColor(Color.BLACK)
-    }
+    drawBackground(canvas, art, blurRadius)
 
     val cardWidth = REF_CARD_WIDTH * CARD_SCALE
     val padding = REF_PADDING * CARD_SCALE
@@ -227,6 +248,101 @@ private fun drawNoLyricsCard(
 
     canvas.drawText("libre", footerLeft, footerBaseline, footerMedium)
     canvas.drawText("music", footerLeft + footerMedium.measureText("libre"), footerBaseline, footerLight)
+
+    return out
+}
+
+private fun drawBackground(canvas: Canvas, art: Bitmap?, blurRadius: Float) {
+    if (art != null) {
+        val cover = RectF(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat())
+        val cropped = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        Canvas(cropped).drawBitmap(art, null, coverRect(art, cover), filterPaint())
+        canvas.drawBitmap(blur(cropped, blurRadius), 0f, 0f, null)
+        canvas.drawColor(Color.argb(128, 0, 0, 0))
+    } else {
+        canvas.drawColor(Color.BLACK)
+    }
+}
+
+private fun drawLyricsCard(
+    art: Bitmap?,
+    title: String,
+    artist: String,
+    lyric: String,
+    blurRadius: Float,
+): Bitmap {
+    val out = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(out)
+    drawBackground(canvas, art, blurRadius)
+
+    val scale = LYRICS_CARD_SCALE
+    val cardWidth = REF_LYRICS_CARD_WIDTH * scale
+    val padding = REF_LYRICS_PADDING * scale
+    // The title and artist run to the card's right edge; the reference's 271/283
+    // boxes hug their placeholder text and would clip real titles early.
+    val textWidth = cardWidth - REF_LYRICS_TEXT_LEFT * scale - padding
+
+    val cardHeight = REF_LYRICS_CARD_HEIGHT * scale
+    val left = (CARD_WIDTH - cardWidth) / 2f
+    val top = (CARD_HEIGHT - cardHeight) / 2f
+    val radius = REF_LYRICS_CARD_RADIUS * scale
+    canvas.drawRoundRect(
+        RectF(left, top, left + cardWidth, top + cardHeight),
+        radius,
+        radius,
+        fillPaint(Color.argb(128, 0, 0, 0)),
+    )
+
+    val textLeft = left + REF_LYRICS_TEXT_LEFT * scale
+
+    if (art != null) {
+        val size = REF_LYRICS_ART * scale
+        val rect = RectF(left + padding, top + padding, left + padding + size, top + padding + size)
+        val artRadius = REF_LYRICS_ART_RADIUS * scale
+        canvas.save()
+        canvas.clipPath(Path().apply { addRoundRect(rect, artRadius, artRadius, Path.Direction.CW) })
+        canvas.drawBitmap(art, null, coverRect(art, rect), filterPaint())
+        canvas.restore()
+    }
+
+    val titlePaint = textPaint(Color.WHITE, REF_LYRICS_TITLE_SIZE * scale, Typeface.DEFAULT_BOLD)
+    canvas.drawText(
+        ellipsize(title, titlePaint, textWidth),
+        textLeft,
+        baselineOf(top + REF_LYRICS_TITLE_TOP * scale, titlePaint),
+        titlePaint,
+    )
+
+    val artistPaint = textPaint(Color.WHITE, REF_LYRICS_ARTIST_SIZE * scale, mediumTypeface())
+    canvas.drawText(
+        ellipsize(artist, artistPaint, textWidth),
+        textLeft,
+        baselineOf(top + REF_LYRICS_ARTIST_TOP * scale, artistPaint),
+        artistPaint,
+    )
+
+    val footerColor = Color.argb(179, 255, 255, 255)
+    val footerMedium = textPaint(footerColor, REF_LYRICS_FOOTER_SIZE * scale, mediumTypeface())
+    val footerLight = textPaint(
+        footerColor,
+        REF_LYRICS_FOOTER_SIZE * scale,
+        Typeface.create("sans-serif-light", Typeface.NORMAL),
+    )
+    val footerBaseline = baselineOf(top + REF_LYRICS_FOOTER_TOP * scale, footerMedium)
+    canvas.drawText("libre", textLeft, footerBaseline, footerMedium)
+    canvas.drawText("music", textLeft + footerMedium.measureText("libre"), footerBaseline, footerLight)
+
+    val lyricPaint = textPaint(Color.WHITE, REF_LYRICS_LYRIC_SIZE * scale, Typeface.DEFAULT_BOLD)
+    val lyricLayout = StaticLayout.Builder
+        .obtain(lyric, 0, lyric.length, lyricPaint, (REF_LYRICS_LYRIC_WIDTH * scale).roundToInt())
+        .setIncludePad(false)
+        .setMaxLines(REF_LYRICS_LYRIC_LINES)
+        .setEllipsize(TextUtils.TruncateAt.END)
+        .build()
+    canvas.save()
+    canvas.translate(left + padding, top + REF_LYRICS_LYRIC_TOP * scale)
+    lyricLayout.draw(canvas)
+    canvas.restore()
 
     return out
 }
