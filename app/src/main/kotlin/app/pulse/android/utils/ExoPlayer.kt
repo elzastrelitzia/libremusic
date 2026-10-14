@@ -5,7 +5,6 @@ package app.pulse.android.utils
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.C
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
@@ -45,39 +44,7 @@ class RangeHandlerDataSourceFactory(private val parent: DataSource.Factory) : Da
     override fun createDataSource() = Source(parent.createDataSource())
 }
 
-class CatchingDataSourceFactory(
-    private val parent: DataSource.Factory,
-    private val onError: ((Throwable) -> Unit)?
-) : DataSource.Factory {
-    inner class Source(private val parent: DataSource) : DataSource by parent {
-        override fun open(dataSpec: DataSpec) = runCatching {
-            parent.open(dataSpec)
-        }.getOrElse { ex ->
-            ex.printStackTrace()
-
-            // ponytail: let InterruptedException propagate ExoPlayer's LoadTask treats it as clean cancellation
-            if (ex is InterruptedException) throw ex
-            if (ex is PlaybackException) throw ex
-            else throw PlaybackException(
-                /* message = */ "Unknown playback error",
-                /* cause = */ ex,
-                /* errorCode = */ PlaybackException.ERROR_CODE_UNSPECIFIED
-            ).also { onError?.invoke(it) }
-        }
-
-        override fun getResponseHeaders(): Map<String, List<String>> = parent.responseHeaders
-    }
-
-    override fun createDataSource() = Source(parent.createDataSource())
-}
-
 fun DataSource.Factory.handleRangeErrors(): DataSource.Factory = RangeHandlerDataSourceFactory(this)
-fun DataSource.Factory.handleUnknownErrors(
-    onError: ((Throwable) -> Unit)? = null
-): DataSource.Factory = CatchingDataSourceFactory(
-    parent = this,
-    onError = onError
-)
 
 class FallbackDataSourceFactory(
     private val upstream: DataSource.Factory,

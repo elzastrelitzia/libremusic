@@ -95,7 +95,6 @@ import app.pulse.android.utils.forcePlayFromBeginning
 import app.pulse.android.utils.forceSeekToNext
 import app.pulse.android.utils.forceSeekToPrevious
 import app.pulse.android.utils.get
-import app.pulse.android.utils.handleUnknownErrors
 import app.pulse.android.utils.intent
 import app.pulse.android.utils.mediaItems
 import app.pulse.android.utils.progress
@@ -236,9 +235,22 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     @Volatile
     private var codecRetriedMediaId: String? = null
 
+    // Bounds the generic error retry to one attempt per media item. Without it
+    // an unknown/Unplayable error leaves the player IDLE and pressing play
+    // (setPlayWhenReady only) can never retry, only a media item change
+    // re-prepares. Re-armed per item in onMediaItemTransition.
+    private var errorRetriedMediaId: String? = null
+
     // Dedup guard for 403 recovery: only one in-flight recovery per mediaId.
     // Cancelled on new 403 so the latest attempt wins.
     private var recoveryJob: Job? = null
+
+    // Caps the 403 recovery per item. A run of 403s on one item means the URL
+    // is gated, not stale, so re-resolving only burns battery and yt-dlp runs.
+    // Past the cap the item is skipped instead of spinning. Re-armed per item
+    // in onMediaItemTransition.
+    private var recovery403MediaId: String? = null
+    private var recovery403Attempts = 0
 
     // The silent player must never drive UI state, so only the audible player
     // gets the service listener. Errors on the silent player abort the fade
@@ -614,6 +626,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         maybePreloadNext()
 
+        // re-arm the one-shot error retries so a fresh song gets a
+        // fresh attempt (both were previously one-shot for the whole session).
+        errorRetriedMediaId = null
+        codecRetriedMediaId = null
+        recovery403MediaId = null
+        recovery403Attempts = 0
+
         maybeRecoverPlaybackError()
         maybeNormalizeVolume()
         maybeProcessRadio()
@@ -683,37 +702,85 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         }
 
+        // Cap the 403 recovery per item, a run of 403s on one item means the URL
+        // is gated, not stale, so re-resolving only burns battery and yt-dlp
+        // runs. Past the cap the item is skipped instead of spinning.
+        var exhausted403 = false
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 403
         ) {
-            // resolve a fresh URL in the background so the player is ready for the next transition.
             val mediaId = player.currentMediaItem?.mediaId?.videoId
-            mediaId?.let { uriCache.remove(it) }
-            // cancel any in-flight recovery for this mediaId
-            recoveryJob?.cancel()
-            recoveryJob = coroutineScope.launch {
-                val freshUrl = mediaId != null && withTimeoutOrNull(10_000L) {
-                    blockStreamClientOn403(mediaId)
-                    resolveVerifiedStream(mediaId) != null
-                } == true
-                Log.w(TAG, "403 recovery ${mediaId ?: "?"} freshUrl=$freshUrl fading=$fading")
-                // Skip re-prepare if crossfade completed while resolving —
-                // the old player is now silent and will be re-prepared
-                // when it becomes audible again.
-                if (fading) return@launch
-                handler.post {
-                    // pause() clears playWhenReady, so read it first: a user pause
-                    // has to survive the recovery, play() would resume it.
-                    val resume = player.playWhenReady
-                    player.pause()
-                    player.prepare()
-                    if (resume) player.play()
-                }
+            if (mediaId != null && mediaId == recovery403MediaId) recovery403Attempts++
+            else {
+                recovery403MediaId = mediaId
+                recovery403Attempts = 1
             }
-            return
+
+            if (recovery403Attempts <= MAX_403_RECOVERIES) {
+                val attempt = recovery403Attempts
+                // resolve a fresh URL in the background so the player is ready for the next transition.
+                mediaId?.let { uriCache.remove(it) }
+                // cancel any in-flight recovery for this mediaId
+                recoveryJob?.cancel()
+                recoveryJob = coroutineScope.launch {
+                    // back off a little more each attempt so a struggling item
+                    // does not hammer the resolver.
+                    if (attempt > 1) delay(1_500L * attempt)
+                    val freshUrl = mediaId != null && withTimeoutOrNull(10_000L) {
+                        blockStreamClientOn403(mediaId)
+                        resolveVerifiedStream(mediaId) != null
+                    } == true
+                    Log.w(
+                        TAG,
+                        "403 recovery ${mediaId ?: "?"} freshUrl=$freshUrl " +
+                            "fading=$fading attempt=$attempt"
+                    )
+                    // Skip re-prepare if crossfade completed while resolving —
+                    // the old player is now silent and will be re-prepared
+                    // when it becomes audible again.
+                    if (fading) return@launch
+                    handler.post {
+                        // pause() clears playWhenReady, so read it first: a user pause
+                        // has to survive the recovery, play() would resume it.
+                        val resume = player.playWhenReady
+                        player.pause()
+                        player.prepare()
+                        if (resume) player.play()
+                    }
+                }
+                return
+            }
+
+            Log.w(
+                TAG,
+                "403 recovery exhausted for ${mediaId ?: "?"} after " +
+                    "$recovery403Attempts attempts"
+            )
+            exhausted403 = true
         }
 
-        if (!PlayerPreferences.skipOnError || !player.hasNextMediaItem()) return
+        // Any other fatal error (unknown / Unplayable / timeout) leaves the
+        // player IDLE with playerError set. play() only flips playWhenReady and
+        // never retries, so without this the only route back is changing song
+        // (onMediaItemTransition -> maybeRecoverPlaybackError). Re-prepare once
+        // per item; a second failure falls through to the skip policy. Users
+        // who enabled skip-on-error keep the skip behaviour unchanged, and an
+        // exhausted 403 is skipped too rather than retried forever.
+        if (!PlayerPreferences.skipOnError && !exhausted403) {
+            val retryId = player.currentMediaItem?.mediaId
+            if (retryId != null && retryId != errorRetriedMediaId) {
+                errorRetriedMediaId = retryId
+                // pause() clears playWhenReady: read it first so a user pause
+                // survives the retry (play() would resume it).
+                val resume = player.playWhenReady
+                player.pause()
+                player.prepare()
+                if (resume) player.play()
+                return
+            }
+        }
+
+        if ((!PlayerPreferences.skipOnError && !exhausted403) || !player.hasNextMediaItem()) return
 
         val prev = player.currentMediaItem ?: return
         player.seekToNextMediaItem()
@@ -1971,6 +2038,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
         private const val DEFAULT_CHUNK_LENGTH = 4 * 1024 * 1024L
 
+        // Max 403 recovery cycles per item before it is skipped as gated.
+        private const val MAX_403_RECOVERIES = 3
+
         fun createDatabaseProvider(context: Context) = StandaloneDatabaseProvider(context)
         fun createCache(
             context: Context,
@@ -2081,8 +2151,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withUri(uri)
                     .ranged(info?.fileSize)
             }
-        }.handleUnknownErrors { error ->
-            if (error.findCause<InterruptedException>() == null) uriCache.clear()
         }
     }
 }
