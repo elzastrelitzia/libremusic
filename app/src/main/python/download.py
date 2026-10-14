@@ -122,6 +122,45 @@ def _activate(dest_root, installed):
     print(f"[yt-dlp] sys.path: {[d for _, _, d in installed]}")
 
 
+def components():
+    """Versions of the components in use, for the About screen.
+
+    Returns a JSON array of [name, version] pairs, in display order.
+    """
+    import platform
+
+    out = [["Python", platform.python_version()]]
+
+    try:
+        import yt_dlp
+        root = os.path.join(os.environ["HOME"], "ytdlp")
+        origin = "upgraded" if (yt_dlp.__file__ or "").startswith(root) else "bundled"
+        out.append(["yt-dlp", f"{yt_dlp.version.__version__} ({origin})"])
+    except Exception as e:
+        out.append(["yt-dlp", f"unavailable: {e}"])
+
+    for dist, module in (("yt-dlp-ejs", "yt_dlp_ejs"), ("spotifyscraper", "spotify_scraper")):
+        out.append([dist, _package_version(dist, module)])
+
+    return json.dumps(out)
+
+
+def _package_version(dist, module):
+    # Metadata works for the wheels we extract under $HOME. Chaquopy-bundled
+    # packages live in the APK, where importlib.metadata may not see them, so
+    # fall back to the module's own __version__.
+    try:
+        from importlib.metadata import version
+        return version(dist)
+    except Exception:
+        pass
+    try:
+        import importlib
+        return getattr(importlib.import_module(module), "__version__", "unknown")
+    except Exception as e:
+        return f"unavailable: {e}"
+
+
 def warm_up():
     import yt_dlp
     print("Python Music Engine: Warmed up and ready.")

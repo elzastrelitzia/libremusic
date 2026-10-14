@@ -47,6 +47,10 @@ android {
                 arguments += listOf("-DANDROID_STL=c++_static")
             }
         }
+        val quickjsVersion = Regex("""set\(QUICKJS_VERSION\s+(\S+)\)""")
+            .find(file("src/main/cpp/CMakeLists.txt").readText())
+            ?.groupValues?.get(1) ?: "unknown"
+        buildConfigField("String", "QUICKJS_VERSION", "\"$quickjsVersion\"")
     }
 
     splits {

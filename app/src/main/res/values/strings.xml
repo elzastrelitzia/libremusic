@@ -274,6 +274,7 @@
     <string name="service_lifetime_report_issue">If you really think there is something wrong with the app itself, hop on to the About tab</string>
     <string name="troubleshooting">Troubleshooting</string>
     <string name="troubleshooting_warning">Caution: use these buttons as a last resort when audio playback fails</string>
+    <string name="components">Components</string>
     <string name="reload_app_internals">Reload app internals</string>
     <string name="kill_app">Kill app</string>
     <string name="show_logs">View debug logs</string>

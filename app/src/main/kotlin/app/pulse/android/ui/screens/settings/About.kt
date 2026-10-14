@@ -18,6 +18,7 @@ import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,6 +39,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.pulse.android.BuildConfig
+import app.pulse.android.Dependencies
 import app.pulse.android.R
 import app.pulse.android.preferences.DataPreferences
 import app.pulse.android.service.ServiceNotifications
@@ -177,6 +179,26 @@ fun About() {
                                 app.pulse.android.service.VersionCheckWorker.upsert(context.applicationContext, it.period)
                             },
                             valueText = { it.displayName() }
+                        )
+                    }
+
+                    SettingsGroup(title = stringResource(R.string.components)) {
+                        val components by produceState(initialValue = emptyList<Pair<String, String>>()) {
+                            value = withContext(Dispatchers.IO) { Dependencies.componentInfo() }
+                        }
+
+                        components.forEach { (name, version) ->
+                            SettingsEntry(
+                                title = name,
+                                text = version,
+                                onClick = {}
+                            )
+                        }
+
+                        SettingsEntry(
+                            title = "quickjs",
+                            text = BuildConfig.QUICKJS_VERSION,
+                            onClick = {}
                         )
                     }
                 }

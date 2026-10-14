@@ -12,6 +12,7 @@ import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
 import android.provider.MediaStore
 import android.util.Log
+import org.json.JSONArray
 import app.pulse.android.ui.screens.searchRoute
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -751,6 +752,20 @@ object Dependencies {
             }
             .getOrDefault(false)
     }
+
+    /** Component versions for the About screen, as ordered name/version pairs. */
+    fun componentInfo(): List<Pair<String, String>> = runCatching {
+        val array = JSONArray(module.callAttr("components").toString())
+        buildList {
+            for (i in 0 until array.length()) {
+                val pair = array.getJSONArray(i)
+                add(pair.getString(0) to pair.getString(1))
+            }
+        }
+    }.onFailure {
+        it.printStackTrace()
+        Log.e("MusicEngine", "component info failed", it)
+    }.getOrDefault(emptyList())
 
     val credentialManager by lazy { CredentialManager.create(application) }
 
