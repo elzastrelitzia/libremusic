@@ -131,14 +131,10 @@ fun YtDlpUpdateDialog(
                         }
                     }
 
-                    YtDlpDialogState.Updating -> Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .requiredHeight(54.dp),
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    YtDlpDialogState.Updating -> AppleDialogProgressButton(
+                        palette = palette,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
 
                     YtDlpDialogState.Done -> AppleDialogButton(
                         text = stringResource(R.string.done),
@@ -372,7 +368,7 @@ private fun TitleSection(
 
 @Composable
 internal fun AppleDialogProgressButton(
-    progress: Float,
+    progress: Float? = null,
     palette: app.pulse.core.ui.ColorPalette,
     modifier: Modifier = Modifier,
 ) {
@@ -383,34 +379,42 @@ internal fun AppleDialogProgressButton(
             .clip(RoundedCornerShape(27.dp))
             .background(palette.accent),
     ) {
-        Box(modifier = Modifier.size(28.dp)) {
-            Canvas(modifier = Modifier.size(28.dp)) {
-                val strokeWidth = 3.5.dp.toPx()
-                val halfStroke = strokeWidth / 2f
-                val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-                val topLeft = Offset(halfStroke, halfStroke)
+        if (progress == null) {
+            // No measurable progress (e.g. a yt-dlp install): endless spinner.
+            CircularProgressIndicator(
+                color = palette.onAccent,
+                modifier = Modifier.size(28.dp),
+            )
+        } else {
+            Box(modifier = Modifier.size(28.dp)) {
+                Canvas(modifier = Modifier.size(28.dp)) {
+                    val strokeWidth = 3.5.dp.toPx()
+                    val halfStroke = strokeWidth / 2f
+                    val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+                    val topLeft = Offset(halfStroke, halfStroke)
 
-                // Track
-                drawArc(
-                    color = palette.onAccent.copy(alpha = 0.2f),
-                    startAngle = 0f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth),
-                )
+                    // Track
+                    drawArc(
+                        color = palette.onAccent.copy(alpha = 0.2f),
+                        startAngle = 0f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth),
+                    )
 
-                // Progress
-                drawArc(
-                    color = palette.onAccent,
-                    startAngle = -90f,
-                    sweepAngle = 360f * progress,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth),
-                )
+                    // Progress
+                    drawArc(
+                        color = palette.onAccent,
+                        startAngle = -90f,
+                        sweepAngle = 360f * progress,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth),
+                    )
+                }
             }
         }
     }
