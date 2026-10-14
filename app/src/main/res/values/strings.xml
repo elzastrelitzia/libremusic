@@ -275,6 +275,12 @@
     <string name="troubleshooting">Troubleshooting</string>
     <string name="troubleshooting_warning">Caution: use these buttons as a last resort when audio playback fails</string>
     <string name="components">Components</string>
+    <string name="yt_dlp_updates">yt-dlp updates</string>
+    <string name="yt_dlp_update_required">yt-dlp update required</string>
+    <string name="yt_dlp_update_available_description">New yt-dlp version is available and must be installed to keep playback working.</string>
+    <string name="yt_dlp_updated">yt-dlp updated</string>
+    <string name="yt_dlp_update_failed">yt-dlp update failed</string>
+    <string name="yt_dlp_update_failed_description">Check your connection and try again.</string>
     <string name="reload_app_internals">Reload app internals</string>
     <string name="kill_app">Kill app</string>
     <string name="show_logs">View debug logs</string>

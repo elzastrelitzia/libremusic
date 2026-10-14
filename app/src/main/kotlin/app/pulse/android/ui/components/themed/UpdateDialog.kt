@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
+import app.pulse.android.Dependencies
 import app.pulse.android.R
 import app.pulse.android.utils.medium
 import app.pulse.core.ui.LocalAppearance
@@ -53,6 +54,109 @@ private enum class DialogState {
     Downloading,
     Downloaded,
     Error
+}
+
+private enum class YtDlpDialogState {
+    Prompt,
+    Updating,
+    Done,
+    Error
+}
+
+@Composable
+fun YtDlpUpdateDialog(
+    version: String,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val (palette, typography) = LocalAppearance.current
+
+    var state by remember { mutableStateOf(YtDlpDialogState.Prompt) }
+
+    // yt-dlp update is mandatory
+    Dialog(onDismissRequest = { if (state == YtDlpDialogState.Done) onDismiss() }) {
+        AppleDialogSurface {
+            Column(
+                modifier = Modifier.height(150.dp),
+            ) {
+                BasicText(
+                    text = stringResource(
+                        when (state) {
+                            YtDlpDialogState.Error -> R.string.yt_dlp_update_failed
+                            YtDlpDialogState.Done -> R.string.yt_dlp_updated
+                            else -> R.string.yt_dlp_update_required
+                        }
+                    ),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                    style = typography.s.copy(
+                        color = palette.text,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                    ),
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                if (state == YtDlpDialogState.Prompt || state == YtDlpDialogState.Error) {
+                    BasicText(
+                        text = stringResource(
+                            if (state == YtDlpDialogState.Prompt)
+                                R.string.yt_dlp_update_available_description
+                            else
+                                R.string.yt_dlp_update_failed_description,
+                            version
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = typography.xs.medium.copy(
+                            color = palette.textSecondary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                        ),
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                when (state) {
+                    YtDlpDialogState.Prompt -> AppleDialogButton(
+                        text = stringResource(R.string.update),
+                        containerColor = palette.accent,
+                        contentColor = palette.onAccent,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        state = YtDlpDialogState.Updating
+                        scope.launch {
+                            val success = withContext(Dispatchers.IO) { Dependencies.upgradeYoutubeDl() }
+                            state = if (success) YtDlpDialogState.Done else YtDlpDialogState.Error
+                        }
+                    }
+
+                    YtDlpDialogState.Updating -> Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .requiredHeight(54.dp),
+                    ) {
+                        CircularProgressIndicator()
+                    }
+
+                    YtDlpDialogState.Done -> AppleDialogButton(
+                        text = stringResource(R.string.done),
+                        containerColor = palette.accent,
+                        contentColor = palette.onAccent,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { onDismiss() }
+
+                    YtDlpDialogState.Error -> AppleDialogButton(
+                        text = stringResource(R.string.update),
+                        containerColor = palette.accent,
+                        contentColor = palette.onAccent,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { state = YtDlpDialogState.Prompt }
+                }
+            }
+        }
+    }
 }
 
 @Composable

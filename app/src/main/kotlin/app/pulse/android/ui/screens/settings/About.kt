@@ -180,6 +180,15 @@ fun About() {
                             },
                             valueText = { it.displayName() }
                         )
+
+                        EnumValueSelectorSettingsEntry(
+                            title = stringResource(R.string.yt_dlp_updates),
+                            selectedValue = DataPreferences.ytDlpUpdate,
+                            onValueSelect = {
+                                DataPreferences.ytDlpUpdate = it
+                            },
+                            valueText = { it.displayName() }
+                        )
                     }
 
                     SettingsGroup(title = stringResource(R.string.components)) {

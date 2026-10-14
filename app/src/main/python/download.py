@@ -122,6 +122,34 @@ def _activate(dest_root, installed):
     print(f"[yt-dlp] sys.path: {[d for _, _, d in installed]}")
 
 
+def update_available():
+    """Return the newest yt-dlp version if it differs from what is installed, else ''.
+
+    Only resolves the wheel; it downloads nothing. Raises if PyPI is unreachable
+    so the caller can report it.
+    """
+    latest, _ = _resolve_wheel("yt-dlp")
+
+    dest_root = os.path.join(os.environ["HOME"], "ytdlp")
+    existing = _existing("yt-dlp", dest_root)
+    if existing is not None:
+        installed = existing[1]
+    else:
+        try:
+            from importlib.metadata import version
+            installed = version("yt-dlp")
+        except Exception:
+            try:
+                import yt_dlp
+                installed = yt_dlp.version.__version__
+            except Exception:
+                installed = None
+
+    print(f"[yt-dlp] installed={installed} latest={latest}")
+
+    return latest if installed != latest else ""
+
+
 def components():
     """Versions of the components in use, for the About screen.
 
