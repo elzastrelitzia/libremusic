@@ -10,12 +10,15 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
+import app.pulse.android.R
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -33,6 +36,24 @@ import kotlin.math.roundToInt
 private const val INSTAGRAM_PACKAGE = "com.instagram.android"
 private const val CARD_WIDTH = 1080
 private const val CARD_HEIGHT = 1920
+
+private const val CARD_SCALE = 1.8f
+private const val REF_CARD_WIDTH = 384f
+private const val REF_CARD_HEIGHT = 512f
+private const val REF_CARD_RADIUS = 24f
+private const val REF_PADDING = 22f
+private const val REF_ART = 340f
+private const val REF_ART_RADIUS = 12f
+private const val REF_TITLE_SIZE = 32f
+private const val REF_TITLE_TOP = 372f
+private const val REF_ARTIST_SIZE = 24f
+private const val REF_ARTIST_TOP = 411f
+private const val REF_FOOTER_SIZE = 24f
+private const val REF_FOOTER_TOP = 461f
+private const val REF_LOGO_SIZE = 24f
+private const val REF_LOGO_GAP = 8f
+
+private const val SHOW_FOOTER_LOGO = false
 
 // The song menu is dismissed before the render
 // finishes, which cancels the menu's own rememberCoroutineScope.
@@ -75,11 +96,12 @@ private suspend fun share(context: Context, mediaItem: MediaItem) {
 private suspend fun renderStoryCard(context: Context, mediaItem: MediaItem): Uri =
     withContext(Dispatchers.IO) {
         val density = context.resources.displayMetrics.density
-        val card = drawCard(
+        val card = drawNoLyricsCard(
             art = loadArtwork(context, mediaItem),
             title = mediaItem.mediaMetadata.title?.toString().orEmpty(),
             artist = mediaItem.mediaMetadata.artist?.toString().orEmpty(),
             blurRadius = 32f * density,
+            logo = if (SHOW_FOOTER_LOGO) context.getDrawable(R.drawable.app_icon_transparent) else null,
         )
 
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
@@ -104,46 +126,109 @@ private suspend fun loadArtwork(context: Context, mediaItem: MediaItem): Bitmap?
             }.getOrNull()
         }
 
-private fun drawCard(art: Bitmap?, title: String, artist: String, blurRadius: Float): Bitmap {
-    val card = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(card)
+private fun drawNoLyricsCard(
+    art: Bitmap?,
+    title: String,
+    artist: String,
+    blurRadius: Float,
+    logo: Drawable?,
+): Bitmap {
+    val out = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(out)
 
     if (art != null) {
         val cover = RectF(0f, 0f, CARD_WIDTH.toFloat(), CARD_HEIGHT.toFloat())
         val cropped = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         Canvas(cropped).drawBitmap(art, null, coverRect(art, cover), filterPaint())
         canvas.drawBitmap(blur(cropped, blurRadius), 0f, 0f, null)
-        canvas.drawColor(Color.argb(128, 0, 0, 0)) // dim ~0.5
+        canvas.drawColor(Color.argb(128, 0, 0, 0))
     } else {
         canvas.drawColor(Color.BLACK)
     }
 
-    val centerX = CARD_WIDTH / 2f
-    val artSize = CARD_WIDTH * 0.62f
-    val artTop = CARD_HEIGHT * 0.24f
+    val cardWidth = REF_CARD_WIDTH * CARD_SCALE
+    val padding = REF_PADDING * CARD_SCALE
+    val textLeft = (CARD_WIDTH - cardWidth) / 2f + padding
+    val textWidth = cardWidth - 2 * padding
+
+    // The title wraps to two lines. The card grows by the wrapped line's height so
+    // the artist line and the footer below keep their spacing instead of colliding.
+    val titlePaint = textPaint(Color.WHITE, REF_TITLE_SIZE * CARD_SCALE, Typeface.DEFAULT_BOLD)
+    val titleLayout = StaticLayout.Builder
+        .obtain(title, 0, title.length, titlePaint, textWidth.roundToInt())
+        .setIncludePad(false)
+        .setMaxLines(2)
+        .setEllipsize(TextUtils.TruncateAt.END)
+        .build()
+    val extraForWrappedTitle = if (titleLayout.lineCount > 1) {
+        titleLayout.height - (titleLayout.getLineBottom(0) - titleLayout.getLineTop(0))
+    } else {
+        0
+    }
+
+    val cardHeight = REF_CARD_HEIGHT * CARD_SCALE + extraForWrappedTitle
+    val left = (CARD_WIDTH - cardWidth) / 2f
+    val top = (CARD_HEIGHT - cardHeight) / 2f
+    val cardRadius = REF_CARD_RADIUS * CARD_SCALE
+    canvas.drawRoundRect(
+        RectF(left, top, left + cardWidth, top + cardHeight),
+        cardRadius,
+        cardRadius,
+        fillPaint(Color.argb(128, 0, 0, 0)),
+    )
 
     if (art != null) {
-        val rect = RectF(centerX - artSize / 2f, artTop, centerX + artSize / 2f, artTop + artSize)
-        val corner = artSize * 0.06f
+        val size = REF_ART * CARD_SCALE
+        val rect = RectF(textLeft, top + padding, textLeft + size, top + padding + size)
+        val artRadius = REF_ART_RADIUS * CARD_SCALE
         canvas.save()
-        canvas.clipPath(Path().apply { addRoundRect(rect, corner, corner, Path.Direction.CW) })
+        canvas.clipPath(Path().apply { addRoundRect(rect, artRadius, artRadius, Path.Direction.CW) })
         canvas.drawBitmap(art, null, coverRect(art, rect), filterPaint())
         canvas.restore()
     }
 
-    val maxTextWidth = CARD_WIDTH * 0.82f
+    canvas.save()
+    canvas.translate(textLeft, top + REF_TITLE_TOP * CARD_SCALE)
+    titleLayout.draw(canvas)
+    canvas.restore()
 
-    val titlePaint = textPaint(Color.WHITE, 58f, Typeface.DEFAULT_BOLD)
-    val titleY = artTop + artSize + 100f
-    canvas.drawText(ellipsize(title, titlePaint, maxTextWidth), centerX, titleY, titlePaint)
+    val artistPaint = textPaint(Color.WHITE, REF_ARTIST_SIZE * CARD_SCALE, mediumTypeface())
+    canvas.drawText(
+        ellipsize(artist, artistPaint, textWidth),
+        textLeft,
+        baselineOf(top + REF_ARTIST_TOP * CARD_SCALE + extraForWrappedTitle, artistPaint),
+        artistPaint,
+    )
 
-    val artistPaint = textPaint(Color.argb(200, 255, 255, 255), 44f)
-    canvas.drawText(ellipsize(artist, artistPaint, maxTextWidth), centerX, titleY + 70f, artistPaint)
+    val footerColor = Color.argb(179, 255, 255, 255)
+    val footerMedium = textPaint(footerColor, REF_FOOTER_SIZE * CARD_SCALE, mediumTypeface())
+    val footerLight = textPaint(
+        footerColor,
+        REF_FOOTER_SIZE * CARD_SCALE,
+        Typeface.create("sans-serif-light", Typeface.NORMAL),
+    )
+    val footerTop = top + REF_FOOTER_TOP * CARD_SCALE + extraForWrappedTitle
+    val footerBaseline = baselineOf(footerTop, footerMedium)
+    val footerLeft = if (logo != null) {
+        val size = REF_LOGO_SIZE * CARD_SCALE
+        val metrics = footerMedium.fontMetrics
+        val footerCenter = footerTop + (metrics.descent - metrics.ascent) / 2f
+        logo.setBounds(
+            textLeft.toInt(),
+            (footerCenter - size / 2f).toInt(),
+            (textLeft + size).toInt(),
+            (footerCenter + size / 2f).toInt(),
+        )
+        logo.draw(canvas)
+        textLeft + size + REF_LOGO_GAP * CARD_SCALE
+    } else {
+        textLeft
+    }
 
-    val footerPaint = textPaint(Color.argb(150, 255, 255, 255), 38f)
-    canvas.drawText("libremusic", centerX, CARD_HEIGHT - 140f, footerPaint)
+    canvas.drawText("libre", footerLeft, footerBaseline, footerMedium)
+    canvas.drawText("music", footerLeft + footerMedium.measureText("libre"), footerBaseline, footerLight)
 
-    return card
+    return out
 }
 
 private fun coverRect(src: Bitmap, dst: RectF): RectF {
@@ -227,10 +312,19 @@ private fun ellipsize(text: String, paint: TextPaint, maxWidth: Float): String =
 
 private fun filterPaint() = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
+private fun fillPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    this.color = color
+    style = Paint.Style.FILL
+}
+
+private fun mediumTypeface() = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+
+private fun baselineOf(boxTop: Float, paint: Paint): Float = boxTop - paint.fontMetrics.ascent
+
 private fun textPaint(color: Int, size: Float, typeface: Typeface? = null) =
     TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color
         textSize = size
-        textAlign = Paint.Align.CENTER
+        textAlign = Paint.Align.LEFT
         this.typeface = typeface ?: Typeface.DEFAULT
     }
