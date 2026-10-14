@@ -252,6 +252,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var recovery403MediaId: String? = null
     private var recovery403Attempts = 0
 
+    // Last item that hit a playback error (403 or otherwise). Crossfade is only
+    // started out of a song that has not errored: while 403s are storming every
+    // transition, fading would just fire a doomed request for the next song and
+    // abort. Corrected per item, so it re-enables once songs play clean.
+    private var lastErroredMediaId: String? = null
+
     // The silent player must never drive UI state, so only the audible player
     // gets the service listener. Errors on the silent player abort the fade
     // and fall back to the normal hard cut. Both players always carry the
@@ -260,6 +266,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         override fun onPlayerError(error: PlaybackException) {
             Log.w(TAG, "silent player error ${error.errorCode}, fading=$fading")
             val mediaId = silent.currentMediaItem?.mediaId?.videoId
+            lastErroredMediaId = silent.currentMediaItem?.mediaId
 
             // during crossfade abort the fade. After crossfade just
             // re-prepare the silent player so it stays usable
@@ -679,6 +686,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 "state=${player.playbackState} position=${player.currentPosition} " +
                 "resolving=${recoveryJob?.isActive == true}"
         )
+        lastErroredMediaId = player.currentMediaItem?.mediaId
 
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 416
@@ -1142,6 +1150,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             val next = a.getMediaItemAt(a.nextMediaItemIndex)
             if (next.mediaId == a.currentMediaItem?.mediaId) return
             if (abortedFadeOutId == a.currentMediaItem?.mediaId && abortedFadeNextId == next.mediaId) return
+            // Crossfade only out of a stable song, if this item already errored,
+            // its stream (and likely the next) is gated, so fading would fire a
+            // doomed request and abort. Hard cut instead until songs play clean.
+            if (a.currentMediaItem?.mediaId == lastErroredMediaId) return
             if (duration - a.currentPosition > seconds * 1000L) return
             startCrossfade(next)
             return
