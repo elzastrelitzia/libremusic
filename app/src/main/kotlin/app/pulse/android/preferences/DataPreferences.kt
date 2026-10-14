@@ -26,6 +26,8 @@ object DataPreferences : GlobalPreferencesHolder() {
     val homeFeedCacheDaysProperty = int(7)
     var homeFeedCacheDays by homeFeedCacheDaysProperty
     var versionCheckPeriod by enum(VersionCheckPeriod.Daily)
+    var ytDlpUpdate by enum(VersionCheckPeriod.Daily)
+    var pendingYtDlpVersion by string("")
     var autoSyncPlaylists by boolean(true)
     var pendingUpdateVersion by string("")
     var pendingUpdateUrl by string("")

@@ -1,6 +1,7 @@
 package app.pulse.android.service
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -11,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.pulse.android.BuildConfig
+import app.pulse.android.Dependencies
 import app.pulse.android.preferences.DataPreferences
 import app.pulse.core.data.utils.Version
 import app.pulse.core.data.utils.version
@@ -110,5 +112,37 @@ class VersionCheckWorker(
             result.isSuccess -> Result.success()
             else -> Result.failure()
         }
+    }
+}
+
+class YtDlpUpdateWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
+
+    companion object {
+        const val WORK_TAG = "ytdlp_update_worker"
+
+        fun executeOneTime(context: Context) {
+            val request = OneTimeWorkRequestBuilder<YtDlpUpdateWorker>()
+                .addTag(WORK_TAG)
+                .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "${WORK_TAG}_onetime",
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+        }
+    }
+
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        // Resolve the newest nightly and record it. The dialog installs it, because
+        // the update is mandatory, so the worker itself downloads nothing.
+        val latest = Dependencies.ytDlpUpdateAvailable()
+        if (latest != null) DataPreferences.pendingYtDlpVersion = latest
+        Log.i("MusicEngine", "yt-dlp update check: latest=$latest")
+
+        Result.success()
     }
 }

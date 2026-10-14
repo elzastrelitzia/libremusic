@@ -104,6 +104,7 @@ import app.pulse.android.ui.components.themed.LinearProgressIndicator
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
+import app.pulse.android.ui.components.themed.YtDlpUpdateDialog
 import app.pulse.core.ui.utils.isLandscape
 
 import app.pulse.android.ui.screens.albumRoute
@@ -265,6 +266,13 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
             if (app.pulse.android.preferences.DataPreferences.versionCheckPeriod != app.pulse.android.preferences.DataPreferences.VersionCheckPeriod.Off) {
                 kotlinx.coroutines.delay(10_000)
                 app.pulse.android.service.VersionCheckWorker.executeOneTime(this@MainActivity.applicationContext)
+            }
+        }
+
+        LaunchedEffect(app.pulse.android.preferences.DataPreferences.ytDlpUpdate) {
+            if (app.pulse.android.preferences.DataPreferences.ytDlpUpdate != app.pulse.android.preferences.DataPreferences.VersionCheckPeriod.Off) {
+                kotlinx.coroutines.delay(10_000)
+                app.pulse.android.service.YtDlpUpdateWorker.executeOneTime(this@MainActivity.applicationContext)
             }
         }
 
@@ -447,6 +455,15 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         DataPreferences.pendingUpdateVersion = ""
                         DataPreferences.pendingUpdateUrl = ""
                     }
+                )
+            }
+
+            // Shown only once the app-update prompt is gone, so the two never stack.
+            val pendingYtDlp = DataPreferences.pendingYtDlpVersion
+            if (pendingVersion.isEmpty() && pendingYtDlp.isNotEmpty()) {
+                YtDlpUpdateDialog(
+                    version = pendingYtDlp,
+                    onDismiss = { DataPreferences.pendingYtDlpVersion = "" }
                 )
             }
 
@@ -752,6 +769,14 @@ object Dependencies {
             }
             .getOrDefault(false)
     }
+
+    /** The newest yt-dlp version if it differs from the installed one, else null. */
+    fun ytDlpUpdateAvailable(): String? = runCatching {
+        module.callAttr("update_available").toString().ifBlank { null }
+    }.onFailure {
+        it.printStackTrace()
+        Log.e("MusicEngine", "yt-dlp update check failed", it)
+    }.getOrNull()
 
     /** Component versions for the About screen, as ordered name/version pairs. */
     fun componentInfo(): List<Pair<String, String>> = runCatching {
