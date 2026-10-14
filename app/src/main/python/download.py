@@ -18,6 +18,7 @@ WHEEL_SUFFIX = "-none-any.whl"
 
 
 def download(quickjs_bin: str, video_id: str) -> str:
+    _restore()
     import yt_dlp  # imported per call so an in-app upgrade takes effect
 
     opts = {
@@ -33,6 +34,7 @@ def upgrade(package_name="yt-dlp"):
 
     Returns True on success; raises on failure so the Java caller can report it.
     """
+    global _restored
     dest_root = os.path.join(os.environ["HOME"], "ytdlp")
     os.makedirs(dest_root, exist_ok=True)
     print(f"[yt-dlp] upgrade requested: {package_name} -> {dest_root}")
@@ -44,6 +46,7 @@ def upgrade(package_name="yt-dlp"):
             installed.append(result)
 
     _activate(dest_root, installed)
+    _restored = True
 
     # Drop the loaded module so the next `import yt_dlp` picks up the new one.
     for name in [n for n in list(sys.modules) if n == "yt_dlp" or n.startswith("yt_dlp.")]:
@@ -122,6 +125,39 @@ def _activate(dest_root, installed):
     print(f"[yt-dlp] sys.path: {[d for _, _, d in installed]}")
 
 
+_restored = False
+
+
+def _restore():
+    """Put the wheels installed under $HOME back on sys.path at process start.
+
+    sys.path is per-process, so upgrade()'s activation is lost when the app
+    restarts and the app silently falls back to the bundled copy. Run this
+    before any yt_dlp import.
+    """
+    global _restored
+    if _restored:
+        return
+    _restored = True
+
+    dest_root = os.path.join(os.environ["HOME"], "ytdlp")
+    installed = [e for e in (_existing(p, dest_root) for p in PACKAGES) if e is not None]
+    if not installed:
+        return
+
+    for _, _, dest in reversed(installed):
+        while dest in sys.path:
+            sys.path.remove(dest)
+        sys.path.insert(0, dest)
+
+    # The bundled module may already be imported; drop it so the next import
+    # resolves to the restored wheel.
+    for name in [n for n in list(sys.modules) if n == "yt_dlp" or n.startswith("yt_dlp.")]:
+        del sys.modules[name]
+
+    print(f"[yt-dlp] restored: {[d for _, _, d in installed]}")
+
+
 def update_available():
     """Return the newest yt-dlp version if it differs from what is installed, else ''.
 
@@ -160,6 +196,7 @@ def components():
     out = [["Python", platform.python_version()]]
 
     try:
+        _restore()
         import yt_dlp
         root = os.path.join(os.environ["HOME"], "ytdlp")
         origin = "upgraded" if (yt_dlp.__file__ or "").startswith(root) else "bundled"
@@ -190,5 +227,6 @@ def _package_version(dist, module):
 
 
 def warm_up():
+    _restore()
     import yt_dlp
     print("Python Music Engine: Warmed up and ready.")
