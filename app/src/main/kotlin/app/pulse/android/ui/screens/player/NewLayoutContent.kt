@@ -45,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,6 +62,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
@@ -107,8 +109,11 @@ import app.pulse.core.ui.colorPaletteOf
 import app.pulse.android.Database
 import app.pulse.android.service.LOCAL_KEY_PREFIX
 import app.pulse.android.transaction
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlin.math.roundToInt
+
+private const val CONTROLS_AUTO_HIDE_MS = 3_000L
 
 @Composable
 fun NewLayoutContent(
@@ -135,6 +140,27 @@ fun NewLayoutContent(
     val shouldBePlaying = player.shouldBePlaying
     val isBuffering = player.rememberIsBuffering() ||
         (shouldBePlaying && player.playbackState != Player.STATE_READY)
+
+    var controlsVisible by remember { mutableStateOf(true) }
+    var lastTouchAt by remember { mutableLongStateOf(0L) }
+
+    val controlsEnabled = !isShowingLyrics || controlsVisible
+    val controlsAutoHide = isShowingLyrics && shouldBePlaying && !isBuffering
+    val controlsAlpha by animateFloatAsState(
+        targetValue = if (controlsEnabled) 1f else 0f,
+        label = "controlsAlpha"
+    )
+
+    LaunchedEffect(controlsAutoHide, controlsVisible, lastTouchAt) {
+        if (!controlsAutoHide) {
+            controlsVisible = true
+            return@LaunchedEffect
+        }
+        if (!controlsVisible) return@LaunchedEffect
+        delay(CONTROLS_AUTO_HIDE_MS)
+        controlsVisible = false
+    }
+
     val metadata = remember(mediaItem) { mediaItem?.mediaMetadata }
     val mediaId = mediaItem?.mediaId ?: return
     val artworkUri = remember(mediaId) {
@@ -256,6 +282,19 @@ fun NewLayoutContent(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.any { it.pressed }) {
+                            controlsVisible = true
+
+                            val now = System.currentTimeMillis()
+                            if (now - lastTouchAt > 1_000) lastTouchAt = now
+                        }
+                    }
+                }
+            }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -436,10 +475,109 @@ fun NewLayoutContent(
                 val queueListState = rememberLazyListState()
                 var hasScrolledQueueToCurrent by remember { mutableStateOf(false) }
 
+                // scrim that belongs to the controls
+                val controlsScrim = if (isShowingLyrics) {
+                    Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.15f to gradientEndColor,
+                                1f to gradientEndColor
+                            )
+                        )
+                        .padding(top = 56.dp)
+                } else Modifier
+
+                val bottomControls: @Composable () -> Unit = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(controlsScrim)
+                    ) {
+                        if (uiMedia != null) {
+                            Box(modifier = Modifier.padding(horizontal = 48.dp)) {
+                                SeekBar(
+                                    binder = binder,
+                                    position = position,
+                                    media = uiMedia,
+                                    alwaysShowDuration = true,
+                                    color = colorPalette.accent,
+                                    enabled = controlsEnabled,
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = 4.dp)
+                        ) {
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Image(
+                                painter = painterResource(R.drawable.play_skip_back),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(colorPalette.accent),
+                                modifier = Modifier
+                                    .clickable(enabled = controlsEnabled) { player.forceSeekToPrevious() }
+                                    .size(38.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(48.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clickable(enabled = controlsEnabled) {
+                                        if (shouldBePlaying) player.pause()
+                                        else {
+                                            if (player.playbackState == Player.STATE_IDLE) player.prepare()
+                                            player.play()
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isBuffering && shouldBePlaying) {
+                                    app.pulse.android.ui.components.themed.CircularProgressIndicator(
+                                        modifier = Modifier.size(44.dp),
+                                        color = colorPalette.accent
+                                    )
+                                } else {
+                                    Image(
+                                        painter = if (shouldBePlaying) painterResource(R.drawable.pause)
+                                        else painterResource(R.drawable.play),
+                                        contentDescription = null,
+                                        colorFilter = ColorFilter.tint(colorPalette.accent),
+                                        modifier = Modifier.size(44.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(48.dp))
+
+                            Image(
+                                painter = painterResource(R.drawable.play_skip_forward),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(colorPalette.accent),
+                                modifier = Modifier
+                                    .clickable(enabled = controlsEnabled) { player.forceSeekToNext() }
+                                    .size(38.dp)
+                            )
+
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+
+                        Spacer(modifier = Modifier.height(162.dp))
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = if (isShowingLyrics || isShowingQueue) 16.dp else 0.dp)
                         .weight(1f)
                 ) {
                     if (isShowingLyrics) Lyrics(
@@ -467,10 +605,19 @@ fun NewLayoutContent(
                         }
                         QueueOverlay(
                             binder = binder,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
                             onDismiss = { onShowQueue(false) },
                             lazyListState = queueListState
                         )
+                    }
+
+                    if (isShowingLyrics) Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .alpha(controlsAlpha)
+                    ) {
+                        bottomControls()
                     }
                 }
 
@@ -513,83 +660,7 @@ fun NewLayoutContent(
                         )
                 }
 
-                if (uiMedia != null) {
-                    Box(modifier = Modifier.padding(horizontal = 48.dp)) {
-                        SeekBar(
-                            binder = binder,
-                            position = position,
-                            media = uiMedia,
-                            alwaysShowDuration = true,
-                            color = colorPalette.accent,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 4.dp)
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Image(
-                        painter = painterResource(R.drawable.play_skip_back),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorPalette.accent),
-                        modifier = Modifier
-                            .clickable { player.forceSeekToPrevious() }
-                            .size(38.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(48.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clickable {
-                                if (shouldBePlaying) player.pause()
-                                else {
-                                    if (player.playbackState == Player.STATE_IDLE) player.prepare()
-                                    player.play()
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isBuffering && shouldBePlaying) {
-                            app.pulse.android.ui.components.themed.CircularProgressIndicator(
-                                modifier = Modifier.size(44.dp),
-                                color = colorPalette.accent
-                            )
-                        } else {
-                            Image(
-                                painter = if (shouldBePlaying) painterResource(R.drawable.pause)
-                                else painterResource(R.drawable.play),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(colorPalette.accent),
-                                modifier = Modifier.size(44.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(48.dp))
-
-                    Image(
-                        painter = painterResource(R.drawable.play_skip_forward),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorPalette.accent),
-                        modifier = Modifier
-                            .clickable { player.forceSeekToNext() }
-                            .size(38.dp)
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-
-                Spacer(modifier = Modifier.height(162.dp))
+                if (!isShowingLyrics) bottomControls()
             }
 
             val navBottomPadding = WindowInsets.navigationBars
@@ -602,6 +673,7 @@ fun NewLayoutContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .alpha(controlsAlpha)
                     .padding(bottom = navBottomPadding)
             ) {
                 Spacer(modifier = Modifier.height(28.dp))
@@ -609,6 +681,7 @@ fun NewLayoutContent(
                 NewLayoutVolumeSlider(
                     context = context,
                     colorPalette = colorPalette,
+                    enabled = controlsEnabled,
                     modifier = Modifier
                         .padding(horizontal = 48.dp)
                         .height(24.dp)
@@ -629,7 +702,10 @@ fun NewLayoutContent(
                             else colorPalette.accent.copy(alpha = 0.25f)
                         ),
                         modifier = Modifier
-                            .clickable(enabled = lyricsReady, onClick = onLyricsClick)
+                            .clickable(
+                                enabled = controlsEnabled && lyricsReady,
+                                onClick = onLyricsClick
+                            )
                             .size(24.dp)
                     )
 
@@ -638,7 +714,7 @@ fun NewLayoutContent(
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(colorPalette.accent),
                         modifier = Modifier
-                            .clickable(onClick = onQueueClick)
+                            .clickable(enabled = controlsEnabled, onClick = onQueueClick)
                             .size(24.dp)
                     )
 
@@ -647,7 +723,7 @@ fun NewLayoutContent(
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(colorPalette.accent),
                         modifier = Modifier
-                            .clickable(onClick = onMenuLaunch)
+                            .clickable(enabled = controlsEnabled, onClick = onMenuLaunch)
                             .size(24.dp)
                     )
                 }
@@ -660,6 +736,7 @@ fun NewLayoutContent(
 private fun NewLayoutVolumeSlider(
     context: Context,
     colorPalette: app.pulse.core.ui.ColorPalette,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
@@ -701,7 +778,8 @@ private fun NewLayoutVolumeSlider(
             modifier = Modifier
                 .weight(1f)
                 .height(barHeight * 2)
-                .pointerInput(Unit) {
+                .pointerInput(enabled) {
+                    if (!enabled) return@pointerInput
                     detectTapGestures { offset ->
                         val newFraction = (offset.x / size.width).coerceIn(0f, 1f)
                         val newVol = (newFraction * maxVolume).roundToInt()
@@ -709,7 +787,8 @@ private fun NewLayoutVolumeSlider(
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
                     }
                 }
-                .pointerInput(Unit) {
+                .pointerInput(enabled) {
+                    if (!enabled) return@pointerInput
                     detectHorizontalDragGestures(
                         onDragStart = { isDragging = true },
                         onHorizontalDrag = { _, delta ->

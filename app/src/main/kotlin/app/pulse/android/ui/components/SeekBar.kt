@@ -76,6 +76,7 @@ fun SeekBar(
     isActive: Boolean = binder.player.isPlaying,
     alwaysShowDuration: Boolean = false,
     scrubberRadius: Dp = 8.dp,
+    enabled: Boolean = true,
     range: ClosedRange<Long> = 0L..media.duration
 ) {
     var scrubbingPosition by remember(media) { mutableStateOf<Long?>(null) }
@@ -97,7 +98,8 @@ fun SeekBar(
     }
 
     val innerModifier = modifier
-        .pointerInput(range) {
+        .pointerInput(range, enabled) {
+            if (!enabled) return@pointerInput
             if (range.endInclusive < range.start) return@pointerInput
 
             detectDrags(
@@ -108,7 +110,8 @@ fun SeekBar(
                 onSeekEnd = onSeekEnd
             )
         }
-        .pointerInput(range) {
+        .pointerInput(range, enabled) {
+            if (!enabled) return@pointerInput
             detectTaps(
                 range = range,
                 onSeekStart = onSeekStart,
