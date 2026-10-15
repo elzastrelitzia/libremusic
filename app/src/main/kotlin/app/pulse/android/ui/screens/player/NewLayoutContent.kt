@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -148,6 +149,7 @@ fun NewLayoutContent(
     val controlsAutoHide = isShowingLyrics && shouldBePlaying && !isBuffering
     val controlsAlpha by animateFloatAsState(
         targetValue = if (controlsEnabled) 1f else 0f,
+        animationSpec = tween(durationMillis = 328),
         label = "controlsAlpha"
     )
 
