@@ -651,11 +651,20 @@ fun Lyrics(
                         if (lazyListState.isScrollInProgress) continue
 
                         val targetIndex = currentSynchronizedLyrics.index + 1
-                        lazyListState.centerActiveItem(
-                            targetIndex,
-                            animated = targetIndex != lastIndex,
-                            seek = abs(targetIndex - lastIndex) > 1
-                        )
+                        try {
+                            lazyListState.centerActiveItem(
+                                targetIndex,
+                                animated = targetIndex != lastIndex,
+                                seek = abs(targetIndex - lastIndex) > 1
+                            )
+                        } catch (e: CancellationException) {
+                            // user drag or fling scrolls at UserInput priority,
+                            // so MutatorMutex cancels our lower priority
+                            // mutation and throws here. That kills only the
+                            // mutation, not this effect, rethrow only when our
+                            // own scope is gone, otherwise keep following.
+                            ensureActive()
+                        }
                         lastIndex = targetIndex
                     }
                 }
