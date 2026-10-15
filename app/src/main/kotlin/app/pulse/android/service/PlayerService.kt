@@ -276,11 +276,11 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             // block bad client and re-prepare on 403
             if (error.findCause<InvalidResponseCodeException>()?.responseCode == 403 && mediaId != null) {
+                log403Reason(error)
+                // Drop the dead URL (memory + DB) so the re-prepare below mints a
+                // fresh one from yt-dlp.
                 coroutineScope.launch {
-                    withTimeoutOrNull(10_000L) {
-                        blockStreamClientOn403(mediaId)
-                        resolveVerifiedStream(mediaId)
-                    }
+                    withTimeoutOrNull(10_000L) { dropCachedUrl(mediaId) }
                 }
             }
             // re-prepare so the player is ready for the next transition
@@ -337,7 +337,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var sponsorBlockJob: Job? = null
     private var preFetchJob: Job? = null
     private var preloadJob: Job? = null
-    private var urlRefreshJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -496,8 +495,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             subscribe(PlayerPreferences.volumeNormalizationBaseGainProperty) { maybeNormalizeVolume() }
             subscribe(PlayerPreferences.volumeNormalizationProperty) { maybeNormalizeVolume() }
             subscribe(PlayerPreferences.sponsorBlockEnabledProperty) { maybeSponsorBlock() }
-
-            startUrlRefreshJob()
 
             launch {
                 val audioManager = getSystemService<AudioManager>()
@@ -717,6 +714,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 403
         ) {
+            log403Reason(error)
             val mediaId = player.currentMediaItem?.mediaId?.videoId
             if (mediaId != null && mediaId == recovery403MediaId) recovery403Attempts++
             else {
@@ -726,22 +724,18 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             if (recovery403Attempts <= MAX_403_RECOVERIES) {
                 val attempt = recovery403Attempts
-                // resolve a fresh URL in the background so the player is ready for the next transition.
-                mediaId?.let { uriCache.remove(it) }
                 // cancel any in-flight recovery for this mediaId
                 recoveryJob?.cancel()
                 recoveryJob = coroutineScope.launch {
                     // back off a little more each attempt so a struggling item
                     // does not hammer the resolver.
                     if (attempt > 1) delay(1_500L * attempt)
-                    val freshUrl = mediaId != null && withTimeoutOrNull(10_000L) {
-                        blockStreamClientOn403(mediaId)
-                        resolveVerifiedStream(mediaId) != null
-                    } == true
+                    // Drop the dead URL, in memory and in the DB, so the prepare
+                    // below mints a fresh one from yt-dlp.
+                    mediaId?.let { withTimeoutOrNull(10_000L) { dropCachedUrl(it) } }
                     Log.w(
                         TAG,
-                        "403 recovery ${mediaId ?: "?"} freshUrl=$freshUrl " +
-                            "fading=$fading attempt=$attempt"
+                        "403 recovery ${mediaId ?: "?"} fading=$fading attempt=$attempt"
                     )
                     // Skip re-prepare if crossfade completed while resolving —
                     // the old player is now silent and will be re-prepared
@@ -845,30 +839,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         Regex("[?&]c=([^&]+)").find(url)?.groupValues?.getOrNull(1)
             ?.let { if (it == "WEB") "WEB_REMIX" else it }
 
-    private fun startUrlRefreshJob() {
-        urlRefreshJob?.cancel()
-        urlRefreshJob = coroutineScope.launch {
-            while (isActive) {
-                delay(60_000) // check every minute
-                val expiring = uriCache.expiringSoon()
-                for (entry in expiring) {
-                    val expiresIn = entry.expiresAt?.let { (it - System.currentTimeMillis()) / 1000 } ?: continue
-                    Log.d(TAG, "refreshing URL for ${entry.key} (expires in ${expiresIn}s)")
-                    try {
-                        val body = Innertube.player(PlayerBody(videoId = entry.key))?.getOrNull() ?: continue
-                        val format = body.streamingData?.highestQualityFormat ?: continue
-                        val url = format.url ?: continue
-                        uriCache.update(key = entry.key, meta = format.contentLength, uri = url.toUri())
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.w(TAG, "URL refresh failed for ${entry.key}", e)
-                    }
-                }
-            }
-        }
-    }
-
     private fun maybeRecoverPlaybackError() {
         if (player.playerError != null) player.prepare()
     }
@@ -959,6 +929,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         // firing during active decode tripped the LMK on low-RAM devices (the +5s
         // version killed the app at exactly the 5s mark). Innertube only never
         // yt-dlp here, python during playback is the same LMK trip.
+        //
+        // This is the one deliberate exception to yt-dlp primary: the URL is
+        // probe-verified below, so a gated mint never reaches the cache. It keeps
+        // the boundary seamless; yt-dlp primary still covers every cold resolve.
         preloadJob = coroutineScope.launch {
             delay(1_500)
             try {
@@ -970,7 +944,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 // would seed the silent player with a doomed stream at fade start.
                 // On a 403 the minting client is blocked here, so the fade and the
                 // boundary resolve skip it and land on the next client instead of
-                // the slow yt-dlp rescue.
+                // paying for a cold yt-dlp resolve.
                 if (probeStreamUrl(videoId, url) != null) return@launch
 
                 uriCache.push(key = videoId, meta = format.contentLength, uri = url.toUri())
@@ -1040,27 +1014,38 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 
-    // Attribute a 403 to the client that minted the URL (stamped at resolve
-    // time), block it for a backoff, rotate the visitor, and drop the dead URL
-    // from the DB. Returns the blocked client name, null when unattributable.
-    private suspend fun blockStreamClientOn403(mediaId: String): String? =
-        withContext(Dispatchers.IO) {
-            val format = Database.formatSync(mediaId)
-            val clientName = Innertube.takeResolvedStreamClient(mediaId)
-                ?: format?.url?.let(::clientNameFromUrl)
-            if (clientName != null) {
-                Innertube.markStreamClientFailed(mediaId, clientName)
-                Innertube.invalidateVisitorData()
-                format?.url?.let { Database.insert(format.copy(url = null)) }
-            }
-            clientName
-        }
+    // Log the CDN's own reason for a 403 so it can be classified (gated mint vs
+    // dead signature) instead of guessed. Cheap and worth keeping.
+    private fun log403Reason(error: PlaybackException) {
+        val cause = error.findCause<InvalidResponseCodeException>() ?: return
+        val body = runCatching { cause.responseBody?.toString(Charsets.UTF_8) }
+            .getOrNull()
+            ?.replace('\n', ' ')
+            ?.take(300)
+        Log.w(
+            TAG,
+            "403 detail code=${cause.responseCode} message=${cause.responseMessage} " +
+                "body=$body headers=${cause.headerFields}"
+        )
+    }
 
-    // Resolve and probe-verify a stream URL in the background. Each poisoned
-    // client is blocked (in probeStreamUrl) so the next resolve skips it; the
-    // first verified URL is cached for the players' resolvers to pick up.
+    // Drop the cached URL for an item, in memory and in the DB, so the resolver
+    // mints a fresh one on the next prepare. Both have to go: the resolver reads
+    // uriCache first and the persisted row second, so leaving either behind makes
+    // it reuse the dead URL.
+    private suspend fun dropCachedUrl(mediaId: String) {
+        uriCache.remove(mediaId)
+        withContext(Dispatchers.IO) {
+            Database.formatSync(mediaId)?.let { Database.insert(it.copy(url = null)) }
+        }
+    }
+
+    // Resolve and probe-verify a stream URL through the Innertube ladder. Each
+    // poisoned client is blocked (in probeStreamUrl) so the next attempt skips
+    // it; the first verified URL is cached for the players' resolver to pick up.
     // Returns null when no client produced a verified URL (all blocked or a
-    // transient failure), the resolver's own ladder then falls to yt-dlp.
+    // transient failure). Used as the resolver's fallback when yt-dlp does not
+    // produce a URL.
     // Guard-clearing is deliberately left to the caller: a probe outcome alone
     // is not enough to make a fade refire worthwhile (see silentGuard).
     private suspend fun resolveVerifiedStream(mediaId: String): Format? {
@@ -1771,7 +1756,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             },
             context = applicationContext,
             cache = cache,
-            uriCache = uriCache
+            uriCache = uriCache,
+            resolveFallback = { resolveVerifiedStream(it) }
         ),
         /* extractorsFactory = */ DefaultExtractorsFactory()
     ).setLoadErrorHandlingPolicy(
@@ -2077,7 +2063,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             cache: Cache,
             chunkLength: Long? = DEFAULT_CHUNK_LENGTH,
             findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
-            uriCache: UriCache<String, Long?> = UriCache()
+            uriCache: UriCache<String, Long?> = UriCache(),
+            // Innertube fallback for when yt-dlp cannot produce a URL. The
+            // caller probe-verifies it, so a returned URL is playable.
+            resolveFallback: suspend (videoId: String) -> Format? = { null }
         ): DataSource.Factory = ResolvingDataSource.Factory(
             ConditionalCacheDataSourceFactory(
                 cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
@@ -2120,48 +2109,63 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                         .ranged(format.contentLength)
                 }
             }.getOrNull() ?: run {
+                // yt-dlp is primary rn. It ships the player clients YouTube still
+                // accepts and the JS challenge solver, so its URLs are gated far
+                // less often than a hand-kept Innertube ladder. It costs python
+                // startup per cold resolve, which the caller accepts in exchange
+                // for the 403 rate.
                 val info = runBlocking(Dispatchers.IO) {
-                    // disable innertube for now, will be enabled if needed
                     runCatching { Dependencies.runDownload(mediaId) }
                         .mapCatching { YouTubeDLResponse.fromString(it) }
                         .also { it.exceptionOrNull()?.printStackTrace() }
                         .getOrNull()
                 }
                 val uri = runCatching { info?.url?.toUri() }.getOrNull()
-                    ?: throw UnplayableException()
-                val format = info?.formats?.firstOrNull { it.formatId == info.formatId }
+                if (uri != null) {
+                    val format = info?.formats?.firstOrNull { it.formatId == info.formatId }
 
-                val mediaItem = runCatching {
-                    runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
-                }.getOrNull()
+                    val mediaItem = runCatching {
+                        runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
+                    }.getOrNull()
 
-                transaction {
-                    runCatching {
-                        mediaItem?.let(Database::insert)
-                        Database.insert(
-                            Format(
-                                songId = mediaId,
-                                itag = info?.formatId?.toIntOrNull(),
-                                mimeType = null,
-                                bitrate = format?.abr?.let { it * 1000 }?.toLong(),
-                                loudnessDb = null,
-                                contentLength = info?.fileSize,
-                                lastModified = null,
-                                url = uri.toString()
+                    transaction {
+                        runCatching {
+                            mediaItem?.let(Database::insert)
+                            Database.insert(
+                                Format(
+                                    songId = mediaId,
+                                    itag = info?.formatId?.toIntOrNull(),
+                                    mimeType = null,
+                                    bitrate = format?.abr?.let { it * 1000 }?.toLong(),
+                                    loudnessDb = null,
+                                    contentLength = info?.fileSize,
+                                    lastModified = null,
+                                    url = uri.toString()
+                                )
                             )
-                        )
+                        }
                     }
+
+                    uriCache.push(
+                        key = mediaId,
+                        meta = info?.fileSize,
+                        uri = uri
+                    )
+
+                    dataSpec
+                        .withUri(uri)
+                        .ranged(info?.fileSize)
+                } else {
+                    // Innertube as fallback, probe-verified. Covers a yt-dlp
+                    // regression or an id its extractor cannot handle.
+                    val fallback = runBlocking(Dispatchers.IO) { resolveFallback(mediaId) }
+                    val fallbackUri = runCatching { fallback?.url?.toUri() }.getOrNull()
+                        ?: throw UnplayableException()
+
+                    dataSpec
+                        .withUri(fallbackUri)
+                        .ranged(fallback?.contentLength)
                 }
-
-                uriCache.push(
-                    key = mediaId,
-                    meta = info?.fileSize,
-                    uri = uri
-                )
-
-                dataSpec
-                    .withUri(uri)
-                    .ranged(info?.fileSize)
             }
         }
     }
