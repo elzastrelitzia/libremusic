@@ -1027,6 +1027,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             "403 detail code=${cause.responseCode} message=${cause.responseMessage} " +
                 "body=$body headers=${cause.headerFields}"
         )
+        Log.w(TAG, "403 device addresses ${localAddresses()}")
     }
 
     // Drop the cached URL for an item, in memory and in the DB, so the resolver
