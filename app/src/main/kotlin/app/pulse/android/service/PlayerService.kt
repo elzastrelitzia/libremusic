@@ -17,6 +17,7 @@ import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.PresetReverb
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
+import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -130,6 +131,7 @@ import app.pulse.providers.sponsorblock.SponsorBlock
 import app.pulse.providers.sponsorblock.models.Action
 import app.pulse.providers.sponsorblock.models.Category
 import app.pulse.providers.sponsorblock.requests.segments
+import java.net.NetworkInterface
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -336,7 +338,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var volumeNormalizationJob: Job? = null
     private var sponsorBlockJob: Job? = null
     private var preFetchJob: Job? = null
-    private var preloadJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -557,7 +558,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             loudnessEnhancer?.release()
             preFetchJob?.cancel()
-            preloadJob?.cancel()
             preferenceUpdaterJob?.cancel()
 
             coroutineScope.cancel()
@@ -893,14 +893,19 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 
+    // Warm the next track's artwork only. The stream URL is deliberately not
+    // resolved here cuz the only preload that could run during playback is
+    // Innertube (a python resolve trips the LMK on low-RAM devices), and
+    // Innertube-minted URLs are the ones the CDN revokes mid-song, so the
+    // preload was feeding the player a shorter-lived URL than yt-dlp would.
+    // Every resolve is now a cold yt-dlp one, at the cost of a few seconds at
+    // each track boundary.
     private fun maybePreloadNext() {
-        preloadJob?.cancel()
-
         if (!player.hasNextMediaItem()) return
         val next = player.getMediaItemAt(player.nextMediaItemIndex)
         if (next.isLocal) return
         // Cold start the timeline can still be settling (current index -1), which
-        // makes "next" resolve to the current song skip the duplicate resolve.
+        // makes "next" resolve to the current song.
         if (next.mediaId == player.currentMediaItem?.mediaId) return
 
         // Warm Coil's cache with the next song's fullscreen artwork so the
@@ -918,52 +923,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .memoryCacheKey(url)
                     .build()
             )
-        }
-
-        val videoId = next.mediaId.videoId
-        if (uriCache[videoId] != null) return
-
-        // Resolve the next track's stream URL ahead of time so the transition
-        // finds it in uriCache and skips the resolve wait. Run it shortly after
-        // the current song's resolve window (codec not up yet the calm moment):
-        // firing during active decode tripped the LMK on low-RAM devices (the +5s
-        // version killed the app at exactly the 5s mark). Innertube only never
-        // yt-dlp here, python during playback is the same LMK trip.
-        //
-        // This is the one deliberate exception to yt-dlp primary: the URL is
-        // probe-verified below, so a gated mint never reaches the cache. It keeps
-        // the boundary seamless; yt-dlp primary still covers every cold resolve.
-        preloadJob = coroutineScope.launch {
-            delay(1_500)
-            try {
-                val body = Innertube.player(PlayerBody(videoId = videoId))?.getOrNull() ?: return@launch
-                val format = body.streamingData?.highestQualityFormat ?: return@launch
-                val url = format.url ?: return@launch
-
-                // Verify before caching: a URL that 403s at fetch time (POT-gated)
-                // would seed the silent player with a doomed stream at fade start.
-                // On a 403 the minting client is blocked here, so the fade and the
-                // boundary resolve skip it and land on the next client instead of
-                // paying for a cold yt-dlp resolve.
-                if (probeStreamUrl(videoId, url) != null) return@launch
-
-                uriCache.push(key = videoId, meta = format.contentLength, uri = url.toUri())
-                runCatching {
-                    Database.insert(
-                        Format(
-                            songId = videoId,
-                            mimeType = format.mimeType,
-                            contentLength = format.contentLength,
-                            url = url
-                        )
-                    )
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // A failed preload must never take down playback.
-                Log.w(TAG, "preload failed", e)
-            }
         }
     }
 
@@ -2040,6 +1999,47 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         // Max 403 recovery cycles per item before it is skipped as gated.
         private const val MAX_403_RECOVERIES = 3
 
+        // Last resolver line logged, so a URL is identified once rather than
+        // once per 4 MiB range request.
+        private var lastStreamLog: String? = null
+
+        // Describe the URL the CDN is about to serve. `expire` is printed as a
+        // countdown because a wall-clock stamp is unreadable across devices, and
+        // `ip` is the address the URL's signature was bound to, so a later 403
+        // can be compared against the device's addresses at that moment.
+        private fun logStreamIdentity(mediaId: String, src: String, uri: Uri) {
+            // Key on the URL, not the formatted line: the countdown ticks, which
+            // would make every re-open of the same URL a new line.
+            val key = "$mediaId $uri"
+            if (key == lastStreamLog) return
+            lastStreamLog = key
+            val left = uri.getQueryParameter("expire")
+                ?.toLongOrNull()
+                ?.let { it - System.currentTimeMillis() / 1000 }
+            Log.i(
+                TAG,
+                "stream $mediaId src=$src expireIn=${left}s " +
+                    "ip=${uri.getQueryParameter("ip") ?: "none"} " +
+                    "addr=${localAddresses()}"
+            )
+        }
+
+        private fun localAddresses(): String = runCatching {
+            val out = mutableListOf<String>()
+            val nifs = NetworkInterface.getNetworkInterfaces()
+            while (nifs.hasMoreElements() && out.size < 8) {
+                val nif = nifs.nextElement()
+                if (!nif.isUp || nif.isLoopback) continue
+                val addrs = nif.inetAddresses
+                while (addrs.hasMoreElements() && out.size < 8) {
+                    val addr = addrs.nextElement()
+                    if (addr.isLoopbackAddress) continue
+                    out += "${nif.name}/${addr.hostAddress}"
+                }
+            }
+            out.joinToString(",")
+        }.getOrElse { "err:${it.message}" }
+
         fun createDatabaseProvider(context: Context) = StandaloneDatabaseProvider(context)
         fun createCache(
             context: Context,
@@ -2078,16 +2078,17 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             val mediaId = dataSpec.key?.videoId
                 ?: error("A key must be set")
 
-            fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
-                if (chunkLength == null) return@let null
+            fun DataSpec.ranged(contentLength: Long?, src: String): DataSpec {
+                logStreamIdentity(mediaId, src, uri)
+                if (chunkLength == null || contentLength == null) return this
 
                 val start = dataSpec.uriPositionOffset
                 val length = (contentLength - start).coerceAtMost(chunkLength)
                 val rangeText = "$start-${start + length}"
 
-                this.subrange(start, length)
+                return subrange(start, length)
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
-            } ?: this
+            }
 
             if (
                 dataSpec.isLocal || (
@@ -2101,13 +2102,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             else uriCache[mediaId]?.let { cachedUri ->
                 dataSpec
                     .withUri(cachedUri.uri)
-                    .ranged(cachedUri.meta)
+                    .ranged(cachedUri.meta, "cache")
             } ?: runCatching {
                 val format = runBlocking(Dispatchers.IO) { Database.formatSync(mediaId) }
                 format?.url?.let { url ->
                     dataSpec
                         .withUri(url.toUri())
-                        .ranged(format.contentLength)
+                        .ranged(format.contentLength, "db")
                 }
             }.getOrNull() ?: run {
                 // yt-dlp is primary rn. It ships the player clients YouTube still
@@ -2155,7 +2156,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
                     dataSpec
                         .withUri(uri)
-                        .ranged(info?.fileSize)
+                        .ranged(info?.fileSize, "ytdlp")
                 } else {
                     // Innertube as fallback, probe-verified. Covers a yt-dlp
                     // regression or an id its extractor cannot handle.
@@ -2165,7 +2166,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
                     dataSpec
                         .withUri(fallbackUri)
-                        .ranged(fallback?.contentLength)
+                        .ranged(fallback?.contentLength, "innertube")
                 }
             }
         }
