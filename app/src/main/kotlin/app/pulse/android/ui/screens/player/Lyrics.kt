@@ -133,8 +133,8 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private const val UPDATE_DELAY = 50L
-private const val LYRICS_OFFSET_MS = 1000L
+private const val UPDATE_DELAY = 128L
+private const val LYRICS_OFFSET_MS = 512L
 
 private const val ACTIVE_LINE_SCALE = 1.05f
 
