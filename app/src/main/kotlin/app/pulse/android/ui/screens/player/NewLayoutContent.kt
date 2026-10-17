@@ -266,7 +266,13 @@ fun NewLayoutContent(
             )
             LyricsCache[mediaId] = lyrics
             transaction {
-                runCatching { Database.upsert(lyrics) }
+                runCatching {
+                    // Lyrics has a foreign key on songId, without the song row the
+                    // upsert throws and runCatching hides it, so lyrics survive only
+                    // in LyricsCache and the overlay refetches them on play.
+                    mediaItem?.let { Database.insert(it) }
+                    Database.upsert(lyrics)
+                }
             }
         }
     }
