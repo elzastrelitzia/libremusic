@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.pulse.android.Database
 import app.pulse.android.LocalPlayerAwareWindowInsets
@@ -66,6 +68,7 @@ import app.pulse.android.utils.disabled
 import app.pulse.android.utils.forcePlay
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.secondary
+import app.pulse.android.utils.semiBold
 import app.pulse.android.utils.thumbnail
 import app.pulse.compose.persist.persist
 import app.pulse.compose.persist.persistList
@@ -133,6 +136,10 @@ fun OnlineSearch(
         )?.map { page -> page?.items?.take(5) }
     }
 
+    // one source for the history artwork slot, so the requested and displayed
+    // sizes cannot drift apart
+    val historyThumbnailSize = 64.dp
+
     val lazyListState = rememberLazyListState()
 
     LazyColumn(
@@ -189,9 +196,9 @@ fun OnlineSearch(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .size(64.dp)
+                        .size(historyThumbnailSize)
                 ) {
-                    val thumbnailUrl = searchQuery.thumbnailUrl.thumbnail(40.dp.px)
+                    val thumbnailUrl = searchQuery.thumbnailUrl.thumbnail(historyThumbnailSize.px)
 
                     if (thumbnailUrl != null) {
                         val context = LocalContext.current
@@ -218,13 +225,27 @@ fun OnlineSearch(
                     }
                 }
 
-                BasicText(
-                    text = searchQuery.query,
-                    style = typography.m.medium,
+                Column(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .weight(1f)
-                )
+                ) {
+                    BasicText(
+                        text = searchQuery.query,
+                        style = typography.m.medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    searchQuery.artistsText?.let { artists ->
+                        BasicText(
+                            text = artists,
+                            style = typography.xs.semiBold.secondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
 
                 Image(
                     painter = painterResource(R.drawable.close),

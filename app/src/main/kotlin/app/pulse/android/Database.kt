@@ -285,15 +285,19 @@ interface DatabaseAccessor {
     @Query("DELETE FROM QueuedMediaItem")
     fun clearQueue()
 
-
+    // Best-effort match of a history row to a local song, for its artwork and
+    // artist. Free-text queries rarely name an entity exactly, so many rows come
+    // back null and fall back to an icon and a single line.
     @Query(
         """
-        SELECT sq.id, sq.query,
-            (SELECT s.thumbnailUrl FROM Song s
-             WHERE s.title LIKE '%' || sq.query || '%'
-                OR s.artistsText LIKE '%' || sq.query || '%'
-             LIMIT 1) AS thumbnailUrl
+        SELECT sq.id, sq.query, s.thumbnailUrl, s.artistsText
         FROM SearchQuery sq
+        LEFT JOIN Song s ON s.id = (
+            SELECT s2.id FROM Song s2
+            WHERE s2.title LIKE '%' || sq.query || '%'
+               OR s2.artistsText LIKE '%' || sq.query || '%'
+            LIMIT 1
+        )
         WHERE sq.query LIKE :query
         ORDER BY sq.id DESC
         """
