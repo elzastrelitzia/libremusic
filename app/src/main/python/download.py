@@ -23,7 +23,9 @@ def download(quickjs_bin: str, video_id: str) -> str:
 
     opts = {
         'format': 'bestaudio',
-        'js_runtimes': { "quickjs": { "path": quickjs_bin } }
+        'js_runtimes': { "quickjs": { "path": quickjs_bin } },
+        # yt-dlp's default is 3.
+        'extractor_retries': 1,
     }
 
     return json.dumps(yt_dlp.YoutubeDL(opts).extract_info(video_id, download=False), indent=4)
