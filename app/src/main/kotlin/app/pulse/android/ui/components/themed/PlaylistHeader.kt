@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,13 +39,16 @@ import app.pulse.android.utils.medium
 import app.pulse.android.utils.primary
 import app.pulse.android.utils.semiBold
 import app.pulse.core.ui.LocalAppearance
-import app.pulse.core.ui.utils.px
-
-private val HeroShape = RoundedCornerShape(16.dp)
 
 /**
- * Header body shared by the online and local playlist screens: a mosaic cover,
- * the title, the song count and the shuffle / play / add row.
+ * Space above the title, roughly where the cover card used to sit, so the title
+ * reads over the mosaic instead of hugging the top bar.
+ */
+private val HeroTopPadding = 360.dp
+
+/**
+ * Header body shared by the online and local playlist screens: the title, the
+ * song count and the shuffle / play / add row, over the mosaic backdrop.
  */
 @Composable
 fun PlaylistHero(
@@ -65,29 +67,8 @@ fun PlaylistHero(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 120.dp, bottom = 24.dp)
+            .padding(top = HeroTopPadding, bottom = 24.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .aspectRatio(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            MosaicThumbnail(
-                urls = mosaicUrls,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        shape = HeroShape
-                        shadowElevation = 8.dp.toPx()
-                        clip = false
-                    }
-                    .clip(HeroShape)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         BasicText(
             text = title,
             style = typography.l.semiBold.copy(color = colorPalette.text),
