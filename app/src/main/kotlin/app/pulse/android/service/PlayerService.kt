@@ -643,10 +643,14 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         maybeProcessRadio()
 
         with(bitmapProvider) {
+            val onArtworkLoaded: (Bitmap) -> Unit = {
+                maybeShowSongCoverInLockScreen()
+                updateNotification()
+            }
             when {
-                mediaItem == null -> load(null)
-                mediaItem.mediaMetadata.artworkUri == lastUri -> bitmapProvider.load(lastUri)
-                else -> bitmapProvider.load(mediaItem.mediaMetadata.artworkUri)
+                mediaItem == null -> load(null, onArtworkLoaded)
+                mediaItem.mediaMetadata.artworkUri == lastUri -> load(lastUri, onArtworkLoaded)
+                else -> load(mediaItem.mediaMetadata.artworkUri, onArtworkLoaded)
             }
         }
 
