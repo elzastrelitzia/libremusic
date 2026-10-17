@@ -618,6 +618,11 @@ fun NewLayoutContent(
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .alpha(controlsAlpha)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {}
+                            )
                     ) {
                         bottomControls()
                     }
