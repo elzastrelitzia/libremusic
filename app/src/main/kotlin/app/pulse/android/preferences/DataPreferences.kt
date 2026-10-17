@@ -31,6 +31,7 @@ object DataPreferences : GlobalPreferencesHolder() {
     var autoSyncPlaylists by boolean(true)
     var pendingUpdateVersion by string("")
     var pendingUpdateUrl by string("")
+    var batteryPromptShown by boolean(false)
 
     enum class TopListPeriod(
         val displayName: @Composable () -> String,

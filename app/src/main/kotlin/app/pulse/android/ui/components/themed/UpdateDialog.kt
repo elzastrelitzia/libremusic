@@ -1,6 +1,8 @@
 package app.pulse.android.ui.components.themed
 
 import android.content.Intent
+import android.provider.Settings
+import androidx.core.net.toUri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,10 +37,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import app.pulse.android.Dependencies
+import app.pulse.android.preferences.DataPreferences
 import app.pulse.android.R
 import app.pulse.android.utils.medium
 import app.pulse.core.ui.LocalAppearance
@@ -427,6 +431,7 @@ internal fun AppleDialogButton(
     contentColor: Color,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    fontSize: TextUnit = 18.sp,
     onClick: () -> Unit,
 ) {
     Box(
@@ -442,7 +447,7 @@ internal fun AppleDialogButton(
             style = LocalAppearance.current.typography.s.copy(
                 color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
+                fontSize = fontSize,
             ),
         )
     }
@@ -458,6 +463,77 @@ private fun File.calculateSha256(): String {
         }
     }
     return digest.digest().joinToString("") { "%02x".format(it) }
+}
+
+@Composable
+fun BatteryOptimizationPrompt(
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val (palette, typography) = LocalAppearance.current
+
+    Dialog(onDismissRequest = {
+        DataPreferences.batteryPromptShown = true
+        onDismiss()
+    }) {
+        AppleDialogSurface {
+            Column(modifier = Modifier.width(320.dp)) {
+                BasicText(
+                    text = stringResource(R.string.battery_optimization_title),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                    style = typography.s.copy(
+                        color = palette.text,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                    ),
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                BasicText(
+                    text = stringResource(R.string.battery_optimization_body),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    style = typography.xs.medium.copy(
+                        color = palette.textSecondary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                    ),
+                )
+
+                Spacer(Modifier.height(32.dp))
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    AppleDialogButton(
+                        text = stringResource(R.string.allow),
+                        containerColor = palette.accent,
+                        contentColor = palette.onAccent,
+                        modifier = Modifier.weight(1f),
+                        fontSize = 16.sp,
+                    ) {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = "package:${context.packageName}".toUri()
+                        }
+                        context.startActivity(intent)
+                        DataPreferences.batteryPromptShown = true
+                        onDismiss()
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    AppleDialogButton(
+                        text = stringResource(R.string.later),
+                        containerColor = palette.background2,
+                        contentColor = palette.text,
+                        modifier = Modifier.weight(1f),
+                        fontSize = 16.sp,
+                    ) {
+                        DataPreferences.batteryPromptShown = true
+                        onDismiss()
+                    }
+                }
+            }
+        }
+    }
 }
 
 private suspend fun fetchChecksum(apkUrl: String): String? = withContext(Dispatchers.IO) {

@@ -93,6 +93,7 @@ import androidx.media3.common.Player
 import androidx.work.Configuration
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.preferences.DataPreferences
+import app.pulse.android.preferences.PlayerPreferences
 import app.pulse.android.preferences.UIStatePreferences
 import app.pulse.android.service.PlayerService
 import app.pulse.android.service.ServiceNotifications
@@ -105,6 +106,9 @@ import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
 import app.pulse.android.ui.components.themed.YtDlpUpdateDialog
+import app.pulse.android.ui.components.themed.BatteryOptimizationPrompt
+import androidx.compose.ui.platform.LocalContext
+import app.pulse.android.utils.isIgnoringBatteryOptimizations
 import app.pulse.core.ui.utils.isLandscape
 
 import app.pulse.android.ui.screens.albumRoute
@@ -404,6 +408,20 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         val isDownloading by downloadState.collectAsState()
 
                         HomeScreen()
+
+                        val context = LocalContext.current
+                        if (!DataPreferences.batteryPromptShown && !context.isIgnoringBatteryOptimizations) {
+                            BatteryOptimizationPrompt {
+                                DataPreferences.batteryPromptShown = true
+                            }
+                        }
+
+                        val ctx = LocalContext.current
+                        LaunchedEffect(ctx.isIgnoringBatteryOptimizations) {
+                            if (ctx.isIgnoringBatteryOptimizations && !PlayerPreferences.isInvincibilityEnabled) {
+                                PlayerPreferences.isInvincibilityEnabled = true
+                            }
+                        }
 
                         AnimatedVisibility(
                             visible = isDownloading,
