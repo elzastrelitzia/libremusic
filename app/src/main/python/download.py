@@ -17,6 +17,23 @@ PACKAGES = ("yt-dlp", "yt-dlp-ejs")
 WHEEL_SUFFIX = "-none-any.whl"
 
 
+# `extract_info` returns the whole video dict (100s of KB, every format with
+# every URL). The Kotlin `YouTubeDLResponse` reads only `id`, `format_id`,
+# `url`, `filesize`, and `formats[].{format_id,abr}`, yet the full dict is
+# stringified and copied across Chaquopy's JNI boundary on every resolve.
+# Project it down here so the payload shrinks by roughly an order of magnitude.
+_KEYS = ("id", "format_id", "url", "filesize")
+_FORMAT_KEYS = ("format_id", "abr")
+
+
+def _slim(info):
+    out = {k: info.get(k) for k in _KEYS}
+    formats = info.get("formats")
+    if formats is not None:
+        out["formats"] = [{k: f.get(k) for k in _FORMAT_KEYS} for f in formats]
+    return out
+
+
 def download(quickjs_bin: str, video_id: str) -> str:
     _restore()
     import yt_dlp  # imported per call so an in-app upgrade takes effect
@@ -28,7 +45,7 @@ def download(quickjs_bin: str, video_id: str) -> str:
         'extractor_retries': 1,
     }
 
-    return json.dumps(yt_dlp.YoutubeDL(opts).extract_info(video_id, download=False), indent=4)
+    return json.dumps(_slim(yt_dlp.YoutubeDL(opts).extract_info(video_id, download=False)))
 
 
 def upgrade(package_name="yt-dlp"):
@@ -232,3 +249,27 @@ def warm_up():
     _restore()
     import yt_dlp
     print("Python Music Engine: Warmed up and ready.")
+
+
+if __name__ == "__main__":
+    # Keeps `_slim` field-for-field in step with `YouTubeDLResponse.kt`.
+    _full = {
+        "id": "abc",
+        "format_id": "251",
+        "url": "https://x/a",
+        "filesize": 123,
+        "title": "drop me",
+        "formats": [
+            {"format_id": "251", "abr": 130.0, "url": "https://x/1", "protocol": "https"},
+            {"format_id": "140", "abr": None, "url": "https://x/2"},
+        ],
+    }
+    assert _slim(_full) == {
+        "id": "abc",
+        "format_id": "251",
+        "url": "https://x/a",
+        "filesize": 123,
+        "formats": [{"format_id": "251", "abr": 130.0}, {"format_id": "140", "abr": None}],
+    }
+    assert _slim({"id": "x", "filesize": 1}) == {"id": "x", "format_id": None, "url": None, "filesize": 1}
+    print("_slim self-check ok")
