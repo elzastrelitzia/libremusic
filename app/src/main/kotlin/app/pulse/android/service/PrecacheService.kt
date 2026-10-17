@@ -175,7 +175,8 @@ class PrecacheService : DownloadService(
                 findMediaItem = { null },
                 context = this,
                 cache = cache,
-                chunkLength = null
+                chunkLength = null,
+                resolveFallback = { PlayerService.resolveInnertubeStream(it) }
             ),
             /* executor = */ executor
         ).apply {

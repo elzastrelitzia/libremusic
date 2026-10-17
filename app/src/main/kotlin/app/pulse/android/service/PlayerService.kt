@@ -110,6 +110,7 @@ import app.pulse.android.utils.toast
 import app.pulse.compose.preferences.SharedPreferencesProperty
 import app.pulse.core.data.enums.ExoPlayerDiskCacheSize
 import app.pulse.core.data.utils.UriCache
+import app.pulse.core.data.utils.expiresInSeconds
 import androidx.media3.exoplayer.DefaultLoadControl
 import app.pulse.core.data.utils.EqualizerIntentBundleAccessor
 import app.pulse.core.ui.utils.isAtLeastAndroid10
@@ -834,10 +835,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         )
     }
-
-    private fun clientNameFromUrl(url: String): String? =
-        Regex("[?&]c=([^&]+)").find(url)?.groupValues?.getOrNull(1)
-            ?.let { if (it == "WEB") "WEB_REMIX" else it }
 
     private fun maybeRecoverPlaybackError() {
         if (player.playerError != null) player.prepare()
@@ -2003,22 +2000,93 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         // once per 4 MiB range request.
         private var lastStreamLog: String? = null
 
+        // yt-dlp is the primary minter, but nothing throttles it: every resolve
+        // and every 403 recovery calls it again, and that repeat is what got the
+        // device's egress IP rate-limited. On the first 429/bot-check signature,
+        // stop calling yt-dlp process-wide and let the Innertube fallback serve
+        // until the cooldown lapses. Normal play never reaches it.
+        //
+        // The first cooldown is short, so a momentary limit costs a minute of
+        // yt-dlp rather than ten. A repeat close to the last one doubles it, since
+        // the limiter is clearly still armed; a long quiet gap resets it, since by
+        // then the limiter has lapsed. Both bounds are arbitrary and retunable.
+        private const val YTDLP_COOLDOWN_MIN_MS = 60 * 1000L
+        private const val YTDLP_COOLDOWN_MAX_MS = 10 * 60 * 1000L
+
+        // Current cooldown length and when it was armed, on the monotonic clock so
+        // a wall-clock adjustment cannot stretch a cooldown. The deadline is their
+        // sum. A zero length at a zero time means "never armed", so the first
+        // check does not wait.
+        @Volatile
+        private var ytDlpCooldownMs = 0L
+
+        @Volatile
+        private var ytDlpCooldownSince = 0L
+
+        private val RATE_LIMIT_MARKERS = listOf(
+            "http error 429",
+            "too many requests",
+            "not a bot",
+            "sign in to confirm"
+        )
+
+        // Best effort: Chaquopy may flatten the python message, in which case
+        // this returns false and the cooldown simply never arms.
+        private fun Throwable.isRateLimit(): Boolean = generateSequence(this) { it.cause }
+            .take(10)
+            .mapNotNull { it.message ?: it.toString() }
+            .joinToString(" ")
+            .lowercase()
+            .let { text -> RATE_LIMIT_MARKERS.any { it in text } }
+
+        // The only resolve path in the app, so gating it here gates playback and
+        // precaching alike. Null on cooldown, on any failure and on an unparseable
+        // result; each of those sends the caller to the Innertube fallback.
+        private fun resolveWithYtDlp(mediaId: String): YouTubeDLResponse? {
+            val now = SystemClock.elapsedRealtime()
+            val cooldownLeft = ytDlpCooldownMs - (now - ytDlpCooldownSince)
+            if (cooldownLeft > 0) {
+                Log.i(TAG, "yt-dlp cooling down ${cooldownLeft / 1000}s, skipping for $mediaId")
+                return null
+            }
+            return runCatching { Dependencies.runDownload(mediaId) }
+                .mapCatching { YouTubeDLResponse.fromString(it) }
+                .onFailure { e ->
+                    e.printStackTrace()
+                    Log.w(TAG, "yt-dlp failed for $mediaId: ${e.message}")
+                    if (e.isRateLimit()) armYtDlpCooldown()
+                }
+                .getOrNull()
+        }
+
+        // Escalate on a repeat, reset after a long quiet gap. Only ever called
+        // from the failure path above, so the two timestamps stay self-consistent.
+        private fun armYtDlpCooldown() {
+            val now = SystemClock.elapsedRealtime()
+            ytDlpCooldownMs = if (now - ytDlpCooldownSince < YTDLP_COOLDOWN_MAX_MS) {
+                (ytDlpCooldownMs * 2).coerceIn(YTDLP_COOLDOWN_MIN_MS, YTDLP_COOLDOWN_MAX_MS)
+            } else {
+                YTDLP_COOLDOWN_MIN_MS
+            }
+            ytDlpCooldownSince = now
+            Log.w(TAG, "yt-dlp rate-limited, paused for ${ytDlpCooldownMs / 1000}s")
+        }
+
         // Describe the URL the CDN is about to serve. `expire` is printed as a
-        // countdown because a wall-clock stamp is unreadable across devices, and
-        // `ip` is the address the URL's signature was bound to, so a later 403
-        // can be compared against the device's addresses at that moment.
+        // countdown because a wall-clock stamp is unreadable across devices,
+        // `ip` is the address the URL's signature was bound to, and `c` is the
+        // client that minted it, so a later 403 can be attributed to a client.
         private fun logStreamIdentity(mediaId: String, src: String, uri: Uri) {
             // Key on the URL, not the formatted line: the countdown ticks, which
             // would make every re-open of the same URL a new line.
             val key = "$mediaId $uri"
             if (key == lastStreamLog) return
             lastStreamLog = key
-            val left = uri.getQueryParameter("expire")
-                ?.toLongOrNull()
-                ?.let { it - System.currentTimeMillis() / 1000 }
+            val left = uri.expiresInSeconds()
             Log.i(
                 TAG,
-                "stream $mediaId src=$src expireIn=${left}s " +
+                "stream $mediaId src=$src c=${clientNameFromUrl(uri.toString()) ?: "none"} " +
+                    "expireIn=${left}s " +
                     "ip=${uri.getQueryParameter("ip") ?: "none"} " +
                     "addr=${localAddresses()}"
             )
@@ -2058,6 +2126,28 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             SimpleCache(directory, cacheEvictor, createDatabaseProvider(context))
         }
 
+        // Probe-less Innertube resolve, for callers with no player guard to clear
+        // and no crossfade to protect. Innertube.player already walks the client
+        // ladder, so a poisoned client is skipped on the mint; the caller that
+        // can afford the extra round trip (resolveVerifiedStream) also probes, and
+        // blocks the client on a 403.
+        // ponytail: no probe and no caching, so a fetch-time 403 is not attributed
+        // to a client and the download simply retries. Route through
+        // resolveVerifiedStream if precache ever needs that attribution.
+        suspend fun resolveInnertubeStream(mediaId: String): Format? =
+            Innertube.player(PlayerBody(videoId = mediaId))?.getOrNull()
+                ?.streamingData?.highestQualityFormat
+                ?.let { stream ->
+                    stream.url?.let { url ->
+                        Format(
+                            songId = mediaId,
+                            mimeType = stream.mimeType,
+                            contentLength = stream.contentLength,
+                            url = url
+                        )
+                    }
+                }
+
         @Suppress("CyclomaticComplexMethod")
         fun createYouTubeDataSourceResolverFactory(
             context: Context,
@@ -2090,6 +2180,16 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
             }
 
+            // A signature past its `expire` is a guaranteed 403, and dropCachedUrl
+            // only cleans up after the fact. Refuse it here so the resolver mints
+            // a fresh one instead of handing the player a dead URL.
+            fun Uri.usable(src: String): Boolean {
+                val left = expiresInSeconds() ?: return true
+                if (left > 0) return true
+                Log.i(TAG, "skip expired $src url for $mediaId expireIn=${left}s")
+                return false
+            }
+
             if (
                 dataSpec.isLocal || (
                     chunkLength != null && cache.isCached(
@@ -2099,16 +2199,17 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     )
                     )
             ) dataSpec
-            else uriCache[mediaId]?.let { cachedUri ->
+            else uriCache[mediaId]?.takeIf { it.uri.usable("cache") }?.let { cachedUri ->
                 dataSpec
                     .withUri(cachedUri.uri)
                     .ranged(cachedUri.meta, "cache")
             } ?: runCatching {
                 val format = runBlocking(Dispatchers.IO) { Database.formatSync(mediaId) }
-                format?.url?.let { url ->
+                val url = format?.url?.toUri()?.takeIf { it.usable("db") }
+                url?.let {
                     dataSpec
-                        .withUri(url.toUri())
-                        .ranged(format.contentLength, "db")
+                        .withUri(it)
+                        .ranged(format?.contentLength, "db")
                 }
             }.getOrNull() ?: run {
                 // yt-dlp is primary rn. It ships the player clients YouTube still
@@ -2116,12 +2217,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 // less often than a hand-kept Innertube ladder. It costs python
                 // startup per cold resolve, which the caller accepts in exchange
                 // for the 403 rate.
-                val info = runBlocking(Dispatchers.IO) {
-                    runCatching { Dependencies.runDownload(mediaId) }
-                        .mapCatching { YouTubeDLResponse.fromString(it) }
-                        .also { it.exceptionOrNull()?.printStackTrace() }
-                        .getOrNull()
-                }
+                val info = runBlocking(Dispatchers.IO) { resolveWithYtDlp(mediaId) }
                 val uri = runCatching { info?.url?.toUri() }.getOrNull()
                 if (uri != null) {
                     val format = info?.formats?.firstOrNull { it.formatId == info.formatId }
@@ -2172,3 +2268,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 }
+
+private val CLIENT_PARAM = Regex("[?&]c=([^&]+)")
+
+private fun clientNameFromUrl(url: String): String? =
+    CLIENT_PARAM.find(url)?.groupValues?.getOrNull(1)
+        ?.let { if (it == "WEB") "WEB_REMIX" else it }
