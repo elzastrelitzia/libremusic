@@ -4,7 +4,7 @@
     <p style="display: inline;">Music streaming for everyone</p>
 </div>
 
-[Screenshots are available at the web!](https://elzastrelitzia.github.io/pulse-web/#screenshots)
+[Screenshots are available on the web!](https://elzastrelitzia.github.io/pulse-web/#screenshots)
 
 ## Features
 
