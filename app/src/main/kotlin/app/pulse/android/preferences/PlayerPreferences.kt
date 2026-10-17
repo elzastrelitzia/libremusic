@@ -74,7 +74,7 @@ object PlayerPreferences : GlobalPreferencesHolder() {
 
 
     var lyricsKeepScreenAwake by boolean(true)
-    var lyricsFontSize by int(24)
+    var lyricsFontSize by int(32)
     var lyricsShowSystemBars by boolean(true)
     var lyricsTranslationLanguage by enum(LyricsTranslationLanguage.Device)
     var lyricsTranslationEnabled by boolean(false)

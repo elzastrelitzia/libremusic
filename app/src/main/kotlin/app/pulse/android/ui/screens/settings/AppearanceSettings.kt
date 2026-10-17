@@ -142,7 +142,7 @@ fun AppearanceSettings() {
                 onSlide = { lyricsFontSizeValue = it },
                 onSlideComplete = { PlayerPreferences.lyricsFontSize = lyricsFontSizeValue.toInt() },
                 toDisplay = { stringResource(R.string.format_sp, it.toInt()) },
-                range = 18f..28f,
+                range = 18f..32f,
                 steps = 9
             )
 
