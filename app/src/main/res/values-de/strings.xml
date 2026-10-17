@@ -153,7 +153,8 @@
     <string name="view_album">Album ansehen</string>
     <string name="view_playlist">Wiedergabeliste ansehen</string>
     <string name="search_placeholder">Suchen…</string>
-    <string name="format_version_credits">v%1$s von Huizengek &amp; vfsfitvnm | Maintained by elza</string>
+    <string name="format_version_credits">Gepflegt von elza</string>
+    <string name="update_available_description">Eine neuere Version von libremusic ist verfügbar. Möchten Sie sie jetzt aktualisieren?</string>
     <string name="social">Soziales</string>
     <string name="contact">Kontakt</string>
     <string name="github">GitHub</string>

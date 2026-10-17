@@ -152,7 +152,8 @@
     <string name="view_album">Vaata albumit</string>
     <string name="view_playlist">Vaata Esitusloendi</string>
     <string name="search_placeholder">Sisesta nimi</string>
-    <string name="format_version_credits">v%1$s autoriks Huizengek &amp; vfsfitvnm | Maintained by elza</string>
+    <string name="format_version_credits">Haldab elza</string>
+    <string name="update_available_description">Saadaval on uuem libremusic\'i versioon. Kas soovite selle kohe värskendada?</string>
     <string name="social">Sotsiaalmeedia</string>
     <string name="contact">Kontakt</string>
     <string name="github">GitHub</string>

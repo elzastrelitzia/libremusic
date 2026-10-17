@@ -153,7 +153,8 @@
     <string name="view_album">Voir l\'album</string>
     <string name="view_playlist">Voir la playlist</string>
     <string name="search_placeholder">Chercher…</string>
-    <string name="format_version_credits">v%1$s par Huizengek &amp; vfsfitvnm | Maintained by elza</string>
+    <string name="format_version_credits">Maintenu par elza</string>
+    <string name="update_available_description">Une nouvelle version de libremusic est disponible. Voulez-vous la mettre à jour maintenant ?</string>
     <string name="social">Social</string>
     <string name="contact">Contact</string>
     <string name="github">GitHub</string>
