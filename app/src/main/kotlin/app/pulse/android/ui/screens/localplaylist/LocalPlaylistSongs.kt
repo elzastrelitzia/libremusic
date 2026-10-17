@@ -139,14 +139,11 @@ fun LocalPlaylistSongs(
         songs.mapNotNull { it.thumbnailUrl?.takeIf { u -> u.isNotEmpty() } }.take(4)
     }
 
-    var tintColor by remember { mutableStateOf(colorPalette.accent) }
-
     CollapsingHeader(
         title = playlist.name,
         lazyListState = reorderingState.lazyListState,
         headerActions = {
             PlaylistHeaderActions(
-                tintColor = tintColor,
                 shareUrl = playlist.browseId?.let {
                     "https://music.youtube.com/playlist?list=${it.removePrefix("VL")}"
                 },
@@ -239,8 +236,6 @@ Box(modifier = modifier) {
                         title = playlist.name,
                         songCount = songs.size,
                         mosaicUrls = mosaicUrls,
-                        tintColor = tintColor,
-                        onTintExtracted = { tintColor = it },
                         onShuffle = {
                             binder?.stopRadio()
                             binder?.player?.forcePlayAtIndex(
@@ -294,7 +289,7 @@ Box(modifier = modifier) {
                             ReorderHandle(
                                 reorderingState = reorderingState,
                                 index = index,
-                                color = tintColor
+                                color = colorPalette.accent
                             )
                         },
                         clip = !reorderingState.isDragging,

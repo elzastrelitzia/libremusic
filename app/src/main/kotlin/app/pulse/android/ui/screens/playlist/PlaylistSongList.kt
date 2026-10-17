@@ -150,8 +150,6 @@ fun PlaylistSongList(
 
     val (currentMediaId, playing) = playingSong(binder)
 
-    var tintColor by remember { mutableStateOf(colorPalette.accent) }
-
     val lazyListState = rememberLazyListState()
 
     CollapsingHeader(
@@ -159,7 +157,6 @@ fun PlaylistSongList(
         lazyListState = lazyListState,
         headerActions = {
             PlaylistHeaderActions(
-                tintColor = tintColor,
                 shareUrl = playlistPage?.url
                     ?: "https://music.youtube.com/playlist?list=${browseId.removePrefix("VL")}",
                 menuVisible = isMenuVisible,
@@ -230,8 +227,6 @@ fun PlaylistSongList(
                         title = playlistPage?.title ?: stringResource(R.string.unknown),
                         songCount = songs?.size ?: 0,
                         mosaicUrls = mosaicUrls,
-                        tintColor = tintColor,
-                        onTintExtracted = { tintColor = it },
                         onShuffle = {
                             val items = mediaItems
                             if (!items.isNullOrEmpty()) {

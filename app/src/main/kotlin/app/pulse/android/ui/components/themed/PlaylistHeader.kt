@@ -42,19 +42,14 @@ import app.pulse.core.ui.utils.px
 private val HeroShape = RoundedCornerShape(16.dp)
 
 /**
- * Header body shared by the online and local playlist screens, a blurred quadrant
- * tint behind a mosaic cover, the title, the song count and the shuffle / play / add row.
- *
- * [tintColor] is owned by the caller so the header pill row can match it;
- * [onTintExtracted] reports the colour sampled from the cover back up.
+ * Header body shared by the online and local playlist screens: a mosaic cover,
+ * the title, the song count and the shuffle / play / add row.
  */
 @Composable
 fun PlaylistHero(
     title: String,
     songCount: Int,
     mosaicUrls: List<String>,
-    tintColor: Color,
-    onTintExtracted: (Color) -> Unit,
     onShuffle: () -> Unit,
     onPlay: () -> Unit,
     onAdd: (() -> Unit)?,
@@ -75,17 +70,6 @@ fun PlaylistHero(
                 .aspectRatio(1f),
             contentAlignment = Alignment.Center
         ) {
-            if (mosaicUrls.isNotEmpty()) QuadrantTint(
-                urls = mosaicUrls,
-                onColorExtracted = onTintExtracted,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        scaleX = 2f
-                        scaleY = 4f
-                        clip = false
-                    }
-            )
             MosaicThumbnail(
                 urls = mosaicUrls,
                 modifier = Modifier
@@ -110,7 +94,7 @@ fun PlaylistHero(
 
         BasicText(
             text = pluralStringResource(R.plurals.song_count_plural, songCount, songCount),
-            style = typography.s.medium.copy(color = tintColor.copy(alpha = 0.7f)),
+            style = typography.s.medium.copy(color = colorPalette.accent.copy(alpha = 0.7f)),
             modifier = Modifier.padding(top = 4.dp)
         )
 
@@ -125,7 +109,7 @@ fun PlaylistHero(
 
             HeaderCircleIconButton(
                 icon = R.drawable.shuffle,
-                containerColor = tintColor,
+                containerColor = colorPalette.accent,
                 enabled = enabled,
                 onClick = onShuffle
             )
@@ -135,7 +119,7 @@ fun PlaylistHero(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(tintColor)
+                    .background(colorPalette.accent)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -159,7 +143,7 @@ fun PlaylistHero(
 
             if (onAdd != null) HeaderCircleIconButton(
                 icon = R.drawable.add,
-                containerColor = tintColor,
+                containerColor = colorPalette.accent,
                 onClick = onAdd
             )
 
@@ -193,16 +177,16 @@ fun PlaylistGradient() {
  */
 @Composable
 fun PlaylistHeaderActions(
-    tintColor: Color,
     shareUrl: String?,
     menuVisible: Boolean,
     onMenuVisibleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     menuContent: @Composable () -> Unit
 ) {
+    val colorPalette = LocalAppearance.current.colorPalette
     val context = LocalContext.current
 
-    HeaderPillRow(containerColor = tintColor, modifier = modifier) {
+    HeaderPillRow(containerColor = colorPalette.accent, modifier = modifier) {
         IconButton(
             icon = R.drawable.share_social,
             onClick = {
@@ -227,7 +211,7 @@ fun PlaylistHeaderActions(
                 NewMenu(
                     visible = menuVisible,
                     onDismiss = { onMenuVisibleChange(false) },
-                    containerColor = tintColor
+                    containerColor = colorPalette.accent
                 ) {
                     menuContent()
                 }
