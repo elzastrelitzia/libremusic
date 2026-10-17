@@ -115,7 +115,6 @@ import app.pulse.providers.lrclib.LrcLib
 import app.pulse.providers.lrclib.LrcParser
 import app.pulse.providers.lrclib.models.Track
 import app.pulse.providers.lrclib.toLrcFile
-import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CancellationException
@@ -136,8 +135,6 @@ private const val UPDATE_DELAY = 128L
 private const val LYRICS_OFFSET_MS = 512L
 
 private const val ACTIVE_LINE_SCALE = 1.05f
-
-private val SKELETON_LINE_WIDTHS = listOf(0.55f, 0.85f, 0.45f, 0.75f, 0.6f, 0.9f, 0.5f, 0.8f)
 
 // Center a lyric line using measured layout metrics (ported from ArchiveTune):
 // read the item's real offset and size from layoutInfo and scroll BY the delta
@@ -793,24 +790,9 @@ fun Lyrics(
             )
         }
 
-        if (text == null && !error) Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .shimmer()
-        ) {
-            repeat(SKELETON_LINE_WIDTHS.size) { i ->
-                Spacer(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .padding(horizontal = 48.dp)
-                        .fillMaxWidth(SKELETON_LINE_WIDTHS[i])
-                        .height(lyricsFontSize.dp)
-                        .background(colorPalette.onOverlayShimmer.copy(alpha = 0.85f))
-                )
-            }
-        }
+        if (text == null && !error) CircularProgressIndicator(
+            modifier = Modifier.align(Alignment.Center)
+        )
 
         if (showControls) {
             if (onOpenDialog != null) Image(
