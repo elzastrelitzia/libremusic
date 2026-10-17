@@ -317,4 +317,6 @@
         <item quantity="one">%1$d şarkı</item>
         <item quantity="other">%1$d şarkı</item>
     </plurals>
+    <string name="whats_new_in">%1$s sürümündeki yenilikler</string>
+    <string name="okay">Tamam</string>
 </resources>

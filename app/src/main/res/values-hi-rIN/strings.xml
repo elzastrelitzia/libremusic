@@ -346,4 +346,6 @@
         <item quantity="one">%1$d गाना</item>
         <item quantity="other">%1$d गीत</item>
     </plurals>
+    <string name="whats_new_in">%1$s में नया क्या है</string>
+    <string name="okay">ठीक है</string>
 </resources>

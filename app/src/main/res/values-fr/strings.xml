@@ -347,4 +347,6 @@
         <item quantity="many">%1$d titres</item>
         <item quantity="other">%1$d titres</item>
     </plurals>
+    <string name="whats_new_in">Nouveautés de la version %1$s</string>
+    <string name="okay">OK</string>
 </resources>

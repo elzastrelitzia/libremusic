@@ -342,4 +342,6 @@
         <item quantity="one">%1$d Lied</item>
         <item quantity="other">%1$d Lieder</item>
     </plurals>
+    <string name="whats_new_in">Neu in Version %1$s</string>
+    <string name="okay">Okay</string>
 </resources>

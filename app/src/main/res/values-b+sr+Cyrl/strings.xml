@@ -334,4 +334,6 @@
         <item quantity="one">%1$d песма</item>
         <item quantity="other">%1$d песама</item>
     </plurals>
+    <string name="whats_new_in">Шта је ново у верзији %1$s</string>
+    <string name="okay">У реду</string>
 </resources>

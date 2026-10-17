@@ -341,4 +341,6 @@
         <item quantity="few">%1$d песни</item>
         <item quantity="many">%1$d песен</item>
     </plurals>
+    <string name="whats_new_in">Что нового в версии %1$s</string>
+    <string name="okay">ОК</string>
 </resources>

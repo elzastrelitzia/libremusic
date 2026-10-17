@@ -345,4 +345,6 @@
         <item quantity="many">%1$d cançons</item>
         <item quantity="other">%1$d cançons</item>
     </plurals>
+    <string name="whats_new_in">Novetats de la versió %1$s</string>
+    <string name="okay">D\'acord</string>
 </resources>

@@ -338,4 +338,6 @@
         <item quantity="one">%1$d laul</item>
         <item quantity="other">%1$d laulu</item>
     </plurals>
+    <string name="whats_new_in">Mis on uut versioonis %1$s</string>
+    <string name="okay">Olgu</string>
 </resources>

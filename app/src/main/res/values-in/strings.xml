@@ -301,4 +301,6 @@
     <plurals name="song_count_plural">
         <item quantity="other">%1$d lagu</item>
     </plurals>
+    <string name="whats_new_in">Apa yang baru di %1$s</string>
+    <string name="okay">Oke</string>
 </resources>

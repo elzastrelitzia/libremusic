@@ -345,4 +345,6 @@
         <item quantity="many">%1$d canciones</item>
         <item quantity="other">%1$d canciones</item>
     </plurals>
+    <string name="whats_new_in">Novedades de la versión %1$s</string>
+    <string name="okay">Aceptar</string>
 </resources>

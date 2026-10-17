@@ -183,6 +183,8 @@
     <string name="update_available_description">A newer version of libremusic is available. Would you like to update it now?</string>
     <string name="later">Later</string>
     <string name="update">Update</string>
+    <string name="whats_new_in">What\'s new in %1$s</string>
+    <string name="okay">Okay</string>
     <string name="downloading_update_progress">Downloading… %1$s</string>
     <string name="auto_update">Auto-download updates</string>
     <string name="auto_update_description">Automatically download new versions over any network and prompt to install</string>

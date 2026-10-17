@@ -343,4 +343,6 @@
     <plurals name="song_count_plural">
         <item quantity="other">%1$d 首歌曲</item>
     </plurals>
+    <string name="whats_new_in">%1$s 的新功能</string>
+    <string name="okay">好的</string>
 </resources>

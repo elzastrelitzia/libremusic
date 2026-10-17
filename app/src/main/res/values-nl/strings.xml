@@ -346,4 +346,6 @@
         <item quantity="one">%1$d nummer</item>
         <item quantity="other">%1$d nummers</item>
     </plurals>
+    <string name="whats_new_in">Nieuw in versie %1$s</string>
+    <string name="okay">Oké</string>
 </resources>

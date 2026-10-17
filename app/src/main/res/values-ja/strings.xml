@@ -319,4 +319,6 @@
     <plurals name="song_count_plural">
         <item quantity="other">%1$d 曲</item>
     </plurals>
+    <string name="whats_new_in">%1$s の新機能</string>
+    <string name="okay">OK</string>
 </resources>

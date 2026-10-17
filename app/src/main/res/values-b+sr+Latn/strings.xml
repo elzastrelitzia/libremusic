@@ -334,4 +334,6 @@
         <item quantity="one">%1$d pesma</item>
         <item quantity="other">%1$d pesama</item>
     </plurals>
+    <string name="whats_new_in">Šta je novo u verziji %1$s</string>
+    <string name="okay">U redu</string>
 </resources>
