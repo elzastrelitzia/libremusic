@@ -55,6 +55,7 @@ import app.pulse.android.models.PlaylistPreview
 import app.pulse.android.models.PlaylistWithSongs
 import app.pulse.android.models.QueuedMediaItem
 import app.pulse.android.models.SearchQuery
+import app.pulse.android.models.SearchQueryArtwork
 import app.pulse.core.data.models.SongEntity
 import app.pulse.core.data.models.toSong
 import app.pulse.core.data.models.toEntity
@@ -284,8 +285,20 @@ interface DatabaseAccessor {
     @Query("DELETE FROM QueuedMediaItem")
     fun clearQueue()
 
-    @Query("SELECT * FROM SearchQuery WHERE `query` LIKE :query ORDER BY id DESC")
-    fun queries(query: String): Flow<List<SearchQuery>>
+
+    @Query(
+        """
+        SELECT sq.id, sq.query,
+            (SELECT s.thumbnailUrl FROM Song s
+             WHERE s.title LIKE '%' || sq.query || '%'
+                OR s.artistsText LIKE '%' || sq.query || '%'
+             LIMIT 1) AS thumbnailUrl
+        FROM SearchQuery sq
+        WHERE sq.query LIKE :query
+        ORDER BY sq.id DESC
+        """
+    )
+    fun queriesWithArtwork(query: String): Flow<List<SearchQueryArtwork>>
 
     @Query("SELECT COUNT (*) FROM SearchQuery")
     fun queriesCount(): Flow<Int>
