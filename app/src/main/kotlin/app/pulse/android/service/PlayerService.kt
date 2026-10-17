@@ -315,14 +315,14 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 /* action = */ LIKE_ACTION,
                 /* name   = */ getString(R.string.like),
                 /* icon   = */
-                if (isLikedState.value) R.drawable.heart else R.drawable.heart_outline
+                if (isLikedState.value) R.drawable.heart_notification else R.drawable.heart_outline_notification
             ).build()
         ).addCustomAction(
             PlaybackState.CustomAction.Builder(
                 /* action = */ LOOP_ACTION,
                 /* name   = */ getString(R.string.queue_loop),
                 /* icon   = */
-                if (PlayerPreferences.trackLoopEnabled) R.drawable.repeat_on else R.drawable.repeat
+                if (PlayerPreferences.trackLoopEnabled) R.drawable.repeat_on_notification else R.drawable.repeat_notification
             ).build()
         )
 
@@ -1658,34 +1658,34 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
                 .addAction(
-                    R.drawable.play_skip_back,
+                    R.drawable.play_skip_back_notification,
                     getString(R.string.skip_back),
                     notificationActionReceiver.previous.pendingIntent
                 )
                 .let {
                     if (player.shouldBePlaying) it.addAction(
-                        R.drawable.pause,
+                        R.drawable.pause_notification,
                         getString(R.string.pause),
                         notificationActionReceiver.pause.pendingIntent
                     )
                     else it.addAction(
-                        R.drawable.play,
+                        R.drawable.play_notification,
                         getString(R.string.play),
                         notificationActionReceiver.play.pendingIntent
                     )
                 }
                 .addAction(
-                    R.drawable.play_skip_forward,
+                    R.drawable.play_skip_forward_notification,
                     getString(R.string.skip_forward),
                     notificationActionReceiver.next.pendingIntent
                 )
                 .addAction(
-                    if (isLikedState.value) R.drawable.heart else R.drawable.heart_outline,
+                    if (isLikedState.value) R.drawable.heart_notification else R.drawable.heart_outline_notification,
                     getString(R.string.like),
                     notificationActionReceiver.like.pendingIntent
                 )
                 .addAction(
-                    if (PlayerPreferences.trackLoopEnabled) R.drawable.repeat_on else R.drawable.repeat,
+                    if (PlayerPreferences.trackLoopEnabled) R.drawable.repeat_on_notification else R.drawable.repeat_notification,
                     getString(R.string.queue_loop),
                     notificationActionReceiver.loop.pendingIntent
                 )
