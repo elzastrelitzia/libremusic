@@ -43,6 +43,7 @@ import app.pulse.android.ui.components.ShimmerHost
 import app.pulse.android.ui.components.themed.CollapsingHeader
 import app.pulse.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.pulse.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.pulse.android.ui.components.themed.PlaylistBackdrop
 import app.pulse.android.ui.components.themed.PlaylistGradient
 import app.pulse.android.ui.components.themed.PlaylistHeaderActions
 import app.pulse.android.ui.components.themed.PlaylistHero
@@ -175,6 +176,7 @@ fun PlaylistSongList(
         }
     ) {
         Box(modifier = modifier) {
+        PlaylistBackdrop(mosaicUrls)
         PlaylistGradient()
 
         LazyColumn(

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -152,6 +153,42 @@ fun PlaylistHero(
 
             Spacer(modifier = Modifier.weight(1f))
         }
+    }
+}
+
+/**
+ * Sharp mosaic behind the song list, capped at 80% of the screen height and
+ * faded into the background before the rows start, so the playlist cover reads
+ * as the screen backdrop without swallowing the list.
+ */
+@Composable
+fun PlaylistBackdrop(mosaicUrls: List<String>) {
+    if (mosaicUrls.isEmpty()) return
+
+    val colorPalette = LocalAppearance.current.colorPalette
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.8f)
+    ) {
+        MosaicThumbnail(
+            urls = mosaicUrls,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.45f to Color.Transparent,
+                        0.75f to colorPalette.background0,
+                        1f to colorPalette.background0
+                    )
+                )
+        )
     }
 }
 
