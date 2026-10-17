@@ -2,6 +2,7 @@ package app.pulse.android.preferences
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import app.pulse.android.BuildConfig
 import app.pulse.android.GlobalPreferencesHolder
 import app.pulse.android.R
 import app.pulse.core.data.enums.CoilDiskCacheSize
@@ -31,6 +32,8 @@ object DataPreferences : GlobalPreferencesHolder() {
     var autoSyncPlaylists by boolean(true)
     var pendingUpdateVersion by string("")
     var pendingUpdateUrl by string("")
+    // defaults to the running build so a fresh install never counts as an update
+    var lastSeenVersionCode by int(BuildConfig.VERSION_CODE)
     var batteryPromptShown by boolean(false)
 
     enum class TopListPeriod(

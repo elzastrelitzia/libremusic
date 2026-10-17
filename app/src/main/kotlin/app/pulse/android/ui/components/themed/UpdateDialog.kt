@@ -6,6 +6,8 @@ import androidx.core.net.toUri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
@@ -587,5 +590,52 @@ private suspend fun downloadApk(
         }
 
         file
+    }
+}
+
+@Composable
+fun WhatsNewDialog(
+    version: String,
+    body: String,
+    onDismiss: () -> Unit,
+) {
+    val (palette, typography) = LocalAppearance.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        AppleDialogSurface {
+            BasicText(
+                text = stringResource(R.string.whats_new_in, version),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                style = typography.s.copy(
+                    color = palette.text,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                ),
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            BasicText(
+                text = body,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .heightIn(max = 220.dp)
+                    .verticalScroll(rememberScrollState()),
+                style = typography.xs.medium.copy(
+                    color = palette.textSecondary,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                ),
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            AppleDialogButton(
+                text = stringResource(R.string.okay),
+                containerColor = palette.accent,
+                contentColor = palette.onAccent,
+                modifier = Modifier.fillMaxWidth(),
+            ) { onDismiss() }
+        }
     }
 }

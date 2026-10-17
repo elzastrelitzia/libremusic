@@ -47,6 +47,48 @@ suspend fun Version.getNewerVersion(
         }
 }
 
+/**
+ * The release body is written for the release page: a version line, checksums, a
+ * signature link, then the git log. Keep only what belongs in the what's-new dialog.
+ *
+ * The raw markdown body is used, not [Release.text], because the GitHub releases
+ * API never populates body_text. Markdown is shown verbatim; the lines we keep
+ * carry no markup in the workflow's template.
+ */
+// ponytail: matches our own release body wording; returns null if the workflow body
+// is reshaped, so the dialog is skipped rather than showing a raw dump.
+private fun whatsNewFrom(releaseBody: String?): String? =
+    releaseBody
+        ?.lines()
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.filterNot { line ->
+            line.contains("SHA-256") ||
+                line.contains("GPG") ||
+                line.startsWith("Official Release of") ||
+                line == "Changelog:"
+        }
+        ?.map { line ->
+            if (!line.startsWith("-")) return@map line
+            val text = line.removePrefix("-").trim()
+            val prefix = listOf("android: ", "desktop: ", "ci: ").firstOrNull { text.startsWith(it) }
+            "- " + (prefix?.let { text.removePrefix(it) } ?: text)
+        }
+        ?.joinToString("\n")
+        ?.takeIf { it.isNotEmpty() }
+
+/**
+ * "What's new" for the version that is running, or null when that release has no
+ * usable notes. Returns version to body.
+ */
+suspend fun whatsNewForInstalledVersion(): Pair<String, String>? =
+    GitHub.releases(
+        owner = REPO_OWNER,
+        repo = REPO_NAME
+    )?.getOrNull()
+        ?.firstOrNull { it.tag.removePrefix("v") == VERSION_NAME }
+        ?.let { release -> whatsNewFrom(release.markdown)?.let { VERSION_NAME to it } }
+
 class VersionCheckWorker(
     context: Context,
     params: WorkerParameters
