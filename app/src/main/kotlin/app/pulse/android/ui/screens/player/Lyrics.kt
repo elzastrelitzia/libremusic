@@ -332,7 +332,9 @@ fun Lyrics(
                                 else it
                             }
 
-                            lyrics = null
+                            // keep already-loaded lyrics on screen while the
+                            // duration-aware refetch runs, clearing here makes the
+                            // skeleton flash again even though we have lyrics
                             error = false
 
                             val (fixed, synced) = fetchLyricsParallel(
