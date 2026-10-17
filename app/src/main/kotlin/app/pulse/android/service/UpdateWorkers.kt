@@ -57,8 +57,8 @@ suspend fun Version.getNewerVersion(
  */
 // ponytail: matches our own release body wording; returns null if the workflow body
 // is reshaped, so the dialog is skipped rather than showing a raw dump.
-private fun whatsNewFrom(releaseBody: String?): String? =
-    releaseBody
+private fun whatsNewFrom(releaseBody: String?): String? {
+    val lines = releaseBody
         ?.lines()
         ?.map { it.trim() }
         ?.filter { it.isNotEmpty() }
@@ -74,8 +74,13 @@ private fun whatsNewFrom(releaseBody: String?): String? =
             val prefix = listOf("android: ", "desktop: ", "ci: ").firstOrNull { text.startsWith(it) }
             "- " + (prefix?.let { text.removePrefix(it) } ?: text)
         }
-        ?.joinToString("\n")
-        ?.takeIf { it.isNotEmpty() }
+        ?: return null
+
+    // A hand-written summary is normally written after the generated bullets
+    // show it first, where it is actually read.
+    val (prose, bullets) = lines.partition { !it.startsWith("-") }
+    return (prose + bullets).joinToString("\n").takeIf { it.isNotEmpty() }
+}
 
 /**
  * "What's new" for the version that is running, or null when that release has no
