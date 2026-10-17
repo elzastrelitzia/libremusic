@@ -150,6 +150,7 @@ import app.pulse.core.ui.shimmerTheme
 import app.pulse.core.data.utils.activityIntentBundle
 import app.pulse.core.ui.utils.isAtLeastAndroid12
 import app.pulse.core.data.utils.songBundle
+import app.pulse.core.data.utils.mb
 import app.pulse.providers.innertube.Innertube
 import app.pulse.providers.innertube.models.bodies.BrowseBody
 import app.pulse.providers.innertube.requests.playlistPage
@@ -715,7 +716,6 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         applicationScope.launch {
-            Dependencies.warmUp()
             MonetCompat.enablePaletteCompat()
             with(ServiceNotifications) { createAll() }
         }
@@ -725,8 +725,10 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
         .crossfade(true)
         .memoryCache {
+            // Fixed cap. `maxSizePercent` scales with the device heap, so a
+            // big-heap phone silently holds tens of MB of decoded artwork.
             MemoryCache.Builder()
-                .maxSizePercent(context, 0.1)
+                .maxSizeBytes(32.mb)
                 .build()
         }
         .diskCache {
@@ -762,9 +764,18 @@ object Dependencies {
             .also { if (!it.canExecute()) it.setExecutable(true) }
     }
 
-    fun runDownload(id: String): String = module
-        .callAttr("download", quickjsPath.absolutePath, id)
-        .toString()
+    @Volatile
+    private var engineWarmed = false
+
+    fun runDownload(id: String): String {
+        // warmed on first resolve, not at launch, importing yt-dlp costs tens of
+        // MB, and most launches never play anything.
+        if (!engineWarmed) {
+            engineWarmed = true
+            warmUp()
+        }
+        return module.callAttr("download", quickjsPath.absolutePath, id).toString()
+    }
 
     fun warmUp() {
         runCatching {

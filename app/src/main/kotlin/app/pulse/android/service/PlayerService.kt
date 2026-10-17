@@ -393,9 +393,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         bitmapProvider = BitmapProvider(
             getBitmapSize = {
+                // The notification large icon and lockscreen art render far
+                // narrower than `512 * density` (1408px at 440dpi = can be around 7.4 MB per
+                // ARGB_8888 bitmap, and this provider holds two).
                 (512 * resources.displayMetrics.density)
                     .roundToInt()
                     .coerceAtMost(AppearancePreferences.maxThumbnailSize)
+                    .coerceAtMost(512)
             },
             getColor = { isSystemInDarkMode ->
                 if (isSystemInDarkMode) Color.BLACK else Color.WHITE

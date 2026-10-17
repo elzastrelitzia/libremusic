@@ -53,7 +53,8 @@ class BitmapProvider(
 
         lastIsSystemInDarkMode = isSystemInDarkMode
 
-        val size = getBitmapSize()
+        // solid-colour placeholder
+        val size = DEFAULT_BITMAP_SIZE
         defaultBitmap = createBitmap(size, size).applyCanvas {
             drawColor(getColor(isSystemInDarkMode))
         }
@@ -102,5 +103,9 @@ class BitmapProvider(
     fun setListener(callback: ((Bitmap?) -> Unit)?) {
         listener = callback
         listener?.invoke(lastBitmap)
+    }
+
+    private companion object {
+        const val DEFAULT_BITMAP_SIZE = 64
     }
 }
