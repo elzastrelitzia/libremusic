@@ -93,7 +93,8 @@ fun HeaderCircleIconButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    containerColor: Color = LocalAppearance.current.colorPalette.background1
+    containerColor: Color = LocalAppearance.current.colorPalette.background1,
+    contentColor: Color = LocalAppearance.current.colorPalette.text
 ) {
     val (colorPalette) = LocalAppearance.current
     Box(
@@ -112,7 +113,7 @@ fun HeaderCircleIconButton(
         Image(
             painter = painterResource(icon),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(if (enabled) colorPalette.text else colorPalette.textDisabled),
+            colorFilter = ColorFilter.tint(if (enabled) contentColor else colorPalette.textDisabled),
             modifier = Modifier.size(24.dp)
         )
     }

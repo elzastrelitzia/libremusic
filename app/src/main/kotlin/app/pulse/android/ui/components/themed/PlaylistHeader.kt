@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import app.pulse.android.R
 import app.pulse.android.ui.components.NewMenu
 import app.pulse.android.utils.medium
+import app.pulse.android.utils.primary
 import app.pulse.android.utils.semiBold
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.utils.px
@@ -110,6 +111,7 @@ fun PlaylistHero(
             HeaderCircleIconButton(
                 icon = R.drawable.shuffle,
                 containerColor = colorPalette.accent,
+                contentColor = colorPalette.onAccent,
                 enabled = enabled,
                 onClick = onShuffle
             )
@@ -131,19 +133,20 @@ fun PlaylistHero(
                 Image(
                     painter = painterResource(R.drawable.play),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(colorPalette.background0),
+                    colorFilter = ColorFilter.tint(colorPalette.onAccent),
                     modifier = Modifier.size(18.dp)
                 )
 
                 BasicText(
                     text = stringResource(R.string.play),
-                    style = typography.s.semiBold.copy(color = colorPalette.background0)
+                    style = typography.s.semiBold.primary
                 )
             }
 
             if (onAdd != null) HeaderCircleIconButton(
                 icon = R.drawable.add,
                 containerColor = colorPalette.accent,
+                contentColor = colorPalette.onAccent,
                 onClick = onAdd
             )
 
