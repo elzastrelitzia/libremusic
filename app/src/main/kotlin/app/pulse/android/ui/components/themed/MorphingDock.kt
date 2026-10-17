@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.ui.components.MorphingMiniPlayer
@@ -31,10 +30,8 @@ fun MorphingDock(
     val dockSpacing = if (compact) 6.dp else 8.dp
     val dockHeightExtra = if (compact) 64.dp else 80.dp
     val dockCompactWidth = if (compact) 200.dp else 240.dp
-    val dockOverscrollDip = if (compact) 12.dp else 16.dp
 
     val isSubPage = navigationState == null
-    val density = LocalDensity.current
     val (colorPalette) = LocalAppearance.current
 
     val animatable = remember { Animatable(progress) }
@@ -99,13 +96,9 @@ fun MorphingDock(
             else animatable.value.coerceAtLeast(lastValidHomeProgress.floatValue)
 
     // Phase 1 (Home Morph: 0.0 → 1.0)
-    // homeP is allowed to exceed 1.0 on home for overscroll wobble.
-    // On sub-page it is clamped so overscroll is always 0.
-    val homeP = if (!isSubPage) p else p.coerceAtMost(1f)
-
-    val navMorphProgress    = (homeP / 0.90f).coerceIn(0f, 1f)
-    val playerMorphProgress = ((homeP - 0.2f) / 0.7f).coerceIn(0f, 1f)
-    val playerSlideProgress = ((homeP - 0.5f) / 0.4f).coerceIn(0f, 1f)
+    val navMorphProgress    = (p / 0.90f).coerceIn(0f, 1f)
+    val playerMorphProgress = ((p - 0.2f) / 0.7f).coerceIn(0f, 1f)
+    val playerSlideProgress = ((p - 0.5f) / 0.4f).coerceIn(0f, 1f)
 
     // Phase 2 (Sub-page Entry: 1.0 → 2.0)
     val navHideFactor   = ((p - 1f) / 0.5f).coerceIn(0f, 1f)
@@ -131,11 +124,7 @@ fun MorphingDock(
         val baseSize  = if (compact) Dimensions.items.collapsedPlayerHeight else 64.dp
 
         // Structural morph, shrink circle to 80% of baseSize at p=1.0
-        val morphFactor       = homeP.coerceIn(0f, 1f)
-        val targetSize        = baseSize * (1f - 0.2f * morphFactor)
-        val overscroll        = (homeP - 1f).coerceAtLeast(0f)
-        val currentCircleSize = (targetSize - (baseSize * 0.4f * overscroll)).coerceAtLeast(baseSize * 0.6f)
-        val commonDip         = with(density) { dockOverscrollDip.toPx() * overscroll }
+        val currentCircleSize = baseSize * (1f - 0.2f * p.coerceIn(0f, 1f))
 
         // Search btn
         Box(
@@ -146,7 +135,6 @@ fun MorphingDock(
                     alpha        = 1f - navHideFactor
                     scaleX       = 1f - navHideFactor
                     scaleY       = 1f - navHideFactor
-                    translationY = commonDip
                 }
         ) {
             FloatingSearchButton(onClick = onSearchClick, modifier = Modifier.fillMaxSize())
@@ -168,7 +156,6 @@ fun MorphingDock(
                         alpha        = 1f - navHideFactor
                         scaleX       = 1f - navHideFactor
                         scaleY       = 1f - navHideFactor
-                        translationY = commonDip
                     }
             ) {
                 MorphingNavigationBar(
@@ -205,7 +192,7 @@ fun MorphingDock(
                     scaleX       = radioShowFactor
                     scaleY       = radioShowFactor
                     val liftDistance = dockSpacing.toPx() * (p - 1f).coerceIn(0f, 1f)
-                    translationY = -liftDistance + commonDip
+                    translationY = -liftDistance
                 }
         ) {
             HomeCircleButton(
@@ -223,7 +210,7 @@ fun MorphingDock(
                 .graphicsLayer {
                     val travelDistance = (baseSize + dockSpacing).toPx()
                     val liftDistance   = dockSpacing.toPx() * (p - 1f).coerceIn(0f, 1f)
-                    translationY = -travelDistance * (1f - playerSlideProgress) - liftDistance + commonDip
+                    translationY = -travelDistance * (1f - playerSlideProgress) - liftDistance
                     translationX = -(currentCircleSize / 2 + dockSpacing / 2).toPx() * radioShowFactor
                 }
         ) {
