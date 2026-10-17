@@ -61,6 +61,7 @@
     <string name="set_sleep_timer">Set sleep timer</string>
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
+    <string name="allow">Allow</string>
     <string name="confirm">Confirm</string>
     <string name="no">No</string>
     <string name="stop">Stop</string>
@@ -269,6 +270,8 @@
     <string name="ignore_battery_optimizations_action">Disable background restrictions</string>
     <string name="invincible_service">Invincible service</string>
     <string name="invincible_service_description">Should keep the playback going 99.99% of the time, in case turning off the battery optimizations is not enough</string>
+    <string name="battery_optimization_title">Keep music playing in background</string>
+    <string name="battery_optimization_body">Android may stop libremusic playback when the screen is off unless battery optimizations are turned off for libremusic.</string>
     <string name="need_help">Need help?</string>
     <string name="need_help_description">Most of the time, it is not the developer\'s fault (even after turning on invincible service) that the app stops working properly in the background.\nCheck if your device manufacturer kills your apps (click to redirect)</string>
     <string name="service_lifetime_report_issue">If you really think there is something wrong with the app itself, hop on to the About tab</string>
