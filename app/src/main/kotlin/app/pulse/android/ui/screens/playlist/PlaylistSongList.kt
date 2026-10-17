@@ -176,7 +176,7 @@ fun PlaylistSongList(
         }
     ) {
         Box(modifier = modifier) {
-        PlaylistBackdrop(mosaicUrls)
+        PlaylistBackdrop(mosaicUrls, lazyListState)
         PlaylistGradient()
 
         LazyColumn(

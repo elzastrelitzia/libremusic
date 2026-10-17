@@ -219,7 +219,7 @@ fun LocalPlaylistSongs(
         }
     ) {
 Box(modifier = modifier) {
-        PlaylistBackdrop(mosaicUrls)
+        PlaylistBackdrop(mosaicUrls, reorderingState.lazyListState)
         PlaylistGradient()
 
         LookaheadScope {

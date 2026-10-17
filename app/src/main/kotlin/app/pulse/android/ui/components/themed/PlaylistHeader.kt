@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -162,7 +163,10 @@ fun PlaylistHero(
  * as the screen backdrop without swallowing the list.
  */
 @Composable
-fun PlaylistBackdrop(mosaicUrls: List<String>) {
+fun PlaylistBackdrop(
+    mosaicUrls: List<String>,
+    lazyListState: LazyListState
+) {
     if (mosaicUrls.isEmpty()) return
 
     val colorPalette = LocalAppearance.current.colorPalette
@@ -171,6 +175,15 @@ fun PlaylistBackdrop(mosaicUrls: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.8f)
+            .graphicsLayer {
+                val info = lazyListState.layoutInfo
+                val first = info.visibleItemsInfo.firstOrNull()
+                val scrolled = if (first == null) 0f
+                else (info.viewportStartOffset - first.offset).toFloat()
+                    .coerceAtLeast(0f)
+
+                translationY = -scrolled
+            }
     ) {
         MosaicThumbnail(
             urls = mosaicUrls,
