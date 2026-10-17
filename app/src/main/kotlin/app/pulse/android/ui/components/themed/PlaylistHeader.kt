@@ -157,13 +157,17 @@ fun PlaylistBackdrop(
             .fillMaxWidth()
             .fillMaxHeight(0.8f)
             .graphicsLayer {
-                val info = lazyListState.layoutInfo
-                val first = info.visibleItemsInfo.firstOrNull()
-                val scrolled = if (first == null) 0f
-                else (info.viewportStartOffset - first.offset).toFloat()
-                    .coerceAtLeast(0f)
+                // Only while the header is the first visible item is its scroll
+                // offset the true scroll position. Item offsets in layoutInfo are
+                // relative to the viewport, so they restart each time the first
+                // visible item changes, which snapped the mosaic back once per
+                // row. Once the header has left, the mosaic has faded out anyway,
+                // so park it off screen.
+                val scrolled = if (lazyListState.firstVisibleItemIndex == 0)
+                    lazyListState.firstVisibleItemScrollOffset.toFloat()
+                else size.height
 
-                translationY = -scrolled
+                translationY = -scrolled.coerceIn(0f, size.height)
             }
     ) {
         MosaicThumbnail(
