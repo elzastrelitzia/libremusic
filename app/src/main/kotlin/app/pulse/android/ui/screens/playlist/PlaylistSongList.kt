@@ -65,6 +65,7 @@ import app.pulse.android.ui.components.themed.IconButton
 import app.pulse.android.ui.components.themed.MosaicThumbnail
 import app.pulse.android.ui.components.themed.QuadrantTint
 import app.pulse.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.pulse.android.ui.components.themed.SecondaryTextButton
 import app.pulse.android.ui.components.themed.TextFieldDialog
 import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.items.SongItemPlaceholder
@@ -104,10 +105,16 @@ fun PlaylistSongList(
 
     var playlistPage by persist<Innertube.PlaylistOrAlbumPage?>("playlist/$browseId/playlistPage")
 
-    LaunchedEffect(Unit) {
+    // A failed fetch used to leave the skeleton up forever: the effect was keyed on
+    // Unit, so it never retried and there was no error branch.
+    var loadFailed by remember { mutableStateOf(false) }
+    var reloadKey by remember { mutableStateOf(0) }
+
+    LaunchedEffect(reloadKey) {
         if (playlistPage != null && playlistPage?.songsPage?.continuation == null) return@LaunchedEffect
 
-        playlistPage = withContext(Dispatchers.IO) {
+        loadFailed = false
+        val page = withContext(Dispatchers.IO) {
             Innertube
                 .playlistPage(BrowseBody(browseId = browseId, params = params))
                 ?.completed(
@@ -116,6 +123,8 @@ fun PlaylistSongList(
                 )
                 ?.getOrNull()
         }
+        loadFailed = page == null
+        playlistPage = page
     }
 
     var isImportingPlaylist by rememberSaveable { mutableStateOf(false) }
@@ -238,19 +247,38 @@ fun PlaylistSongList(
                 contentType = 0
             ) {
                 if (playlistPage == null) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 128.dp, bottom = 24.dp)
-                            .shimmer()
-                    ) {
-                        Box(
+                    if (loadFailed) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .aspectRatio(1f)
-                                .background(colorPalette.shimmer)
-                        )
+                                .fillMaxWidth()
+                                .padding(top = 128.dp, bottom = 24.dp)
+                        ) {
+                            BasicText(
+                                text = stringResource(R.string.error_message),
+                                style = typography.m.medium.copy(color = colorPalette.textSecondary)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            SecondaryTextButton(
+                                text = stringResource(R.string.reload),
+                                onClick = { reloadKey++ }
+                            )
+                        }
+                    } else {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 128.dp, bottom = 24.dp)
+                                .shimmer()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.6f)
+                                    .aspectRatio(1f)
+                                    .background(colorPalette.shimmer)
+                            )
+                        }
                     }
                 } else {
                     Column(
@@ -404,7 +432,7 @@ fun PlaylistSongList(
                 )
             }
 
-            if (playlistPage == null) item(key = "loading") {
+            if (playlistPage == null && !loadFailed) item(key = "loading") {
                 ShimmerHost(modifier = Modifier.fillParentMaxSize()) {
                     repeat(4) {
                         SongItemPlaceholder(thumbnailSize = Dimensions.thumbnails.song)
