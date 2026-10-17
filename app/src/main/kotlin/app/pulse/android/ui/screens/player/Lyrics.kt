@@ -86,7 +86,6 @@ import app.pulse.android.ui.components.themed.Menu
 import app.pulse.android.ui.components.themed.MenuEntry
 import app.pulse.android.ui.components.themed.TextField
 import app.pulse.android.ui.components.themed.TextFieldDialog
-import app.pulse.android.ui.components.themed.TextPlaceholder
 import app.pulse.android.ui.components.themed.ValueSelectorDialogBody
 import app.pulse.android.ui.modifiers.verticalFadingEdge
 import app.pulse.android.utils.LyricsTranslation
@@ -137,6 +136,8 @@ private const val UPDATE_DELAY = 128L
 private const val LYRICS_OFFSET_MS = 512L
 
 private const val ACTIVE_LINE_SCALE = 1.05f
+
+private val SKELETON_LINE_WIDTHS = listOf(0.55f, 0.85f, 0.45f, 0.75f, 0.6f, 0.9f, 0.5f, 0.8f)
 
 // Center a lyric line using measured layout metrics (ported from ArchiveTune):
 // read the item's real offset and size from layoutInfo and scroll BY the delta
@@ -791,16 +792,20 @@ fun Lyrics(
         }
 
         if (text == null && !error) Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center)
                 .shimmer()
         ) {
-            repeat(4) {
-                TextPlaceholder(
-                    color = colorPalette.onOverlayShimmer,
-                    modifier = Modifier.alpha(1f - it * 0.2f)
+            repeat(SKELETON_LINE_WIDTHS.size) { i ->
+                Spacer(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(horizontal = 48.dp)
+                        .fillMaxWidth(SKELETON_LINE_WIDTHS[i])
+                        .height(lyricsFontSize.dp)
+                        .background(colorPalette.onOverlayShimmer.copy(alpha = 0.85f))
                 )
             }
         }
