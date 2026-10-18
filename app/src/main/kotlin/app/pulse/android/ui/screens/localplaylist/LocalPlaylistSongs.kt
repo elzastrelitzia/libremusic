@@ -250,7 +250,9 @@ Box(modifier = modifier) {
                             binder?.player?.forcePlayFromBeginning(mediaItems)
                         },
                         // No add-to-playlist flow yet, so the button is left out.
-                        onAdd = null
+                        onAdd = null,
+                        // Labelled, and after play.
+                        shuffleWithLabel = true
                     )
                 }
 

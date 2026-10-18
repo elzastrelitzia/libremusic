@@ -58,6 +58,7 @@ fun PlaylistHero(
     onShuffle: () -> Unit,
     onPlay: () -> Unit,
     onAdd: (() -> Unit)?,
+    shuffleWithLabel: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
@@ -91,7 +92,7 @@ fun PlaylistHero(
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            HeaderCircleIconButton(
+            if (!shuffleWithLabel) HeaderCircleIconButton(
                 icon = R.drawable.shuffle,
                 containerColor = colorPalette.accent,
                 contentColor = colorPalette.onAccent,
@@ -99,32 +100,12 @@ fun PlaylistHero(
                 onClick = onShuffle
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(colorPalette.accent)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        enabled = enabled,
-                        onClick = onPlay
-                    )
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.play),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(colorPalette.onAccent),
-                    modifier = Modifier.size(18.dp)
-                )
-
-                BasicText(
-                    text = stringResource(R.string.play),
-                    style = typography.s.semiBold.primary
-                )
-            }
+            HeroActionPill(
+                icon = R.drawable.play,
+                text = stringResource(R.string.play),
+                enabled = enabled,
+                onClick = onPlay
+            )
 
             if (onAdd != null) HeaderCircleIconButton(
                 icon = R.drawable.add,
@@ -133,8 +114,54 @@ fun PlaylistHero(
                 onClick = onAdd
             )
 
+            if (shuffleWithLabel) HeroActionPill(
+                icon = R.drawable.shuffle,
+                text = stringResource(R.string.shuffle),
+                enabled = enabled,
+                onClick = onShuffle
+            )
+
             Spacer(modifier = Modifier.weight(1f))
         }
+    }
+}
+
+/** Accent pill with an icon and a label, used for the header's main actions. */
+@Composable
+private fun HeroActionPill(
+    icon: Int,
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (colorPalette, typography) = LocalAppearance.current
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(colorPalette.accent)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            )
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colorPalette.onAccent),
+            modifier = Modifier.size(18.dp)
+        )
+
+        BasicText(
+            text = text,
+            style = typography.s.semiBold.primary
+        )
     }
 }
 
