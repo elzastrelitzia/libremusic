@@ -152,6 +152,7 @@
     <string name="view_playlist">プレイリストを見る</string>
     <string name="search_placeholder">キーワードを入力…</string>
     <string name="format_version_credits">elza がメンテナンスしています</string>
+    <string name="download">ダウンロード</string>
     <string name="update_available_description">libremusic の新しいバージョンがあります。今すぐ更新しますか？</string>
     <string name="social">知る</string>
     <string name="contact">つながる</string>

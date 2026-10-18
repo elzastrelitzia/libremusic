@@ -153,6 +153,7 @@
     <string name="view_playlist">Просмотр плейлиста</string>
     <string name="search_placeholder">Введите имя</string>
     <string name="format_version_credits">Поддерживается elza</string>
+    <string name="download">Скачать</string>
     <string name="update_available_description">Доступна новая версия libremusic. Хотите обновить её сейчас?</string>
     <string name="social">Социальные сети</string>
     <string name="contact">Контакты</string>

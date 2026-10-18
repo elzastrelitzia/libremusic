@@ -154,6 +154,7 @@
     <string name="view_playlist">प्लेलिस्ट देखें</string>
     <string name="search_placeholder">नाम डालें…</string>
     <string name="format_version_credits">elza द्वारा अनुरक्षित</string>
+    <string name="download">डाउनलोड करें</string>
     <string name="update_available_description">libremusic का नया संस्करण उपलब्ध है। क्या आप इसे अभी अपडेट करना चाहते हैं?</string>
     <string name="social">सामाजिक संपर्क</string>
     <string name="contact">संपर्क</string>

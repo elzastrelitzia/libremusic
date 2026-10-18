@@ -180,6 +180,7 @@
 
     <string name="search_placeholder">Inserisci un nome</string>
     <string name="format_version_credits">Mantenuto da elza</string>
+    <string name="download">Scarica</string>
     <string name="update_available_description">È disponibile una versione più recente di libremusic. Vuoi aggiornarla ora?</string>
     <string name="social">Social</string>
     <string name="contact">Contatti</string>

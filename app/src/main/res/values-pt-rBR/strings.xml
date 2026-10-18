@@ -154,6 +154,7 @@
     <string name="view_playlist">Visualizar playlist</string>
     <string name="search_placeholder">Insira um nome</string>
     <string name="format_version_credits">Mantido por elza</string>
+    <string name="download">Baixar</string>
     <string name="update_available_description">Uma versão mais recente do libremusic está disponível. Deseja atualizá-la agora?</string>
     <string name="social">Redes Sociais</string>
     <string name="contact">Contato</string>

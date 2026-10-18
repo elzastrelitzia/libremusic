@@ -154,6 +154,7 @@
     <string name="view_playlist">Veure llista de reproducció</string>
     <string name="search_placeholder">Cerca…</string>
     <string name="format_version_credits">Mantingut per elza</string>
+    <string name="download">Baixa</string>
     <string name="update_available_description">Hi ha una versió més recent de libremusic disponible. Voleu actualitzar-la ara?</string>
     <string name="social">Social</string>
     <string name="contact">Contacte</string>

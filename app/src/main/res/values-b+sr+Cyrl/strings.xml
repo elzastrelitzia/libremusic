@@ -153,6 +153,7 @@
     <string name="view_playlist">Погледај плејлисту</string>
     <string name="search_placeholder">Унесите име</string>
     <string name="format_version_credits">Одржава elza</string>
+    <string name="download">Преузми</string>
     <string name="update_available_description">Доступна је новија верзија libremusic-а. Желите ли да је сада ажурирате?</string>
     <string name="social">Друштвено</string>
     <string name="contact">Контакт</string>

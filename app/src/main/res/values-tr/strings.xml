@@ -150,6 +150,7 @@
     <string name="view_playlist">Oynatma listesini görüntüle</string>
     <string name="search_placeholder">Bir ad girin</string>
     <string name="format_version_credits">elza tarafından bakımı yapılıyor</string>
+    <string name="download">İndir</string>
     <string name="update_available_description">libremusic\'in daha yeni bir sürümü mevcut. Şimdi güncellemek ister misiniz?</string>
     <string name="social">Sosyal</string>
     <string name="contact">İletişim</string>
