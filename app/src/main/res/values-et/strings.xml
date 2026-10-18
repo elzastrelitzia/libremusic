@@ -341,4 +341,12 @@
     </plurals>
     <string name="whats_new_in">Mis on uut versioonis %1$s</string>
     <string name="okay">Olgu</string>
+    <string name="feedback">Tagasiside</string>
+    <string name="name">Nimi</string>
+    <string name="description">Kirjeldus</string>
+    <string name="send">Saada</string>
+    <string name="close">Sulge</string>
+    <string name="feedback_sent">Tagasiside saadetud</string>
+    <string name="feedback_failed">Tagasiside saatmine ebaõnnestus, kontrolli oma ühendust</string>
+    <string name="feedback_limited">Liiga palju tagasisidet, proovi homme uuesti</string>
 </resources>

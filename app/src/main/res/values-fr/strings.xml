@@ -350,4 +350,12 @@
     </plurals>
     <string name="whats_new_in">Nouveautés de la version %1$s</string>
     <string name="okay">OK</string>
+    <string name="feedback">Retour</string>
+    <string name="name">Nom</string>
+    <string name="description">Description</string>
+    <string name="send">Envoyer</string>
+    <string name="close">Fermer</string>
+    <string name="feedback_sent">Retour envoyé</string>
+    <string name="feedback_failed">Impossible d\'envoyer le retour, vérifiez votre connexion</string>
+    <string name="feedback_limited">Trop de retours, réessayez demain</string>
 </resources>

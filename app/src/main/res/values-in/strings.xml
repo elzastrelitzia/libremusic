@@ -304,4 +304,12 @@
     </plurals>
     <string name="whats_new_in">Apa yang baru di %1$s</string>
     <string name="okay">Oke</string>
+    <string name="feedback">Umpan balik</string>
+    <string name="name">Nama</string>
+    <string name="description">Deskripsi</string>
+    <string name="send">Kirim</string>
+    <string name="close">Tutup</string>
+    <string name="feedback_sent">Umpan balik terkirim</string>
+    <string name="feedback_failed">Tidak dapat mengirim umpan balik, periksa koneksi Anda</string>
+    <string name="feedback_limited">Terlalu banyak umpan balik, coba lagi besok</string>
 </resources>

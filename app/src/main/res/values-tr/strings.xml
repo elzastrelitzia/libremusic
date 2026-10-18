@@ -320,4 +320,12 @@
     </plurals>
     <string name="whats_new_in">%1$s sürümündeki yenilikler</string>
     <string name="okay">Tamam</string>
+    <string name="feedback">Geri bildirim</string>
+    <string name="name">Ad</string>
+    <string name="description">Açıklama</string>
+    <string name="send">Gönder</string>
+    <string name="close">Kapat</string>
+    <string name="feedback_sent">Geri bildirim gönderildi</string>
+    <string name="feedback_failed">Geri bildirim gönderilemedi, bağlantınızı kontrol edin</string>
+    <string name="feedback_limited">Çok fazla geri bildirim, yarın tekrar deneyin</string>
 </resources>

@@ -349,4 +349,12 @@
     </plurals>
     <string name="whats_new_in">%1$s में नया क्या है</string>
     <string name="okay">ठीक है</string>
+    <string name="feedback">फ़ीडबैक</string>
+    <string name="name">नाम</string>
+    <string name="description">विवरण</string>
+    <string name="send">भेजें</string>
+    <string name="close">बंद करें</string>
+    <string name="feedback_sent">फ़ीडबैक भेजा गया</string>
+    <string name="feedback_failed">फ़ीडबैक भेजा नहीं जा सका, अपना कनेक्शन जांचें</string>
+    <string name="feedback_limited">बहुत अधिक फ़ीडबैक, कल पुनः प्रयास करें</string>
 </resources>

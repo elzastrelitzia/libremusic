@@ -348,4 +348,12 @@
     </plurals>
     <string name="whats_new_in">Novedades de la versión %1$s</string>
     <string name="okay">Aceptar</string>
+    <string name="feedback">Comentarios</string>
+    <string name="name">Nombre</string>
+    <string name="description">Descripción</string>
+    <string name="send">Enviar</string>
+    <string name="close">Cerrar</string>
+    <string name="feedback_sent">Comentario enviado</string>
+    <string name="feedback_failed">No se pudo enviar el comentario, comprueba tu conexión</string>
+    <string name="feedback_limited">Demasiados comentarios, inténtalo de nuevo mañana</string>
 </resources>

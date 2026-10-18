@@ -337,4 +337,12 @@
     </plurals>
     <string name="whats_new_in">Šta je novo u verziji %1$s</string>
     <string name="okay">U redu</string>
+    <string name="feedback">Povratna informacija</string>
+    <string name="name">Ime</string>
+    <string name="description">Opis</string>
+    <string name="send">Pošalji</string>
+    <string name="close">Zatvori</string>
+    <string name="feedback_sent">Povratna informacija poslata</string>
+    <string name="feedback_failed">Povratna informacija nije poslata, proverite vezu</string>
+    <string name="feedback_limited">Previše povratnih informacija, pokušajte sutra</string>
 </resources>

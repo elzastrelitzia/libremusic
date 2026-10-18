@@ -352,4 +352,12 @@
     <string name="pause_minimum_volume">Pausar no volume mínimo</string>
     <string name="whats_new_in">Novidades na versão %1$s</string>
     <string name="okay">OK</string>
+    <string name="feedback">Feedback</string>
+    <string name="name">Nome</string>
+    <string name="description">Descrição</string>
+    <string name="send">Enviar</string>
+    <string name="close">Fechar</string>
+    <string name="feedback_sent">Feedback enviado</string>
+    <string name="feedback_failed">Não foi possível enviar o feedback, verifique sua conexão</string>
+    <string name="feedback_limited">Feedback demais, tente novamente amanhã</string>
 </resources>

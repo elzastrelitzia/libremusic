@@ -346,4 +346,12 @@
     </plurals>
     <string name="whats_new_in">%1$s 的新功能</string>
     <string name="okay">好的</string>
+    <string name="feedback">反馈</string>
+    <string name="name">名称</string>
+    <string name="description">描述</string>
+    <string name="send">发送</string>
+    <string name="close">关闭</string>
+    <string name="feedback_sent">反馈已发送</string>
+    <string name="feedback_failed">无法发送反馈，请检查网络连接</string>
+    <string name="feedback_limited">反馈过多，请明天再试</string>
 </resources>

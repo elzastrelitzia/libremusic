@@ -410,4 +410,12 @@
     </plurals>
     <string name="whats_new_in">Novità nella versione %1$s</string>
     <string name="okay">OK</string>
+    <string name="feedback">Feedback</string>
+    <string name="name">Nome</string>
+    <string name="description">Descrizione</string>
+    <string name="send">Invia</string>
+    <string name="close">Chiudi</string>
+    <string name="feedback_sent">Feedback inviato</string>
+    <string name="feedback_failed">Impossibile inviare il feedback, controlla la connessione</string>
+    <string name="feedback_limited">Troppi feedback, riprova domani</string>
 </resources>

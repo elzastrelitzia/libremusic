@@ -322,4 +322,12 @@
     </plurals>
     <string name="whats_new_in">%1$s の新機能</string>
     <string name="okay">OK</string>
+    <string name="feedback">フィードバック</string>
+    <string name="name">名前</string>
+    <string name="description">説明</string>
+    <string name="send">送信</string>
+    <string name="close">閉じる</string>
+    <string name="feedback_sent">フィードバックを送信しました</string>
+    <string name="feedback_failed">フィードバックを送信できませんでした。接続を確認してください</string>
+    <string name="feedback_limited">フィードバックが多すぎます。明日もう一度お試しください</string>
 </resources>

@@ -345,4 +345,12 @@
     </plurals>
     <string name="whats_new_in">Neu in Version %1$s</string>
     <string name="okay">Okay</string>
+    <string name="feedback">Feedback</string>
+    <string name="name">Name</string>
+    <string name="description">Beschreibung</string>
+    <string name="send">Senden</string>
+    <string name="close">Schließen</string>
+    <string name="feedback_sent">Feedback gesendet</string>
+    <string name="feedback_failed">Feedback konnte nicht gesendet werden, überprüfe deine Verbindung</string>
+    <string name="feedback_limited">Zu viel Feedback, versuche es morgen erneut</string>
 </resources>

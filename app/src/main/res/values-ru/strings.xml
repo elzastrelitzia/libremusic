@@ -344,4 +344,12 @@
     </plurals>
     <string name="whats_new_in">Что нового в версии %1$s</string>
     <string name="okay">ОК</string>
+    <string name="feedback">Отзыв</string>
+    <string name="name">Имя</string>
+    <string name="description">Описание</string>
+    <string name="send">Отправить</string>
+    <string name="close">Закрыть</string>
+    <string name="feedback_sent">Отзыв отправлен</string>
+    <string name="feedback_failed">Не удалось отправить отзыв, проверьте подключение</string>
+    <string name="feedback_limited">Слишком много отзывов, попробуйте завтра</string>
 </resources>

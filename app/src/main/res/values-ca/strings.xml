@@ -348,4 +348,12 @@
     </plurals>
     <string name="whats_new_in">Novetats de la versió %1$s</string>
     <string name="okay">D\'acord</string>
+    <string name="feedback">Comentaris</string>
+    <string name="name">Nom</string>
+    <string name="description">Descripció</string>
+    <string name="send">Enviar</string>
+    <string name="close">Tancar</string>
+    <string name="feedback_sent">Comentari enviat</string>
+    <string name="feedback_failed">No s\'ha pogut enviar el comentari, comprova la connexió</string>
+    <string name="feedback_limited">Massa comentaris, torna-ho a provar demà</string>
 </resources>
