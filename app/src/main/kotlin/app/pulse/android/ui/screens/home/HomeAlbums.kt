@@ -1,38 +1,38 @@
 package app.pulse.android.ui.screens.home
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.pulse.android.Database
 import app.pulse.android.LocalPlayerAwareWindowInsets
 import app.pulse.android.R
 import app.pulse.android.models.Album
 import app.pulse.android.preferences.OrderPreferences
+import app.pulse.android.preferences.UIStatePreferences
 import app.pulse.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.pulse.android.ui.components.themed.CollapsingHeader
 import app.pulse.android.ui.components.themed.CollapsingHeaderContentSpacer
@@ -65,12 +65,14 @@ fun HomeAlbums(
 
     var isMenuVisible by rememberSaveable { mutableStateOf(false) }
 
-    val lazyListState = rememberLazyListState()
+    val lazyGridState = rememberLazyGridState()
 
     Box {
     CollapsingHeader(
         title = stringResource(R.string.albums),
-        lazyListState = lazyListState,
+        lazyGridState = lazyGridState,
+        expandedFontSize = 36.sp,
+        collapsedFontSize = 26.sp,
         headerActions = {
             HeaderPillRow {
                 Box {
@@ -123,21 +125,45 @@ fun HomeAlbums(
                                 isMenuVisible = false
                             }
                         )
+                        NewMenuEntry(
+                            icon = if (UIStatePreferences.albumsAsGrid) R.drawable.grid else R.drawable.list,
+                            text = "Layout",
+                            secondaryText = if (UIStatePreferences.albumsAsGrid) "Grid" else "List",
+                            onClick = {
+                                UIStatePreferences.albumsAsGrid = !UIStatePreferences.albumsAsGrid
+                                isMenuVisible = false
+                            }
+                        )
                     }
                 }
             }
             }
         }
     ) {
-        LazyColumn(
-            state = lazyListState,
-            contentPadding = LocalPlayerAwareWindowInsets.current
-                .only(WindowInsetsSides.Vertical + WindowInsetsSides.End).asPaddingValues(),
+        LazyVerticalGrid(
+            state = lazyGridState,
+            columns = if (UIStatePreferences.albumsAsGrid)
+                GridCells.Adaptive(Dimensions.thumbnails.album + Dimensions.items.alternativePadding * 2)
+            else GridCells.Fixed(1),
+            contentPadding = PaddingValues(
+                top = LocalPlayerAwareWindowInsets.current
+                    .only(WindowInsetsSides.Vertical + WindowInsetsSides.End)
+                    .asPaddingValues()
+                    .calculateTopPadding() + 0.dp,
+                bottom = LocalPlayerAwareWindowInsets.current
+                    .only(WindowInsetsSides.Vertical + WindowInsetsSides.End)
+                    .asPaddingValues()
+                    .calculateBottomPadding()
+            ),
+            horizontalArrangement = Arrangement.spacedBy(Dimensions.items.alternativePadding),
+            verticalArrangement = if (UIStatePreferences.albumsAsGrid)
+                Arrangement.spacedBy(Dimensions.items.alternativePadding)
+            else Arrangement.Top,
             modifier = Modifier
-                .background(colorPalette.background0)
                 .fillMaxSize()
+                .background(colorPalette.background0)
         ) {
-            item {
+            item(key = "spacer", span = { GridItemSpan(maxLineSpan) }) {
                 Spacer(modifier = Modifier.height(CollapsingHeaderContentSpacer))
             }
 
@@ -147,7 +173,11 @@ fun HomeAlbums(
             ) { album ->
                 AlbumItem(
                     album = album,
-                    thumbnailSize = Dimensions.thumbnails.album,
+                    thumbnailSize = if (UIStatePreferences.albumsAsGrid)
+                        Dimensions.thumbnails.album
+                    else Dimensions.thumbnails.album - 24.dp,
+                    alternative = UIStatePreferences.albumsAsGrid,
+                    showChevron = true,
                     modifier = Modifier
                         .clickable(onClick = { onAlbumClick(album) })
                         .animateItem()
@@ -157,7 +187,7 @@ fun HomeAlbums(
     }
 
     FloatingActionsContainerWithScrollToTop(
-            lazyListState = lazyListState,
+            lazyGridState = lazyGridState,
             icon = null
         )
     }

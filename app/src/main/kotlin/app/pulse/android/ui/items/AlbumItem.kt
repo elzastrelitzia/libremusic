@@ -1,22 +1,30 @@
 package app.pulse.android.ui.items
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.pulse.android.R
 import app.pulse.android.models.Album
 import app.pulse.android.ui.components.themed.TextPlaceholder
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
 import app.pulse.android.utils.thumbnail
+import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.shimmer
 import app.pulse.core.ui.utils.px
@@ -28,7 +36,8 @@ fun AlbumItem(
     album: Album,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
-    alternative: Boolean = false
+    alternative: Boolean = false,
+    showChevron: Boolean = false
 ) = AlbumItem(
     thumbnailUrl = album.thumbnailUrl,
     title = album.title,
@@ -36,6 +45,7 @@ fun AlbumItem(
     year = album.year,
     thumbnailSize = thumbnailSize,
     alternative = alternative,
+    showChevron = showChevron,
     modifier = modifier
 )
 
@@ -44,7 +54,8 @@ fun AlbumItem(
     album: Innertube.AlbumItem,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
-    alternative: Boolean = false
+    alternative: Boolean = false,
+    showChevron: Boolean = false
 ) = AlbumItem(
     thumbnailUrl = album.thumbnail?.url,
     title = album.info?.name,
@@ -52,6 +63,7 @@ fun AlbumItem(
     year = album.year,
     thumbnailSize = thumbnailSize,
     alternative = alternative,
+    showChevron = showChevron,
     modifier = modifier
 )
 
@@ -63,14 +75,29 @@ fun AlbumItem(
     year: String?,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
-    alternative: Boolean = false
-) = ItemContainer(
-    alternative = alternative,
+    alternative: Boolean = false,
+    showChevron: Boolean = false
+) = if (alternative) AlternativeCard(
+    thumbnailContent = { modifier ->
+        thumbnailUrl?.let { url ->
+            AsyncImage(
+                model = url.thumbnail(thumbnailSize.px),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = modifier
+            )
+        }
+    },
+    title = title,
+    subtitle = year,
+    thumbnailSize = thumbnailSize,
+    modifier = modifier
+) else ItemContainer(
+    alternative = false,
     thumbnailSize = thumbnailSize,
     modifier = Modifier.clip(LocalAppearance.current.thumbnailShape) then modifier
 ) {
-    val typography = LocalAppearance.current.typography
-    val thumbnailShape = LocalAppearance.current.thumbnailShape
+    val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
 
     if (thumbnailUrl != null) {
         AsyncImage(
@@ -83,34 +110,48 @@ fun AlbumItem(
         )
     }
 
-    ItemInfoContainer {
-        title?.let {
-            BasicText(
-                text = title,
-                style = typography.xs.semiBold,
-                maxLines = if (alternative) 1 else 2,
-                overflow = TextOverflow.Ellipsis
-            )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        ItemInfoContainer(modifier = Modifier.weight(1f)) {
+            title?.let {
+                BasicText(
+                    text = title,
+                    style = typography.xs.semiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            authors?.let {
+                BasicText(
+                    text = authors,
+                    style = typography.xs.semiBold.secondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            year?.let {
+                BasicText(
+                    text = year,
+                    style = typography.xxs.semiBold.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
 
-        if (!alternative) authors?.let {
-            BasicText(
-                text = authors,
-                style = typography.xs.semiBold.secondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        year?.let {
-            BasicText(
-                text = year,
-                style = typography.xxs.semiBold.secondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
+        if (showChevron) Image(
+            painter = painterResource(R.drawable.chevron_forward),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colorPalette.textSecondary),
+            modifier = Modifier
+                .padding(start = Dimensions.items.gap, end = 12.dp)
+                .size(18.dp)
+        )
     }
 }
 

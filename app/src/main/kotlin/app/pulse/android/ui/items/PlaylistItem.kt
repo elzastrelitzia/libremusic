@@ -5,16 +5,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,16 +31,11 @@ import app.pulse.android.Database
 import app.pulse.android.R
 import app.pulse.android.models.PlaylistPreview
 import app.pulse.android.ui.components.themed.TextPlaceholder
-import app.pulse.android.utils.center
-import app.pulse.android.utils.color
-import app.pulse.android.utils.medium
 import app.pulse.android.utils.secondary
 import app.pulse.android.utils.semiBold
 import app.pulse.android.utils.thumbnail
 import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
-import app.pulse.core.ui.onOverlay
-import app.pulse.core.ui.overlay
 import app.pulse.core.ui.shimmer
 import app.pulse.core.ui.utils.px
 import app.pulse.core.ui.utils.roundedShape
@@ -198,14 +190,18 @@ fun PlaylistItem(
     modifier: Modifier = Modifier,
     alternative: Boolean = false,
     showChevron: Boolean = false
-) = ItemContainer(
-    alternative = alternative,
+) = if (alternative) AlternativeCard(
+    thumbnailContent = thumbnailContent,
+    title = name,
+    subtitle = channelName,
+    badge = songCount?.toString(),
+    thumbnailSize = thumbnailSize,
+    modifier = modifier
+) else ItemContainer(
+    alternative = false,
     thumbnailSize = thumbnailSize,
     modifier = Modifier.clip(
-        (
-            LocalAppearance.current.thumbnailShapeCorners +
-                if (alternative) Dimensions.items.alternativePadding else Dimensions.items.horizontalPadding
-            ).roundedShape
+        (LocalAppearance.current.thumbnailShapeCorners + Dimensions.items.horizontalPadding).roundedShape
     ) then modifier
 ) { centeredModifier ->
     val (colorPalette, typography, thumbnailShapeCorners) = LocalAppearance.current
@@ -214,62 +210,32 @@ fun PlaylistItem(
         modifier = centeredModifier
             .clip(thumbnailShapeCorners.roundedShape)
             .background(color = colorPalette.background1)
-            .let {
-                if (alternative) it
-                    .sizeIn(
-                        minWidth = thumbnailSize,
-                        minHeight = thumbnailSize
-                    )
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                else it.requiredSize(thumbnailSize)
-            }
+            .requiredSize(thumbnailSize)
     ) {
         thumbnailContent(Modifier.fillMaxSize())
 
-        songCount?.let {
-            BasicText(
-                text = "$songCount",
-                style = typography.xxs.medium.color(colorPalette.onOverlay),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .padding(all = Dimensions.items.gap)
-                    .background(
-                        color = colorPalette.overlay,
-                        shape = (thumbnailShapeCorners - Dimensions.items.gap).coerceAtLeast(0.dp).roundedShape
-                    )
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                    .align(Alignment.BottomEnd)
-            )
-        }
+        songCount?.let { ItemBadge("$it") }
     }
 
-    val texts: @Composable ColumnScope.() -> Unit = {
-        BasicText(
-            text = name.orEmpty(),
-            style = typography.m.semiBold.let { if (alternative && channelName.isNullOrBlank()) it.center else it },
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        if (channelName?.isNotBlank() == true) BasicText(
-            text = channelName,
-            style = typography.xs.semiBold.secondary,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-
-    if (alternative) {
-        ItemInfoContainer(
-            modifier = if (channelName.isNullOrBlank()) centeredModifier else Modifier
-        ) { texts() }
-    } else Row(
+    Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
-        ItemInfoContainer(modifier = Modifier.weight(1f)) { texts() }
+        ItemInfoContainer(modifier = Modifier.weight(1f)) {
+            BasicText(
+                text = name.orEmpty(),
+                style = typography.m.semiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            if (channelName?.isNotBlank() == true) BasicText(
+                text = channelName,
+                style = typography.xs.semiBold.secondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
 
         if (showChevron) Image(
             painter = painterResource(R.drawable.chevron_forward),
