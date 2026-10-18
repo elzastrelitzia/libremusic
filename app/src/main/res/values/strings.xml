@@ -423,4 +423,5 @@
     <string name="close">Close</string>
     <string name="feedback_sent">Feedback sent</string>
     <string name="feedback_failed">Couldn\'t send feedback, check your connection</string>
+    <string name="feedback_limited">Too much feedback, try again tomorrow</string>
 </resources>
