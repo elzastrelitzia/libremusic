@@ -15,6 +15,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import app.pulse.core.ui.LocalAppearance
 
+/**
+ * Fade band behind the dock, as a multiple of the dock's own height, so the band
+ * scales with the compact dock setting instead of holding its own dp values.
+ */
+private const val DockFadeFactorExpanded = 1.25f
+private const val DockFadeFactorCompact = 0.25f
+
 @Composable
 fun MorphingDock(
     progress: Float,
@@ -28,7 +35,7 @@ fun MorphingDock(
     val compact = AppearancePreferences.compactDock
     val dockPad = if (compact) 16.dp else 24.dp
     val dockSpacing = if (compact) 6.dp else 8.dp
-    val dockHeightExtra = if (compact) 64.dp else 80.dp
+    val baseSize = if (compact) Dimensions.items.collapsedPlayerHeight else 64.dp
     val dockCompactWidth = if (compact) 200.dp else 240.dp
 
     val isSubPage = navigationState == null
@@ -118,10 +125,16 @@ fun MorphingDock(
             .safeDrawingPadding()
             .padding(horizontal = dockPad, vertical = dockPad)
             .fillMaxWidth()
-            .height(Dimensions.items.collapsedPlayerHeight * 2 + dockSpacing + dockHeightExtra)
+            .height(
+                Dimensions.items.collapsedPlayerHeight + dockSpacing +
+                    baseSize * (
+                        DockFadeFactorCompact +
+                            (DockFadeFactorExpanded - DockFadeFactorCompact) *
+                            (1f - p).coerceIn(0f, 1f)
+                        )
+            )
     ) {
         val fullWidth = maxWidth
-        val baseSize  = if (compact) Dimensions.items.collapsedPlayerHeight else 64.dp
 
         // Structural morph, shrink circle to 80% of baseSize at p=1.0
         val currentCircleSize = baseSize * (1f - 0.2f * p.coerceIn(0f, 1f))
