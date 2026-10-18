@@ -108,6 +108,14 @@ value class RootRouterOwner internal constructor(val router: RootRouter)
 
 val LocalRouteHandler = compositionLocalOf<RootRouter?> { null }
 
+/**
+ * True while a predictive back gesture is seeking this handler's transition.
+ * The screen such a gesture reveals is composed as the seek target, so it would
+ * otherwise be indistinguishable from the screen the user is actually on and
+ * could claim global UI state, like the navigation bar in the dock.
+ */
+val LocalPredictiveBackInProgress = compositionLocalOf { false }
+
 @Composable
 fun ProvideRootRouter(content: @Composable RootRouterOwner.() -> Unit) {
     val currentRouteHandler = LocalRouteHandler.current
@@ -161,7 +169,12 @@ private fun RouteHandler(
     val transitionState = remember { SeekableTransitionState(child) }
 
     if (predictiveBackProgress == null) LaunchedEffect(child) {
-        if (transitionState.currentState != child) transitionState.animateTo(child)
+        // Comparing the target as well as the current state matters after a
+        // cancelled gesture: the seek left the buried screen as the target, so
+        // currentState alone would report everything as settled and the screen
+        // the gesture revealed would stay composed.
+        if (transitionState.targetState != child || transitionState.currentState != child)
+            transitionState.animateTo(child)
     } else LaunchedEffect(predictiveBackProgress) {
         transitionState.seekTo(
             fraction = predictiveBackProgress ?: 0f,
@@ -169,19 +182,23 @@ private fun RouteHandler(
         )
     }
 
-    rememberTransition(
-        transitionState = transitionState,
-        label = null
-    ).AnimatedContent(
-        transitionSpec = transitionSpec,
-        modifier = modifier
+    CompositionLocalProvider(
+        LocalPredictiveBackInProgress provides (predictiveBackProgress != null)
     ) {
-        val scope = remember(it) { it.scope() }
+        rememberTransition(
+            transitionState = transitionState,
+            label = null
+        ).AnimatedContent(
+            transitionSpec = transitionSpec,
+            modifier = modifier
+        ) {
+            val scope = remember(it) { it.scope() }
 
-        LaunchedEffect(predictiveBackProgress, scope) {
-            if (predictiveBackProgress == null && scope.child == null) router.current = scope
+            LaunchedEffect(predictiveBackProgress, scope) {
+                if (predictiveBackProgress == null && scope.child == null) router.current = scope
+            }
+
+            scope.content()
         }
-
-        scope.content()
     }
 }

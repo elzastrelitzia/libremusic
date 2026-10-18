@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import app.pulse.android.utils.color
 import app.pulse.android.utils.semiBold
+import app.pulse.compose.routing.LocalPredictiveBackInProgress
 
 data class NavigationState(
     val tabs: ImmutableList<Tab>,
@@ -84,7 +85,11 @@ fun Scaffold(
     val isLandscape = isLandscape
     val globalNavigationState = LocalNavigationState.current
 
-    if (isGlobalNav) {
+    // A predictive back gesture composes the screen it reveals as the seek target,
+    // so a half swipe back to Home would hand this screen's tabs to the dock while
+    // the user is still on the screen being popped. Only the screen being seen
+    // should drive the dock.
+    if (isGlobalNav && !LocalPredictiveBackInProgress.current) {
         DisposableEffect(tabs, tabIndex, onTabChange, hiddenTabs) {
             val previousState = globalNavigationState.value
             globalNavigationState.value = NavigationState(
