@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -45,6 +46,8 @@ import app.pulse.core.ui.LocalAppearance
  * reads over the mosaic instead of hugging the top bar.
  */
 private val HeroTopPadding = 360.dp
+
+private const val HeroCircleAlpha = 0.5f
 
 /**
  * Header body shared by the online and local playlist screens: the title, the
@@ -97,7 +100,8 @@ fun PlaylistHero(
                 containerColor = colorPalette.accent,
                 contentColor = colorPalette.onAccent,
                 enabled = enabled,
-                onClick = onShuffle
+                onClick = onShuffle,
+                modifier = Modifier.alpha(HeroCircleAlpha)
             )
 
             HeroActionPill(
@@ -111,7 +115,8 @@ fun PlaylistHero(
                 icon = R.drawable.add,
                 containerColor = colorPalette.accent,
                 contentColor = colorPalette.onAccent,
-                onClick = onAdd
+                onClick = onAdd,
+                modifier = Modifier.alpha(HeroCircleAlpha)
             )
 
             if (shuffleWithLabel) HeroActionPill(
