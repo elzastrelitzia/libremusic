@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -48,6 +49,10 @@ import app.pulse.core.ui.LocalAppearance
 private val HeroTopPadding = 360.dp
 
 private const val HeroCircleAlpha = 0.5f
+
+private val BackdropTopFadeHeight = 128.dp
+
+private const val BackdropTopFadeAlpha = 0.8f
 
 /**
  * Header body shared by the online and local playlist screens: the title, the
@@ -216,6 +221,19 @@ fun PlaylistBackdrop(
                         0.45f to Color.Transparent,
                         0.75f to colorPalette.background0,
                         1f to colorPalette.background0
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to colorPalette.background0.copy(alpha = BackdropTopFadeAlpha),
+                        1f to Color.Transparent,
+                        startY = 0f,
+                        endY = with(LocalDensity.current) { BackdropTopFadeHeight.toPx() }
                     )
                 )
         )
