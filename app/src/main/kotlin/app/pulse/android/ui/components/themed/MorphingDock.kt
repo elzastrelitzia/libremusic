@@ -122,7 +122,9 @@ fun MorphingDock(
                     )
                 )
             )
-            .safeDrawingPadding()
+            // Ime is left out on purpose, the keyboard covers the dock, and
+            // padding for it would lift the dock above the keyboard instead.
+            .windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime))
             .padding(horizontal = dockPad, vertical = dockPad)
             .fillMaxWidth()
             .height(
