@@ -25,7 +25,6 @@ import app.pulse.android.ui.components.themed.HeaderIconButton
 import app.pulse.android.ui.components.themed.HeaderPlaceholder
 import app.pulse.android.ui.components.themed.PlaylistInfo
 import app.pulse.android.ui.components.themed.Scaffold
-import app.pulse.android.ui.components.themed.adaptiveThumbnailContent
 import app.pulse.android.ui.items.AlbumItem
 import app.pulse.android.ui.items.AlbumItemPlaceholder
 import app.pulse.android.ui.screens.GlobalRoutes
@@ -183,9 +182,11 @@ fun AlbumScreen(browseId: String) {
                 }
             }
 
-            val thumbnailContent = adaptiveThumbnailContent(
-                isLoading = album?.timestamp == null,
-                url = album?.thumbnailUrl
+
+            val mosaicUrls = listOfNotNull(
+                album?.thumbnailUrl
+                    ?: albumPage?.thumbnail?.url
+                    ?: songs.firstOrNull()?.thumbnailUrl
             )
 
             Scaffold(
@@ -203,8 +204,9 @@ fun AlbumScreen(browseId: String) {
                     when (currentTabIndex) {
                         0 -> AlbumSongs(
                             songs = songs,
+                            title = album?.title ?: albumPage?.title,
+                            mosaicUrls = mosaicUrls,
                             headerContent = headerContent,
-                            thumbnailContent = thumbnailContent,
                             afterHeaderContent = {
                                 if (album == null) PlaylistInfo(playlist = albumPage)
                                 else PlaylistInfo(playlist = album)

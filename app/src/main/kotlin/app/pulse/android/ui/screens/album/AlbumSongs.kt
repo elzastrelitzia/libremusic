@@ -1,7 +1,6 @@
 package app.pulse.android.ui.screens.album
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,8 +22,10 @@ import app.pulse.core.data.models.Song
 import app.pulse.android.ui.components.LocalMenuState
 import app.pulse.android.ui.components.ShimmerHost
 import app.pulse.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
-import app.pulse.android.ui.components.themed.LayoutWithAdaptiveThumbnail
 import app.pulse.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.pulse.android.ui.components.themed.PlaylistBackdrop
+import app.pulse.android.ui.components.themed.PlaylistGradient
+import app.pulse.android.ui.components.themed.PlaylistHero
 import app.pulse.android.ui.components.themed.SecondaryTextButton
 import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.items.SongItemPlaceholder
@@ -35,8 +36,6 @@ import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.forcePlayFromBeginning
 import app.pulse.android.utils.playingSong
 import app.pulse.core.ui.Dimensions
-import app.pulse.core.ui.LocalAppearance
-import app.pulse.core.ui.utils.isLandscape
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -45,33 +44,33 @@ import kotlinx.collections.immutable.toImmutableList
 @Composable
 fun AlbumSongs(
     songs: ImmutableList<Song>,
+    title: String?,
+    mosaicUrls: List<String>,
     headerContent: @Composable (
         beforeContent: (@Composable () -> Unit)?,
         afterContent: (@Composable () -> Unit)?
     ) -> Unit,
-    thumbnailContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     afterHeaderContent: (@Composable () -> Unit)? = null
-) = LayoutWithAdaptiveThumbnail(
-    thumbnailContent = thumbnailContent,
-    modifier = modifier
 ) {
-    val (colorPalette) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
     val lazyListState = rememberLazyListState()
 
     val (currentMediaId, playing) = playingSong(binder)
 
-    Box {
+    val mediaItems = songs.map { it.asMediaItem }
+
+    Box(modifier = modifier) {
+        PlaylistBackdrop(mosaicUrls, lazyListState)
+        PlaylistGradient()
+
         LazyColumn(
             state = lazyListState,
             contentPadding = LocalPlayerAwareWindowInsets.current
                 .only(WindowInsetsSides.Vertical + WindowInsetsSides.End)
                 .asPaddingValues(),
-            modifier = Modifier
-                .background(colorPalette.background0)
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
             item(
                 key = "header",
@@ -95,7 +94,25 @@ fun AlbumSongs(
                         }
                     )
 
-                    if (!isLandscape) thumbnailContent()
+                    PlaylistHero(
+                        title = title.orEmpty(),
+                        songCount = songs.size,
+                        mosaicUrls = mosaicUrls,
+                        onShuffle = {
+                            binder?.stopRadio()
+                            binder?.player?.forcePlayAtIndex(
+                                items = mediaItems.shuffled(),
+                                index = 0
+                            )
+                        },
+                        onPlay = {
+                            binder?.stopRadio()
+                            binder?.player?.forcePlayFromBeginning(mediaItems)
+                        },
+                        onAdd = null,
+                        shuffleWithLabel = true
+                    )
+
                     afterHeaderContent?.invoke()
                 }
             }
@@ -120,7 +137,7 @@ fun AlbumSongs(
                         onClick = {
                             binder?.stopRadio()
                             binder?.player?.forcePlayAtIndex(
-                                items = songs.map { it.asMediaItem },
+                                items = mediaItems,
                                 index = index
                             )
                         }
