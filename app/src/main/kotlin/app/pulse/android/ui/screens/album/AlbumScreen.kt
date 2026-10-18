@@ -2,27 +2,36 @@ package app.pulse.android.ui.screens.album
 
 import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import app.pulse.android.Database
+import app.pulse.android.LocalPlayerServiceBinder
 import app.pulse.android.R
 import app.pulse.android.models.Album
 import app.pulse.core.data.models.Song
 import app.pulse.android.models.SongAlbumMap
 import app.pulse.android.query
+import app.pulse.android.service.PrecacheService
+import app.pulse.android.service.downloadState
 import app.pulse.android.transaction
+import app.pulse.android.ui.components.NewMenuEntry
 import app.pulse.android.ui.components.themed.Header
 import app.pulse.android.ui.components.themed.HeaderIconButton
 import app.pulse.android.ui.components.themed.HeaderPlaceholder
+import app.pulse.android.ui.components.themed.PlaylistHeaderActions
 import app.pulse.android.ui.components.themed.PlaylistInfo
 import app.pulse.android.ui.components.themed.Scaffold
 import app.pulse.android.ui.items.AlbumItem
@@ -33,6 +42,7 @@ import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.searchresult.ItemsPage
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.completed
+import app.pulse.android.utils.enqueue
 import app.pulse.compose.persist.PersistMapCleanup
 import app.pulse.compose.persist.persist
 import app.pulse.compose.persist.persistList
@@ -65,6 +75,8 @@ fun AlbumScreen(browseId: String) {
     var album by persist<Album?>("album/$browseId/album")
     var albumPage by persist<Innertube.PlaylistOrAlbumPage?>("album/$browseId/albumPage")
     var songs by persistList<Song>("album/$browseId/songs")
+
+    var isMenuVisible by rememberSaveable { mutableStateOf(false) }
 
     PersistMapCleanup(prefix = "album/$browseId/")
 
@@ -182,6 +194,60 @@ fun AlbumScreen(browseId: String) {
                 }
             }
 
+            val albumHeaderActions: @Composable RowScope.() -> Unit = {
+                val context = LocalContext.current
+                val binder = LocalPlayerServiceBinder.current
+                val isDownloading by downloadState.collectAsState()
+
+                PlaylistHeaderActions(
+                    shareUrl = album?.shareUrl,
+                    menuVisible = isMenuVisible,
+                    onMenuVisibleChange = { isMenuVisible = it },
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    NewMenuEntry(
+                        icon = R.drawable.enqueue,
+                        text = stringResource(R.string.enqueue),
+                        enabled = songs.isNotEmpty(),
+                        onClick = {
+                            isMenuVisible = false
+                            binder?.player?.enqueue(songs.map { it.asMediaItem })
+                        }
+                    )
+
+                    NewMenuEntry(
+                        icon = R.drawable.download,
+                        text = stringResource(R.string.download),
+                        enabled = songs.isNotEmpty() && !isDownloading,
+                        onClick = {
+                            isMenuVisible = false
+                            songs.forEach {
+                                PrecacheService.scheduleCache(context.applicationContext, it.asMediaItem)
+                            }
+                        }
+                    )
+
+                    NewMenuEntry(
+                        icon = if (album?.bookmarkedAt == null) R.drawable.bookmark_outline
+                        else R.drawable.bookmark,
+                        text = stringResource(R.string.library),
+                        enabled = album != null,
+                        onClick = {
+                            isMenuVisible = false
+
+                            val bookmarkedAt =
+                                if (album?.bookmarkedAt == null) System.currentTimeMillis() else null
+
+                            query {
+                                album
+                                    ?.copy(bookmarkedAt = bookmarkedAt)
+                                    ?.let(Database::update)
+                            }
+                        }
+                    )
+                }
+            }
+
 
             val mosaicUrls = listOfNotNull(
                 album?.thumbnailUrl
@@ -206,7 +272,7 @@ fun AlbumScreen(browseId: String) {
                             songs = songs,
                             title = album?.title ?: albumPage?.title,
                             mosaicUrls = mosaicUrls,
-                            headerContent = headerContent,
+                            headerActions = albumHeaderActions,
                             afterHeaderContent = {
                                 if (album == null) PlaylistInfo(playlist = albumPage)
                                 else PlaylistInfo(playlist = album)
