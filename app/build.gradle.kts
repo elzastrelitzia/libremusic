@@ -51,6 +51,7 @@ android {
             .find(file("src/main/cpp/CMakeLists.txt").readText())
             ?.groupValues?.get(1) ?: "unknown"
         buildConfigField("String", "QUICKJS_VERSION", "\"$quickjsVersion\"")
+        buildConfigField("String", "FEEDBACK_ENDPOINT", "\"https://libremusic-api.vercel.app/api/feedback\"") // dont spam pls heker :(
     }
 
     splits {
@@ -260,6 +261,7 @@ dependencies {
     implementation(projects.providers.piped)
     implementation(projects.providers.sponsorblock)
     implementation(projects.providers.translate)
+    implementation(projects.providers.feedback)
     implementation(projects.core.data)
     implementation(projects.core.ui)
 

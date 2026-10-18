@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +71,9 @@ import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.items.SongItemPlaceholder
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.ui.screens.settingsRoute
-import app.pulse.android.ui.components.themed.HeaderCircleIconButton
+import app.pulse.android.ui.components.themed.HeaderPillRow
+import app.pulse.android.ui.components.themed.HeaderIconButton
+import app.pulse.android.ui.components.themed.FeedbackDialog
 import app.pulse.android.ui.components.themed.CollapsingHeader
 import app.pulse.android.ui.components.themed.CollapsingHeaderContentSpacer
 import app.pulse.android.utils.asMediaItem
@@ -124,6 +127,7 @@ fun QuickPicks(
 
     val context = LocalContext.current.applicationContext
     var isRefreshing by remember { mutableStateOf(false) }
+    var feedbackVisible by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // SongBundle only carries durationText and explicit (see Song.asMediaItem), so
@@ -327,10 +331,10 @@ fun QuickPicks(
             title = stringResource(R.string.quick_picks),
             scrollState = scrollState,
             headerActions = {
-                HeaderCircleIconButton(
-                    icon = R.drawable.settings,
-                    onClick = { settingsRoute.global() }
-                )
+                HeaderPillRow {
+                    HeaderIconButton(onClick = { feedbackVisible = true }, icon = R.drawable.mail_pen)
+                    HeaderIconButton(onClick = { settingsRoute.global() }, icon = R.drawable.settings)
+                }
             }
         ) {
             Column(
@@ -553,4 +557,6 @@ fun QuickPicks(
         )
     }
     }
+
+    if (feedbackVisible) FeedbackDialog(onDismiss = { feedbackVisible = false })
 }
