@@ -12,13 +12,13 @@ import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.artistRoute
 import app.pulse.android.ui.screens.builtInPlaylistRoute
 import app.pulse.android.ui.screens.builtinplaylist.BuiltInPlaylistScreen
+import app.pulse.android.ui.screens.library.LibraryScreen
 import app.pulse.android.ui.screens.localPlaylistRoute
 import app.pulse.android.ui.screens.localplaylist.LocalPlaylistScreen
 import app.pulse.android.ui.screens.mood.MoodScreen
 import app.pulse.android.ui.screens.mood.MoreAlbumsScreen
 import app.pulse.android.ui.screens.mood.MoreMoodsScreen
 import app.pulse.android.ui.screens.moodRoute
-import app.pulse.android.ui.screens.pipedPlaylistRoute
 import app.pulse.android.ui.screens.playlistRoute
 import app.pulse.android.ui.screens.searchRoute
 import app.pulse.android.ui.screens.settingsRoute
@@ -60,6 +60,11 @@ fun HomeScreen() {
         }
 
         Content {
+            // Tabs 2..6 used to be library destinations. An install that had one
+            // selected would otherwise land on a blank tab at an index this
+            // scaffold no longer draws.
+            if (UIStatePreferences.homeScreenTabIndex > 2) UIStatePreferences.homeScreenTabIndex = 2
+
             Scaffold(
                 key = "home",
                 topIconButtonId = R.drawable.settings,
@@ -70,11 +75,7 @@ fun HomeScreen() {
                 tabColumnContent = {
                     tab(0, R.string.quick_picks, R.drawable.sparkles)
                     tab(1, R.string.discover, R.drawable.globe)
-                    tab(2, R.string.songs, R.drawable.musical_notes)
-                    tab(3, R.string.playlists, R.drawable.playlist)
-                    tab(4, R.string.artists, R.drawable.person)
-                    tab(5, R.string.albums, R.drawable.disc)
-                    tab(6, R.string.local, R.drawable.download)
+                    tab(2, R.string.library, R.drawable.library, canHide = false)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
@@ -102,35 +103,7 @@ fun HomeScreen() {
                             onPlaylistClick = { playlistRoute(it, null, null, true) }
                         )
 
-                        2 -> HomeSongs(
-                            onSearchClick = onSearchClick
-                        )
-
-                        3 -> HomePlaylists(
-                            onPlaylistClick = { localPlaylistRoute(it.id) },
-                            onPipedPlaylistClick = { session, playlist ->
-                                pipedPlaylistRoute(
-                                    p0 = session.apiBaseUrl.toString(),
-                                    p1 = session.token,
-                                    p2 = playlist.id.toString()
-                                )
-                            },
-                            onSearchClick = onSearchClick
-                        )
-
-                        4 -> HomeArtistList(
-                            onArtistClick = { artistRoute(it.id) },
-                            onSearchClick = onSearchClick
-                        )
-
-                        5 -> HomeAlbums(
-                            onAlbumClick = { albumRoute(it.id) },
-                            onSearchClick = onSearchClick
-                        )
-
-                        6 -> HomeLocalSongs(
-                            onSearchClick = onSearchClick
-                        )
+                        2 -> LibraryScreen()
                     }
                 }
             }
