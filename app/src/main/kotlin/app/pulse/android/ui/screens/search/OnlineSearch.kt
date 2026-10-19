@@ -49,6 +49,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import app.pulse.android.Database
 import app.pulse.android.LocalPlayerAwareWindowInsets
 import app.pulse.android.LocalPlayerServiceBinder
@@ -172,6 +175,16 @@ fun OnlineSearch(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     modifier = Modifier.clickable {
+                        if (!DataPreferences.pauseSearchHistory) query {
+                            Database.insert(
+                                SearchQuery(
+                                    query = song.info?.name.orEmpty(),
+                                    songId = song.key,
+                                    thumbnailUrl = song.thumbnail?.url,
+                                    artistsText = song.authors?.joinToString("") { it.name.orEmpty() }
+                                )
+                            )
+                        }
                         binder?.stopRadio()
                         binder?.player?.forcePlay(song.asMediaItem)
                         binder?.setupRadio(song.info?.endpoint)
@@ -187,7 +200,28 @@ fun OnlineSearch(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clickable { onSearch(searchQuery.query) }
+                    .clickable {
+                        val songId = searchQuery.songId
+                        if (songId != null) {
+                            binder?.stopRadio()
+                            binder?.player?.forcePlay(
+                                MediaItem.Builder()
+                                    .setMediaId(songId)
+                                    .setUri(songId)
+                                    .setCustomCacheKey(songId)
+                                    .setMediaMetadata(
+                                        MediaMetadata.Builder()
+                                            .setTitle(searchQuery.query)
+                                            .setArtist(searchQuery.artistsText)
+                                            .setArtworkUri(searchQuery.thumbnailUrl?.toUri())
+                                            .build()
+                                    )
+                                    .build()
+                            )
+                        } else {
+                            onSearch(searchQuery.query)
+                        }
+                    }
                     .fillMaxWidth()
                     .padding(all = 16.dp)
                     .animateItem()
@@ -217,7 +251,10 @@ fun OnlineSearch(
                         )
                     } else {
                         Image(
-                            painter = painterResource(R.drawable.time),
+                            painter = painterResource(
+                                if (searchQuery.songId != null) R.drawable.musical_notes
+                                else R.drawable.time
+                            ),
                             contentDescription = null,
                             colorFilter = ColorFilter.disabled,
                             modifier = Modifier.size(20.dp)

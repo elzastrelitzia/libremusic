@@ -16,5 +16,9 @@ import androidx.room.PrimaryKey
 )
 data class SearchQuery(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val query: String
+    val query: String,
+    // Set when the entry was saved by playing a search preview
+    val songId: String? = null,
+    val thumbnailUrl: String? = null,
+    val artistsText: String? = null
 )

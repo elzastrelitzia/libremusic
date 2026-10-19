@@ -286,11 +286,15 @@ interface DatabaseAccessor {
     fun clearQueue()
 
     // Best-effort match of a history row to a local song, for its artwork and
-    // artist. Free-text queries rarely name an entity exactly, so many rows come
-    // back null and fall back to an icon and a single line.
+    // artist. Song rows carry their own thumbnail and artist; free-text queries
+    // rarely name an entity exactly, so many of them come back null and fall
+    // back to an icon and a single line.
     @Query(
         """
-        SELECT sq.id, sq.query, s.thumbnailUrl, s.artistsText
+        SELECT sq.id, sq.query,
+               COALESCE(sq.thumbnailUrl, s.thumbnailUrl) AS thumbnailUrl,
+               COALESCE(sq.artistsText, s.artistsText) AS artistsText,
+               sq.songId
         FROM SearchQuery sq
         LEFT JOIN Song s ON s.id = (
             SELECT s2.id FROM Song s2
@@ -870,7 +874,7 @@ interface DatabaseAccessor {
         PipedSession::class
     ],
     views = [SortedSongPlaylistMap::class],
-    version = 33,
+    version = 34,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -899,7 +903,8 @@ interface DatabaseAccessor {
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
         AutoMigration(from = 30, to = 31, spec = DatabaseInitializer.From30To31Migration::class),
-        AutoMigration(from = 32, to = 33)
+        AutoMigration(from = 32, to = 33),
+        AutoMigration(from = 33, to = 34)
     ]
 )
 @TypeConverters(Converters::class)
