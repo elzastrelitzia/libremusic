@@ -92,6 +92,9 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 
+private const val SUGGESTION_LIMIT = 5
+private const val PREVIEW_LIMIT = 3
+
 @Composable
 fun OnlineSearch(
     textFieldValue: TextFieldValue,
@@ -136,7 +139,7 @@ fun OnlineSearch(
                 params = Innertube.SearchFilter.Song.value
             ),
             fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
-        )?.map { page -> page?.items?.take(5) }
+        )?.map { page -> page?.items?.take(PREVIEW_LIMIT) }
     }
 
     // one source for the history artwork slot, so the requested and displayed
@@ -331,7 +334,7 @@ fun OnlineSearch(
             }
         }
 
-        suggestionsResult?.getOrNull()?.let { suggestions ->
+        suggestionsResult?.getOrNull()?.take(SUGGESTION_LIMIT)?.let { suggestions ->
             items(items = suggestions) { suggestion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
