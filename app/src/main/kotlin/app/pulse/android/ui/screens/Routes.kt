@@ -64,6 +64,11 @@ val databaseSettingsRoute = Route0("databaseSettingsRoute")
 val syncSettingsRoute = Route0("syncSettingsRoute")
 val otherSettingsRoute = Route0("otherSettingsRoute")
 val aboutSettingsRoute = Route0("aboutSettingsRoute")
+val songsRoute = Route0("songsRoute")
+val playlistsRoute = Route0("playlistsRoute")
+val artistsRoute = Route0("artistsRoute")
+val albumsRoute = Route0("albumsRoute")
+val localSongsRoute = Route0("localSongsRoute")
 
 @Composable
 fun RouteHandlerScope.GlobalRoutes() {
