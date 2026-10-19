@@ -28,6 +28,27 @@
     <string name="history">इतिहास</string>
     <string name="overview">संक्षिप्त विवरण</string>
     <string name="library">संग्रह</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d गाना</item>
+        <item quantity="other">%1$d गीत</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d प्लेलिस्ट</item>
+        <item quantity="other">%1$d प्लेलिस्ट</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d कलाकार</item>
+        <item quantity="other">%1$d कलाकार</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d एल्बम</item>
+        <item quantity="other">%1$d एल्बम</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d गाना</item>
+        <item quantity="other">%1$d गीत</item>
+    </plurals>
     <string name="discover">खोज</string>
     <string name="local">स्थानीय</string>
     <string name="quick_picks">त्वरित चयन</string>

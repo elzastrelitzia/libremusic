@@ -28,6 +28,32 @@
     <string name="history">Historial</string>
     <string name="overview">Resum</string>
     <string name="library">Biblioteca</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d cançó</item>
+        <item quantity="many">%1$d cançons</item>
+        <item quantity="other">%1$d cançons</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d llista</item>
+        <item quantity="many">%1$d llistes</item>
+        <item quantity="other">%1$d llistes</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d artista</item>
+        <item quantity="many">%1$d artistes</item>
+        <item quantity="other">%1$d artistes</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d àlbum</item>
+        <item quantity="many">%1$d àlbums</item>
+        <item quantity="other">%1$d àlbums</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d cançó</item>
+        <item quantity="many">%1$d cançons</item>
+        <item quantity="other">%1$d cançons</item>
+    </plurals>
     <string name="discover">Descobrir</string>
     <string name="local">Local</string>
     <string name="quick_picks">Seleccions ràpides</string>

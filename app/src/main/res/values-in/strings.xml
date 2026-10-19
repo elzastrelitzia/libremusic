@@ -27,6 +27,22 @@
     <string name="offline">Luring</string>
     <string name="overview">Gambaran Umum</string>
     <string name="library">Pustaka</string>
+
+    <plurals name="n_songs">
+        <item quantity="other">%1$d lagu</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="other">%1$d daftar putar</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="other">%1$d artis</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="other">%1$d lagu</item>
+    </plurals>
     <string name="discover">Jelajahi</string>
     <string name="local">Lokal</string>
     <string name="quick_picks">Pilihan cepat</string>

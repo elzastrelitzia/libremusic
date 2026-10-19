@@ -28,6 +28,22 @@
     <string name="history">历史</string>
     <string name="overview">概览</string>
     <string name="library">库</string>
+
+    <plurals name="n_songs">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="other">%1$d 个播放列表</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="other">%1$d 位艺术家</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="other">%1$d 张专辑</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
     <string name="discover">发现</string>
     <string name="local">本地</string>
     <string name="quick_picks">快速选择</string>

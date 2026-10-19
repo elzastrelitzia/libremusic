@@ -28,6 +28,27 @@
     <string name="history">Geschiedenis</string>
     <string name="overview">Overzicht</string>
     <string name="library">Bibliotheek</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d nummer</item>
+        <item quantity="other">%1$d nummers</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d afspeellijst</item>
+        <item quantity="other">%1$d afspeellijsten</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d artiest</item>
+        <item quantity="other">%1$d artiesten</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d albums</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d nummer</item>
+        <item quantity="other">%1$d nummers</item>
+    </plurals>
     <string name="discover">Ontdekken</string>
     <string name="local">Lokaal</string>
     <string name="quick_picks">Snelle keuzes</string>

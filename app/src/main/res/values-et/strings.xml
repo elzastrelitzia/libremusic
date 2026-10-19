@@ -28,6 +28,27 @@
     <string name="history">Ajalugu</string>
     <string name="overview">Ülevaade</string>
     <string name="library">Muusikakogu</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d laul</item>
+        <item quantity="other">%1$d laulu</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d esitusloend</item>
+        <item quantity="other">%1$d esitusloendit</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d esitaja</item>
+        <item quantity="other">%1$d esitajat</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d albumit</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d laul</item>
+        <item quantity="other">%1$d laulu</item>
+    </plurals>
     <string name="discover">Avasta</string>
     <string name="local">Kohalik</string>
     <string name="quick_picks">Kiirvalikud</string>

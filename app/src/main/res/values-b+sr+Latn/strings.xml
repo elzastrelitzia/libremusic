@@ -28,6 +28,27 @@
     <string name="history">Istorija</string>
     <string name="overview">Pregled</string>
     <string name="library">Knjižnica</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d pesma</item>
+        <item quantity="other">%1$d pesama</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d plejlista</item>
+        <item quantity="other">%1$d plejlista</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d izvođač</item>
+        <item quantity="other">%1$d izvođača</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d albuma</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d pesma</item>
+        <item quantity="other">%1$d pesama</item>
+    </plurals>
     <string name="discover">Otkrij</string>
     <string name="local">Lokalno</string>
     <string name="quick_picks">Brzi izbor</string>

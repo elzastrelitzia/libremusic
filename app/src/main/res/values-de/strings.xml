@@ -28,6 +28,27 @@
     <string name="history">Zuletzt gespielt</string>
     <string name="overview">Übersicht</string>
     <string name="library">Bibliothek</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d Lied</item>
+        <item quantity="other">%1$d Lieder</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d Wiedergabeliste</item>
+        <item quantity="other">%1$d Wiedergabelisten</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d Künstler</item>
+        <item quantity="other">%1$d Künstler</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d Album</item>
+        <item quantity="other">%1$d Alben</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d Lied</item>
+        <item quantity="other">%1$d Lieder</item>
+    </plurals>
     <string name="discover">Entdecken</string>
     <string name="local">Lokal</string>
     <string name="quick_picks">Startseite</string>

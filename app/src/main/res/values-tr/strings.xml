@@ -27,6 +27,27 @@
     <string name="offline">Çevrimdışı</string>
     <string name="overview">Genel Bakış</string>
     <string name="library">Kütüphane</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d şarkı</item>
+        <item quantity="other">%1$d şarkı</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d çalma listesi</item>
+        <item quantity="other">%1$d çalma listesi</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d sanatçı</item>
+        <item quantity="other">%1$d sanatçı</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d albüm</item>
+        <item quantity="other">%1$d albüm</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d şarkı</item>
+        <item quantity="other">%1$d şarkı</item>
+    </plurals>
     <string name="discover">Keşfet</string>
     <string name="local">Yerel</string>
     <string name="quick_picks">Hızlı seçimler</string>

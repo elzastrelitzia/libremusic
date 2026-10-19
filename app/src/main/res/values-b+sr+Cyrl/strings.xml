@@ -28,6 +28,27 @@
     <string name="history">Историја</string>
     <string name="overview">Преглед</string>
     <string name="library">Књижница</string>
+
+    <plurals name="n_songs">
+        <item quantity="one">%1$d песма</item>
+        <item quantity="other">%1$d песама</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="one">%1$d плејлиста</item>
+        <item quantity="other">%1$d плејлиста</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="one">%1$d извођач</item>
+        <item quantity="other">%1$d извођача</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="one">%1$d албум</item>
+        <item quantity="other">%1$d албума</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="one">%1$d песма</item>
+        <item quantity="other">%1$d песама</item>
+    </plurals>
     <string name="discover">Откриј</string>
     <string name="local">Локално</string>
     <string name="quick_picks">Брзи избор</string>

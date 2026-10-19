@@ -27,6 +27,22 @@
     <string name="offline">オフライン</string>
     <string name="overview">概要</string>
     <string name="library">ライブラリー</string>
+
+    <plurals name="n_songs">
+        <item quantity="other">%1$d 曲</item>
+    </plurals>
+    <plurals name="n_playlists">
+        <item quantity="other">%1$d プレイリスト</item>
+    </plurals>
+    <plurals name="n_artists">
+        <item quantity="other">%1$d アーティスト</item>
+    </plurals>
+    <plurals name="n_albums">
+        <item quantity="other">%1$d アルバム</item>
+    </plurals>
+    <plurals name="n_local_songs">
+        <item quantity="other">%1$d 曲</item>
+    </plurals>
     <string name="discover">見つける</string>
     <string name="local">ローカル</string>
     <string name="quick_picks">おすすめ</string>
