@@ -50,6 +50,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -144,6 +145,10 @@ fun NewLayoutContent(
 
     var controlsVisible by remember { mutableStateOf(true) }
     var lastTouchAt by remember { mutableLongStateOf(0L) }
+    // finger on screen + scroll-hid this gesture: stops the press handler
+    // from showing the controls again between drag events
+    var pointerDown by remember { mutableStateOf(false) }
+    var scrollHidControls by remember { mutableStateOf(false) }
 
     val controlsEnabled = !isShowingLyrics || controlsVisible
     val controlsAutoHide = isShowingLyrics && shouldBePlaying && !isBuffering
@@ -153,9 +158,11 @@ fun NewLayoutContent(
         label = "controlsAlpha"
     )
 
-    LaunchedEffect(controlsAutoHide, controlsVisible, lastTouchAt) {
+    LaunchedEffect(controlsAutoHide, controlsVisible, lastTouchAt, isShowingLyrics) {
         if (!controlsAutoHide) {
-            controlsVisible = true
+            // paused/stopped restores the controls, except a hide the user
+            // caused by scrolling the lyrics — that one is theirs to undo
+            if (!isShowingLyrics || !scrollHidControls) controlsVisible = true
             return@LaunchedEffect
         }
         if (!controlsVisible) return@LaunchedEffect
@@ -295,10 +302,17 @@ fun NewLayoutContent(
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
                         if (event.changes.any { it.pressed }) {
-                            controlsVisible = true
+                            val wasDown = pointerDown
+                            pointerDown = true
+                            if (!wasDown || !scrollHidControls) {
+                                controlsVisible = true
+                                scrollHidControls = false
+                            }
 
                             val now = System.currentTimeMillis()
                             if (now - lastTouchAt > 1_000) lastTouchAt = now
+                        } else {
+                            pointerDown = false
                         }
                     }
                 }
@@ -482,6 +496,31 @@ fun NewLayoutContent(
                 val lyricsListState = rememberLazyListState()
                 val queueListState = rememberLazyListState()
                 var hasScrolledQueueToCurrent by remember { mutableStateOf(false) }
+
+                // Swipe up (list advances) hides the controls
+                LaunchedEffect(lyricsListState, isShowingLyrics) {
+                    if (!isShowingLyrics) return@LaunchedEffect
+                    var prevIndex = lyricsListState.firstVisibleItemIndex
+                    var prevOffset = lyricsListState.firstVisibleItemScrollOffset
+                    snapshotFlow {
+                        lyricsListState.firstVisibleItemIndex to
+                            lyricsListState.firstVisibleItemScrollOffset
+                    }.collect { (index, offset) ->
+                        val advanced = index > prevIndex ||
+                            (index == prevIndex && offset > prevOffset)
+                        val reversed = index < prevIndex ||
+                            (index == prevIndex && offset < prevOffset)
+                        prevIndex = index
+                        prevOffset = offset
+                        if (advanced && pointerDown) {
+                            controlsVisible = false
+                            scrollHidControls = true
+                        } else if (reversed || (index == 0 && offset == 0)) {
+                            controlsVisible = true
+                            scrollHidControls = false
+                        }
+                    }
+                }
 
                 // scrim that belongs to the controls
                 val controlsScrim = if (isShowingLyrics) {
