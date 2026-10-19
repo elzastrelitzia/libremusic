@@ -118,7 +118,10 @@ fun OnlineSearch(
     }
 
     LaunchedEffect(textFieldValue.text) {
-        if (textFieldValue.text.isEmpty()) return@LaunchedEffect
+        if (textFieldValue.text.isEmpty()) {
+            suggestionsResult = null
+            return@LaunchedEffect
+        }
 
         delay(500)
         suggestionsResult = Innertube.searchSuggestions(
