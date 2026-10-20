@@ -110,8 +110,10 @@ fun MorphingDock(
     val playerSlideProgress = ((p - 0.5f) / 0.4f).coerceIn(0f, 1f)
 
     // Phase 2 (Sub-page Entry: 1.0 → 2.0)
-    val navHideFactor   = ((p - 1f) / 0.5f).coerceIn(0f, 1f)
-    val radioShowFactor = ((p - 1.5f) / 0.5f).coerceIn(0f, 1f)
+    // Gated on isSubPage; the collapse spring is under-damped and overshoots past 1.0,
+    // which would otherwise read as a sliver of sub-page entry and pulse the nav bar.
+    val navHideFactor   = if (isSubPage) ((p - 1f) / 0.5f).coerceIn(0f, 1f) else 0f
+    val radioShowFactor = if (isSubPage) ((p - 1.5f) / 0.5f).coerceIn(0f, 1f) else 0f
 
     BoxWithConstraints(
         modifier = modifier
@@ -182,6 +184,7 @@ fun MorphingDock(
                     onTabChange     = currentNavState.onTabChange,
                     onAction        = currentNavState.onAction,
                     hiddenTabs      = currentNavState.hiddenTabs,
+                    expandedWidth   = expandedNavWidth,
                     modifier        = Modifier.fillMaxSize()
                 )
             }

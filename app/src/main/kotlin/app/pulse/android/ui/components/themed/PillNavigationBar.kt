@@ -150,6 +150,9 @@ fun MorphingNavigationBar(
     onTabChange: (Int) -> Unit,
     onAction: (String) -> Unit,
     hiddenTabs: kotlinx.collections.immutable.ImmutableList<String>,
+    // The bar's width when fully expanded. Tab widths come from this, not from the live
+    // width, so the row does not reflow while the bar contracts around it.
+    expandedWidth: Dp = Dp.Unspecified,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
@@ -264,12 +267,15 @@ fun MorphingNavigationBar(
         contentAlignment = Alignment.Center
     ) {
         // Fit the visible tabs into the width the dock gave this bar, instead of a fixed
-        // per-tab width.
+        // per-tab width. The width is the expanded one, so the row is laid out once and stays
+        // put while the bar contracts; using the live width made the tabs slide and the pill
+        // trail them by a frame, which read as a stagger.
         val compactDock = AppearancePreferences.compactDock
         val maxTabWidth = if (compactDock) 60.dp else 72.dp
+        val layoutWidth = expandedWidth.takeIf { it != Dp.Unspecified } ?: maxWidth
         val tabWidth = visibleTabsWithIndices
             .takeIf { it.isNotEmpty() }
-            ?.let { ((maxWidth - 16.dp) / it.size).coerceIn(56.dp, maxTabWidth) }
+            ?.let { ((layoutWidth - 16.dp) / it.size).coerceIn(56.dp, maxTabWidth) }
             ?: maxTabWidth
         // Widen the crossfade range for more fluidity (0.5 to 1.0)
         val crossfadeProgress = ((progress - 0.5f) / 0.5f).coerceIn(0f, 1f)
@@ -333,8 +339,14 @@ fun MorphingNavigationBar(
         }
 
         if (progress <= EXPANDED_PROGRESS) {
-            val clampedCentre = pillCentre.value
-                .coerceIn(pillWidthPx / 2f, maxWidthPx - pillWidthPx / 2f)
+            // Mid-morph the bar can be narrower than one tab, since tabWidth has a floor.
+            // An inverted range would throw, so fall back to the bar's own centre.
+            val halfPill = pillWidthPx / 2f
+            val clampedCentre = if (maxWidthPx > pillWidthPx) {
+                pillCentre.value.coerceIn(halfPill, maxWidthPx - halfPill)
+            } else {
+                maxWidthPx / 2f
+            }
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
