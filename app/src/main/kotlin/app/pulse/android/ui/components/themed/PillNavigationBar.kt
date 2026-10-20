@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.pulse.android.R
 import app.pulse.android.preferences.AppearancePreferences
@@ -36,7 +37,8 @@ internal fun PillNavigationItem(
     isSelected: Boolean,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    labelAlpha: Float = 0f
+    labelAlpha: Float = 0f,
+    tabWidth: Dp = if (AppearancePreferences.compactDock) 60.dp else 72.dp
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     val backgroundColor by animateColorAsState(
@@ -49,7 +51,6 @@ internal fun PillNavigationItem(
     )
 
     val compact = AppearancePreferences.compactDock
-    val tabWidth = if (compact) 60.dp else 72.dp
     val tabIconSize = if (compact) 20.dp else 22.dp
 
     Column(
@@ -77,7 +78,7 @@ internal fun PillNavigationItem(
                 style = typography.xs.semiBold.copy(
                     color = iconColor,
                     fontSize = 9.sp
-                ),           
+                ),
                 modifier = Modifier.graphicsLayer { alpha = labelAlpha },
                 maxLines = 1
             )
@@ -123,14 +124,14 @@ fun MorphingNavigationBar(
     val (colorPalette, typography) = LocalAppearance.current
     val dockScrolled = LocalDockScrolled.current
     val lazyListState = rememberLazyListState()
-    
+
     // Filter visible tabs (same logic as PillNavigationBar)
     val visibleTabsWithIndices = remember(tabs, hiddenTabs, tabIndex) {
         tabs.mapIndexed { index, tab -> index to tab }
             .filter { (index, tab) -> tab.key !in hiddenTabs || index == tabIndex }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .background(colorPalette.background1, CircleShape)
             .clip(CircleShape)
@@ -140,6 +141,14 @@ fun MorphingNavigationBar(
             ),
         contentAlignment = Alignment.Center
     ) {
+        // Fit the visible tabs into the width the dock gave this bar, instead of a fixed
+        // per-tab width.
+        val compactDock = AppearancePreferences.compactDock
+        val maxTabWidth = if (compactDock) 60.dp else 72.dp
+        val tabWidth = visibleTabsWithIndices
+            .takeIf { it.isNotEmpty() }
+            ?.let { ((maxWidth - 16.dp) / it.size).coerceIn(56.dp, maxTabWidth) }
+            ?: maxTabWidth
         // Widen the crossfade range for more fluidity (0.5 to 1.0)
         val crossfadeProgress = ((progress - 0.5f) / 0.5f).coerceIn(0f, 1f)
         val lazyRowAlpha = (1f - crossfadeProgress).coerceIn(0f, 1f)
@@ -169,7 +178,8 @@ fun MorphingNavigationBar(
                                     if (action != null) onAction(action) else onTabChange(originalIndex)
                                 },
                                 enabled = progress < 0.2f,
-                                labelAlpha = (1f - progress * 3f).coerceIn(0f, 1f)
+                                labelAlpha = (1f - progress * 3f).coerceIn(0f, 1f),
+                                tabWidth = tabWidth
                             )
                         }
                     }
@@ -180,8 +190,8 @@ fun MorphingNavigationBar(
         // 2. Single centered selected item (Rendered LAST so it's on top of the LazyRow)
         val selectedTab = tabs.getOrNull(tabIndex)
         if (selectedTab != null) {
-            Box(modifier = Modifier.graphicsLayer { 
-                alpha = singleIconAlpha 
+            Box(modifier = Modifier.graphicsLayer {
+                alpha = singleIconAlpha
                 val scale = (0.8f + (singleIconAlpha * 0.2f)).coerceIn(0f, 1.2f)
                 scaleX = scale
                 scaleY = scale
@@ -190,7 +200,8 @@ fun MorphingNavigationBar(
                     tab = selectedTab,
                     isSelected = false,
                     onClick = { dockScrolled.value = false },
-                    enabled = progress > 0.8f
+                    enabled = progress > 0.8f,
+                    tabWidth = tabWidth
                 )
             }
         }
