@@ -320,6 +320,10 @@ fun SettingsCategoryScreen(
             }
 
             content()
+
+            // The scroll column ends flush with the screen edge, so the gesture pill
+            // overlays the last row. This is breathing room, not a system inset.
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
