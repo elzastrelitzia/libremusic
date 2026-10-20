@@ -38,7 +38,9 @@ internal fun PillNavigationItem(
     onClick: () -> Unit,
     enabled: Boolean = true,
     labelAlpha: Float = 0f,
-    tabWidth: Dp = if (AppearancePreferences.compactDock) 60.dp else 72.dp
+    tabWidth: Dp = if (AppearancePreferences.compactDock) 60.dp else 72.dp,
+    // Separate from isSelected
+    iconSelected: Boolean = isSelected
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     val backgroundColor by animateColorAsState(
@@ -65,7 +67,9 @@ internal fun PillNavigationItem(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(tab.icon),
+            painter = painterResource(
+                if (iconSelected) tab.selectedIcon ?: tab.icon else tab.icon
+            ),
             contentDescription = null,
             colorFilter = ColorFilter.tint(iconColor),
             modifier = Modifier.size(tabIconSize)
@@ -201,7 +205,8 @@ fun MorphingNavigationBar(
                     isSelected = false,
                     onClick = { dockScrolled.value = false },
                     enabled = progress > 0.8f,
-                    tabWidth = tabWidth
+                    tabWidth = tabWidth,
+                    iconSelected = true
                 )
             }
         }

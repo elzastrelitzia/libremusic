@@ -88,8 +88,10 @@ class TabsBuilder @PublishedApi internal constructor() {
         @DrawableRes
         icon: Int,
         canHide: Boolean = true,
-        actionId: String? = null
-    ): Tab = tab(key.toString(), title, icon, canHide, actionId)
+        actionId: String? = null,
+        @DrawableRes
+        selectedIcon: Int? = null
+    ): Tab = tab(key.toString(), title, icon, canHide, actionId, selectedIcon)
 
     fun tab(
         key: String,
@@ -98,7 +100,9 @@ class TabsBuilder @PublishedApi internal constructor() {
         @DrawableRes
         icon: Int,
         canHide: Boolean = true,
-        actionId: String? = null
+        actionId: String? = null,
+        @DrawableRes
+        selectedIcon: Int? = null
     ): Tab {
         require(key.isNotBlank()) { "key cannot be blank" }
         require(!tabs.containsKey(key)) { "key already exists" }
@@ -109,7 +113,8 @@ class TabsBuilder @PublishedApi internal constructor() {
             titleRes = title,
             icon = icon,
             canHide = canHide,
-            actionId = actionId
+            actionId = actionId,
+            selectedIcon = selectedIcon
         )
         tabs += key to ret
         return ret
@@ -121,8 +126,10 @@ class TabsBuilder @PublishedApi internal constructor() {
         @DrawableRes
         icon: Int,
         canHide: Boolean = true,
-        actionId: String? = null
-    ): Tab = tab(key.toString(), title, icon, canHide, actionId)
+        actionId: String? = null,
+        @DrawableRes
+        selectedIcon: Int? = null
+    ): Tab = tab(key.toString(), title, icon, canHide, actionId, selectedIcon)
 
     fun tab(
         key: String,
@@ -130,7 +137,9 @@ class TabsBuilder @PublishedApi internal constructor() {
         @DrawableRes
         icon: Int,
         canHide: Boolean = true,
-        actionId: String? = null
+        actionId: String? = null,
+        @DrawableRes
+        selectedIcon: Int? = null
     ): Tab {
         require(key.isNotBlank()) { "key cannot be blank" }
         require(title.isNotBlank()) { "title cannot be blank" }
@@ -142,7 +151,8 @@ class TabsBuilder @PublishedApi internal constructor() {
             titleText = title,
             icon = icon,
             canHide = canHide,
-            actionId = actionId
+            actionId = actionId,
+            selectedIcon = selectedIcon
         )
         tabs += key to ret
         return ret
@@ -163,6 +173,10 @@ sealed class Tab : Parcelable {
     /** Non-null means this entry is a dock action, not a selectable tab */
     abstract val actionId: String?
 
+    /** Drawn instead of [icon] while this tab is the selected one. */
+    @get:DrawableRes
+    abstract val selectedIcon: Int?
+
     data class ResourcesTab(
         override val key: String,
         @param:StringRes
@@ -170,7 +184,9 @@ sealed class Tab : Parcelable {
         @param:DrawableRes
         override val icon: Int,
         override val canHide: Boolean,
-        override val actionId: String? = null
+        override val actionId: String? = null,
+        @param:DrawableRes
+        override val selectedIcon: Int? = null
     ) : Tab() {
         @IgnoredOnParcel
         override val title: @Composable () -> String = { stringResource(titleRes) }
@@ -182,7 +198,9 @@ sealed class Tab : Parcelable {
         @param:DrawableRes
         override val icon: Int,
         override val canHide: Boolean,
-        override val actionId: String? = null
+        override val actionId: String? = null,
+        @param:DrawableRes
+        override val selectedIcon: Int? = null
     ) : Tab() {
         @IgnoredOnParcel
         override val title: @Composable () -> String = { titleText }
@@ -301,7 +319,9 @@ inline fun NavigationRail(
 
                     val iconContent: @Composable () -> Unit = {
                         Image(
-                            painter = painterResource(tab.icon),
+                            painter = painterResource(
+                                if (tabIndex == index) tab.selectedIcon ?: tab.icon else tab.icon
+                            ),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(colorPalette.text),
                             modifier = Modifier
