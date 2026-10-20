@@ -32,7 +32,16 @@ android {
         minSdk = 24
         targetSdk = 36
 
-        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 30
+        // Derived from the version so a local build's code changes when the version does.
+        // The "What's new" gate compares against a stored code, so a constant here would
+        // silence the dialog after the first install. CI still overrides via the env var.
+        // ponytail: major*10000 + minor*100 + patch, so minor and patch must stay under 100.
+        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull()
+            ?: project.version.toString()
+                .split(".")
+                .let { (major, minor, patch) ->
+                    major.toInt() * 10_000 + minor.toInt() * 100 + patch.toInt()
+                }
         versionName = project.version.toString()
 
         multiDexEnabled = true
