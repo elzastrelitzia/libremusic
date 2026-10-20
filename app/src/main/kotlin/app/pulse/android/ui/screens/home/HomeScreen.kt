@@ -11,11 +11,21 @@ import app.pulse.android.ui.screens.GlobalRoutes
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.ui.screens.SETTINGS_ACTION_ID
 import app.pulse.android.ui.screens.albumRoute
+import app.pulse.android.ui.screens.albumsRoute
 import app.pulse.android.ui.screens.artistRoute
+import app.pulse.android.ui.screens.artistsRoute
 import app.pulse.android.ui.screens.builtInPlaylistRoute
 import app.pulse.android.ui.screens.builtinplaylist.BuiltInPlaylistScreen
 import app.pulse.android.ui.screens.library.LibraryScreen
+import app.pulse.android.ui.screens.library.AlbumsScreen
+import app.pulse.android.ui.screens.library.ArtistsScreen
+import app.pulse.android.ui.screens.library.LocalSongsScreen
+import app.pulse.android.ui.screens.library.PlaylistsScreen
+import app.pulse.android.ui.screens.library.SongsScreen
 import app.pulse.android.ui.screens.localPlaylistRoute
+import app.pulse.android.ui.screens.localSongsRoute
+import app.pulse.android.ui.screens.playlistsRoute
+import app.pulse.android.ui.screens.songsRoute
 import app.pulse.android.ui.screens.localplaylist.LocalPlaylistScreen
 import app.pulse.android.ui.screens.mood.MoodScreen
 import app.pulse.android.ui.screens.mood.MoreAlbumsScreen
@@ -48,6 +58,16 @@ fun HomeScreen() {
         builtInPlaylistRoute { builtInPlaylist ->
             BuiltInPlaylistScreen(builtInPlaylist = builtInPlaylist)
         }
+
+        songsRoute { SongsScreen() }
+
+        playlistsRoute { PlaylistsScreen() }
+
+        artistsRoute { ArtistsScreen() }
+
+        albumsRoute { AlbumsScreen() }
+
+        localSongsRoute { LocalSongsScreen() }
 
         moodRoute { mood ->
             MoodScreen(mood = mood)
