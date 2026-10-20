@@ -67,7 +67,7 @@ internal fun PillNavigationItem(
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     val iconColor by animateColorAsState(
-        targetValue = if (isSelected) colorPalette.accent else colorPalette.textSecondary,
+        targetValue = if (iconSelected) colorPalette.accent else colorPalette.textSecondary,
         label = "iconColor"
     )
 
@@ -412,7 +412,7 @@ fun MorphingNavigationBar(
                     tab = selectedTab,
                     isSelected = false,
                     onClick = { dockScrolled.value = false },
-                    enabled = progress > 0.8f,
+                    enabled = progress > EXPANDED_PROGRESS,
                     tabWidth = tabWidth,
                     iconSelected = true
                 )
