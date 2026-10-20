@@ -1,6 +1,8 @@
 package app.pulse.android.ui.screens.library
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import app.pulse.android.ui.components.themed.LocalDockBackArrow
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.artistRoute
@@ -18,15 +20,27 @@ import app.pulse.android.ui.screens.searchRoute
 // screens deliberately do not hide it. Each `Home*` composable draws its own collapsing
 // header and applies its own window insets, which clear the compact dock.
 
+/** Shows the dock's back arrow while this pushed screen is on top. */
+@Composable
+private fun DockBackArrow() {
+    val backArrow = LocalDockBackArrow.current
+    DisposableEffect(Unit) {
+        backArrow.value = true
+        onDispose { backArrow.value = false }
+    }
+}
+
 @Route
 @Composable
 fun SongsScreen() {
+    DockBackArrow()
     HomeSongs(onSearchClick = { searchRoute.global("") })
 }
 
 @Route
 @Composable
 fun PlaylistsScreen() {
+    DockBackArrow()
     HomePlaylists(
         onPlaylistClick = { localPlaylistRoute.global(it.id) },
         onPipedPlaylistClick = { session, playlist ->
@@ -43,6 +57,7 @@ fun PlaylistsScreen() {
 @Route
 @Composable
 fun ArtistsScreen() {
+    DockBackArrow()
     HomeArtistList(
         onArtistClick = { artistRoute.global(it.id) },
         onSearchClick = { searchRoute.global("") }
@@ -52,6 +67,7 @@ fun ArtistsScreen() {
 @Route
 @Composable
 fun AlbumsScreen() {
+    DockBackArrow()
     HomeAlbums(
         onAlbumClick = { albumRoute.global(it.id) },
         onSearchClick = { searchRoute.global("") }
@@ -61,5 +77,6 @@ fun AlbumsScreen() {
 @Route
 @Composable
 fun LocalSongsScreen() {
+    DockBackArrow()
     HomeLocalSongs(onSearchClick = { searchRoute.global("") })
 }

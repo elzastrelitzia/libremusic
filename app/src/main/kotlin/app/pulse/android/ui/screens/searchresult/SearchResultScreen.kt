@@ -151,6 +151,9 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                 key = "searchresult",
                 topIconButtonId = R.drawable.chevron_back,
                 onTopIconButtonClick = pop,
+                // This screen already carries its own back button in the header, so the dock
+                // keeps its home button here instead of becoming a second back arrow.
+                dockBackArrow = false,
                 tabIndex = UIStatePreferences.searchResultScreenTabIndex,
                 onTabChange = { UIStatePreferences.searchResultScreenTabIndex = it },
                 tabColumnContent = {

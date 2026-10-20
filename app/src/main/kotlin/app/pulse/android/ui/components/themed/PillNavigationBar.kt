@@ -202,7 +202,8 @@ fun MorphingNavigationBar(
 @Composable
 fun HomeCircleButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: Int = R.drawable.home
 ) {
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
@@ -215,7 +216,7 @@ fun HomeCircleButton(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(R.drawable.home),
+            painter = painterResource(icon),
             contentDescription = null,
             colorFilter = ColorFilter.tint(colorPalette.accent),
             modifier = Modifier.size(iconSize)

@@ -68,6 +68,15 @@ val LocalDockScrolled = staticCompositionLocalOf<MutableState<Boolean>> {
     mutableStateOf(false)
 }
 
+/**
+ * Set by pushed screens that show the dock, so its round button becomes a back
+ * arrow that pops one screen rather than a home button that unwinds to QuickPicks.
+ * Search result leaves this false and keeps the home button.
+ */
+val LocalDockBackArrow = staticCompositionLocalOf<MutableState<Boolean>> {
+    mutableStateOf(false)
+}
+
 @Composable
 fun Scaffold(
     key: String,
@@ -80,6 +89,7 @@ fun Scaffold(
     modifier: Modifier = Modifier,
     tabsEditingTitle: String = stringResource(R.string.tabs),
     isGlobalNav: Boolean = false,
+    dockBackArrow: Boolean = true,
     content: @Composable AnimatedVisibilityScope.(Int) -> Unit
 ) {
     val (colorPalette) = LocalAppearance.current
@@ -92,6 +102,18 @@ fun Scaffold(
     // onDispose restores the previous state, so a re-instantiated lambda in the key list would
     // briefly publish a stale NavigationState, the dock's sub-page phase.
     val currentOnAction by rememberUpdatedState(onAction)
+
+    // A pushed screen builds its own Scaffold, while the home tab is the only one that
+    // passes isGlobalNav. So this is exactly the set of screens that should show the dock's
+    // back arrow instead of its home button. Download banners and other non-dock screens
+    // that also build a Scaffold do not reach the dock, which the arrow only relabels.
+    if (!isGlobalNav && dockBackArrow) {
+        val backArrow = LocalDockBackArrow.current
+        DisposableEffect(Unit) {
+            backArrow.value = true
+            onDispose { backArrow.value = false }
+        }
+    }
 
     // A predictive back gesture composes the screen it reveals as the seek target,
     // so a half swipe back to Home would hand this screen's tabs to the dock while

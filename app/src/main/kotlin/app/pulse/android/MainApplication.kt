@@ -103,6 +103,7 @@ import app.pulse.android.ui.components.BottomSheetMenu
 import app.pulse.android.ui.components.BottomSheetState
 import app.pulse.android.ui.components.rememberBottomSheetState
 import app.pulse.android.ui.components.themed.LinearProgressIndicator
+import app.pulse.android.ui.components.themed.LocalDockBackArrow
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
@@ -631,6 +632,7 @@ private fun FloatingDock(
     val progress = app.pulse.android.ui.components.themed.rememberDockMorphProgress()
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     val scope = rememberCoroutineScope()
+    val showBackArrow = LocalDockBackArrow.current.value
 
     app.pulse.android.ui.components.themed.MorphingDock(
         progress = progress,
@@ -638,18 +640,23 @@ private fun FloatingDock(
         onPlayerClick = onPlayerClick,
         onSearchClick = onSearchClick,
         onHomeClick = {
-            // Land on QuickPicks, then unwind every screen between here and home.
-            UIStatePreferences.homeScreenTabIndex = 0
-            scope.launch {
-                // Every RouteHandler registers its back callback with
-                // enabled = child != null, so no enabled callback means HomeScreen
-                // is the only screen left. Dispatching past that would hand the
-                // press to the system and quit the app, hence the guard.
-                while (backDispatcher?.hasEnabledCallbacks() == true) {
-                    backDispatcher?.onBackPressed()
-                    // A back press suspends until the predictive back gesture
-                    // finishes, so give it a frame to land on the parent handler.
-                    withFrameNanos { }
+            if (showBackArrow) {
+                // A pushed screen showed a back arrow, so pop exactly one screen.
+                backDispatcher?.onBackPressed()
+            } else {
+                // Land on QuickPicks, then unwind every screen between here and home.
+                UIStatePreferences.homeScreenTabIndex = 0
+                scope.launch {
+                    // Every RouteHandler registers its back callback with
+                    // enabled = child != null, so no enabled callback means HomeScreen
+                    // is the only screen left. Dispatching past that would hand the
+                    // press to the system and quit the app, hence the guard.
+                    while (backDispatcher?.hasEnabledCallbacks() == true) {
+                        backDispatcher?.onBackPressed()
+                        // A back press suspends until the predictive back gesture
+                        // finishes, so give it a frame to land on the parent handler.
+                        withFrameNanos { }
+                    }
                 }
             }
         },

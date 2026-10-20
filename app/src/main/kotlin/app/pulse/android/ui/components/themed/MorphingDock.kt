@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import app.pulse.android.preferences.AppearancePreferences
+import app.pulse.android.R
 import app.pulse.android.ui.components.MorphingMiniPlayer
 import app.pulse.core.ui.Dimensions
 import androidx.compose.ui.graphics.Brush
@@ -214,7 +215,8 @@ fun MorphingDock(
         ) {
             HomeCircleButton(
                 modifier = Modifier.fillMaxSize(),
-                onClick = onHomeClick
+                onClick = onHomeClick,
+                icon = if (LocalDockBackArrow.current.value) R.drawable.chevron_back else R.drawable.home
             )
         }
 
