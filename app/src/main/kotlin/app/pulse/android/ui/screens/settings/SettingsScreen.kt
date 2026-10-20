@@ -168,7 +168,7 @@ fun MasterSettingsCategoryScreen(
         scrollState = scrollState,
         modifier = Modifier.padding(
             LocalPlayerAwareWindowInsets.current
-                .only(WindowInsetsSides.Bottom + WindowInsetsSides.End)
+                .only(WindowInsetsSides.End)
                 .asPaddingValues()
         )
     ) {

@@ -290,7 +290,7 @@ fun SettingsCategoryScreen(
             .background(colorPalette.background0)
             .padding(
                 LocalPlayerAwareWindowInsets.current
-                    .only(WindowInsetsSides.Bottom + WindowInsetsSides.End)
+                    .only(WindowInsetsSides.End)
                     .asPaddingValues()
             )
     ) {
