@@ -87,8 +87,9 @@ class TabsBuilder @PublishedApi internal constructor() {
         title: Int,
         @DrawableRes
         icon: Int,
-        canHide: Boolean = true
-    ): Tab = tab(key.toString(), title, icon, canHide)
+        canHide: Boolean = true,
+        actionId: String? = null
+    ): Tab = tab(key.toString(), title, icon, canHide, actionId)
 
     fun tab(
         key: String,
@@ -96,7 +97,8 @@ class TabsBuilder @PublishedApi internal constructor() {
         title: Int,
         @DrawableRes
         icon: Int,
-        canHide: Boolean = true
+        canHide: Boolean = true,
+        actionId: String? = null
     ): Tab {
         require(key.isNotBlank()) { "key cannot be blank" }
         require(!tabs.containsKey(key)) { "key already exists" }
@@ -106,7 +108,8 @@ class TabsBuilder @PublishedApi internal constructor() {
             key = key,
             titleRes = title,
             icon = icon,
-            canHide = canHide
+            canHide = canHide,
+            actionId = actionId
         )
         tabs += key to ret
         return ret
@@ -117,15 +120,17 @@ class TabsBuilder @PublishedApi internal constructor() {
         title: String,
         @DrawableRes
         icon: Int,
-        canHide: Boolean = true
-    ): Tab = tab(key.toString(), title, icon, canHide)
+        canHide: Boolean = true,
+        actionId: String? = null
+    ): Tab = tab(key.toString(), title, icon, canHide, actionId)
 
     fun tab(
         key: String,
         title: String,
         @DrawableRes
         icon: Int,
-        canHide: Boolean = true
+        canHide: Boolean = true,
+        actionId: String? = null
     ): Tab {
         require(key.isNotBlank()) { "key cannot be blank" }
         require(title.isNotBlank()) { "title cannot be blank" }
@@ -136,7 +141,8 @@ class TabsBuilder @PublishedApi internal constructor() {
             key = key,
             titleText = title,
             icon = icon,
-            canHide = canHide
+            canHide = canHide,
+            actionId = actionId
         )
         tabs += key to ret
         return ret
@@ -154,13 +160,17 @@ sealed class Tab : Parcelable {
     abstract val icon: Int
     abstract val canHide: Boolean
 
+    /** Non-null means this entry is a dock action, not a selectable tab */
+    abstract val actionId: String?
+
     data class ResourcesTab(
         override val key: String,
         @param:StringRes
         private val titleRes: Int,
         @param:DrawableRes
         override val icon: Int,
-        override val canHide: Boolean
+        override val canHide: Boolean,
+        override val actionId: String? = null
     ) : Tab() {
         @IgnoredOnParcel
         override val title: @Composable () -> String = { stringResource(titleRes) }
@@ -171,7 +181,8 @@ sealed class Tab : Parcelable {
         private val titleText: String,
         @param:DrawableRes
         override val icon: Int,
-        override val canHide: Boolean
+        override val canHide: Boolean,
+        override val actionId: String? = null
     ) : Tab() {
         @IgnoredOnParcel
         override val title: @Composable () -> String = { titleText }
@@ -185,6 +196,7 @@ inline fun NavigationRail(
     noinline onTopIconButtonClick: () -> Unit,
     tabIndex: Int,
     crossinline onTabIndexChange: (Int) -> Unit,
+    crossinline onAction: (String) -> Unit,
     hiddenTabs: ImmutableList<String>,
     crossinline setHiddenTabs: (List<String>) -> Unit,
     modifier: Modifier = Modifier,
@@ -319,7 +331,10 @@ inline fun NavigationRail(
                     val contentModifier = Modifier
                         .clip(24.dp.roundedShape)
                         .combinedClickable(
-                            onClick = { onTabIndexChange(index) },
+                            onClick = {
+                                val action = tab.actionId
+                                if (action != null) onAction(action) else onTabIndexChange(index)
+                            },
                             onLongClick = { editing = true }
                         )
 

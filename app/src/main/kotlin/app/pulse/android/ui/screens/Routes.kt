@@ -56,6 +56,10 @@ val playlistRoute = Route4<String, String?, Int?, Boolean>("playlistRoute")
 val moodRoute = Route1<Mood>("moodRoute")
 val searchResultRoute = Route1<String>("searchResultRoute", RouteTransition.Fade)
 val searchRoute = Route1<String>("searchRoute", RouteTransition.Fade)
+/**
+ * Dock action id for the Settings entry. The entry is not a selectable tab */
+const val SETTINGS_ACTION_ID = "settings"
+
 val settingsRoute = Route0("settingsRoute")
 val appearanceSettingsRoute = Route0("appearanceSettingsRoute")
 val playerSettingsRoute = Route0("playerSettingsRoute")

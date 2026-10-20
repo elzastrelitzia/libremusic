@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -51,7 +52,8 @@ data class NavigationState(
     val tabs: ImmutableList<Tab>,
     val tabIndex: Int,
     val onTabChange: (Int) -> Unit,
-    val hiddenTabs: ImmutableList<String>
+    val hiddenTabs: ImmutableList<String>,
+    val onAction: (String) -> Unit
 )
 
 val LocalNavigationState = staticCompositionLocalOf<MutableState<NavigationState?>> {
@@ -73,6 +75,7 @@ fun Scaffold(
     onTopIconButtonClick: () -> Unit,
     tabIndex: Int,
     onTabChange: (Int) -> Unit,
+    onAction: (String) -> Unit = {},
     tabColumnContent: TabsBuilder.() -> Unit,
     modifier: Modifier = Modifier,
     tabsEditingTitle: String = stringResource(R.string.tabs),
@@ -85,6 +88,11 @@ fun Scaffold(
     val isLandscape = isLandscape
     val globalNavigationState = LocalNavigationState.current
 
+    // Read through rememberUpdatedState so the publish effect's keys stay stable. The effect's
+    // onDispose restores the previous state, so a re-instantiated lambda in the key list would
+    // briefly publish a stale NavigationState, the dock's sub-page phase.
+    val currentOnAction by rememberUpdatedState(onAction)
+
     // A predictive back gesture composes the screen it reveals as the seek target,
     // so a half swipe back to Home would hand this screen's tabs to the dock while
     // the user is still on the screen being popped. Only the screen being seen
@@ -96,7 +104,8 @@ fun Scaffold(
                 tabs = tabs,
                 tabIndex = tabIndex,
                 onTabChange = onTabChange,
-                hiddenTabs = hiddenTabs
+                hiddenTabs = hiddenTabs,
+                onAction = currentOnAction
             )
             onDispose {
                 globalNavigationState.value = previousState
@@ -122,6 +131,7 @@ fun Scaffold(
                     onTopIconButtonClick = onTopIconButtonClick,
                     tabIndex = tabIndex,
                     onTabIndexChange = onTabChange,
+                    onAction = currentOnAction,
                     hiddenTabs = hiddenTabs,
                     setHiddenTabs = { hiddenTabs = it.toImmutableList() },
                     tabsEditingTitle = tabsEditingTitle,

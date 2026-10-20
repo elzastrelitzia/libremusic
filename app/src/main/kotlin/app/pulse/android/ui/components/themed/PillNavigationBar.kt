@@ -116,6 +116,7 @@ fun MorphingNavigationBar(
     tabs: kotlinx.collections.immutable.ImmutableList<Tab>,
     tabIndex: Int,
     onTabChange: (Int) -> Unit,
+    onAction: (String) -> Unit,
     hiddenTabs: kotlinx.collections.immutable.ImmutableList<String>,
     modifier: Modifier = Modifier
 ) {
@@ -163,7 +164,10 @@ fun MorphingNavigationBar(
                             PillNavigationItem(
                                 tab = tab,
                                 isSelected = isSelected,
-                                onClick = { onTabChange(originalIndex) },
+                                onClick = {
+                                    val action = tab.actionId
+                                    if (action != null) onAction(action) else onTabChange(originalIndex)
+                                },
                                 enabled = progress < 0.2f,
                                 labelAlpha = (1f - progress * 3f).coerceIn(0f, 1f)
                             )

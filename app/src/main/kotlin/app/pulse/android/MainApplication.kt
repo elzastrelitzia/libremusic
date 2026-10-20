@@ -654,6 +654,7 @@ private fun FloatingDock(
             }
         },
         isLandscape = isLandscape,
+        onAction = { navigationState.value?.onAction?.invoke(it) },
         modifier = modifier
     )
 }
