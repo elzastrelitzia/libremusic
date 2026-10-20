@@ -70,7 +70,6 @@ import app.pulse.android.ui.items.PlaylistItemPlaceholder
 import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.items.SongItemPlaceholder
 import app.pulse.android.ui.screens.Route
-import app.pulse.android.ui.screens.settingsRoute
 import app.pulse.android.ui.components.themed.HeaderPillRow
 import app.pulse.android.ui.components.themed.HeaderIconButton
 import app.pulse.android.ui.components.themed.FeedbackDialog
@@ -333,7 +332,6 @@ fun QuickPicks(
             headerActions = {
                 HeaderPillRow {
                     HeaderIconButton(onClick = { feedbackVisible = true }, icon = R.drawable.mail_pen)
-                    HeaderIconButton(onClick = { settingsRoute.global() }, icon = R.drawable.settings)
                 }
             }
         ) {
