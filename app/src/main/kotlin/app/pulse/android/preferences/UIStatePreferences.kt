@@ -12,6 +12,12 @@ import kotlinx.collections.immutable.toImmutableList
 
 object UIStatePreferences : GlobalPreferencesHolder() {
     var homeScreenTabIndex by int(0)
+
+    // Set once, the first time Home renders after this preference exists. Indices
+    // 3..6 used to be library destinations; the remap to 2 must not run again
+    // once Settings legitimately occupies index 3.
+    var homeTabsMigrated by boolean(false)
+
     var searchResultScreenTabIndex by int(0)
 
     var artistScreenTabIndexProperty = int(0)

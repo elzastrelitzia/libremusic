@@ -1,5 +1,6 @@
 package app.pulse.android.ui.screens.home
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import app.pulse.android.R
@@ -8,6 +9,7 @@ import app.pulse.android.preferences.UIStatePreferences
 import app.pulse.android.ui.components.themed.Scaffold
 import app.pulse.android.ui.screens.GlobalRoutes
 import app.pulse.android.ui.screens.Route
+import app.pulse.android.ui.screens.SETTINGS_ACTION_ID
 import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.artistRoute
 import app.pulse.android.ui.screens.builtInPlaylistRoute
@@ -60,22 +62,46 @@ fun HomeScreen() {
         }
 
         Content {
-            // Tabs 2..6 used to be library destinations. An install that had one
-            // selected would otherwise land on a blank tab at an index this
-            // scaffold no longer draws.
-            if (UIStatePreferences.homeScreenTabIndex > 2) UIStatePreferences.homeScreenTabIndex = 2
+            // Indices 3..6 were library destinations before the Library tab existed.
+            // Remap once, then remember it was done, so the stored value stops being
+            // wrong rather than being masked on every read. The read-side clamp is the
+            // backstop; this repairs the preference.
+            if (!UIStatePreferences.homeTabsMigrated) {
+                if (UIStatePreferences.homeScreenTabIndex > 2) UIStatePreferences.homeScreenTabIndex = 2
+                UIStatePreferences.homeTabsMigrated = true
+            }
+
+            // Count of entries with no actionId - an action entry is never a valid selected
+            // index. Written by hand because tabColumnContent's builder is only reachable
+            // inside Scaffold, and the migration above already hard-codes this range.
+            // The two change together if a real tab is ever added.
+            val selectableTabCount = 3
+            val clampedTabIndex = UIStatePreferences.homeScreenTabIndex.coerceIn(0, selectableTabCount - 1)
+            if (clampedTabIndex != UIStatePreferences.homeScreenTabIndex) {
+                Log.w("HomeScreen", "clamped homeScreenTabIndex ${UIStatePreferences.homeScreenTabIndex} -> $clampedTabIndex")
+            }
 
             Scaffold(
                 key = "home",
+                // Landscape-only, the rail draws this gear, and the dock (with its own Settings
+                // entry) is not drawn in landscape. Passing 0 here would lose the only Settings
+                // affordance in that orientation.
                 topIconButtonId = R.drawable.settings,
-                onTopIconButtonClick = { settingsRoute() },
+                onTopIconButtonClick = { settingsRoute.global() },
                 isGlobalNav = true,
-                tabIndex = UIStatePreferences.homeScreenTabIndex,
+                tabIndex = clampedTabIndex,
                 onTabChange = { UIStatePreferences.homeScreenTabIndex = it },
+                onAction = { id ->
+                    when (id) {
+                        SETTINGS_ACTION_ID -> settingsRoute.global()
+                        else -> Unit   // unknown id no-op, never crash
+                    }
+                },
                 tabColumnContent = {
                     tab(0, R.string.quick_picks, R.drawable.sparkles)
                     tab(1, R.string.discover, R.drawable.globe)
                     tab(2, R.string.library, R.drawable.library, canHide = false)
+                    tab("settings", R.string.settings, R.drawable.settings, canHide = false, actionId = SETTINGS_ACTION_ID)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
