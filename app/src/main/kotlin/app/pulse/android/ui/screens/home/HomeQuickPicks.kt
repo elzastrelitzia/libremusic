@@ -327,7 +327,7 @@ fun QuickPicks(
         val itemInHorizontalGridWidth = maxWidth * quickPicksLazyGridItemWidthFactor
 
         CollapsingHeader(
-            title = stringResource(R.string.quick_picks),
+            title = stringResource(R.string.home),
             scrollState = scrollState,
             headerActions = {
                 HeaderPillRow {

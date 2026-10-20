@@ -56,7 +56,7 @@
     </plurals>
     <string name="discover">Descubra</string>
     <string name="local">Local</string>
-    <string name="quick_picks">Para você</string>
+    <string name="home">Início</string>
     <string name="mood">Sentimento</string>
     <string name="online">Online</string>
     <string name="videos">Vídeos</string>
@@ -107,7 +107,7 @@
     <string name="youtube_music_not_installed">YouTube Music não está instalado</string>
     <string name="remove_from_queue">Remover da fila</string>
     <string name="remove_from_playlist">Remover da playlist</string>
-    <string name="hide_from_quick_picks">Ocultar do \"Para você\"</string>
+    <string name="hide_from_home">Ocultar do "Início"</string>
     <string name="confirm_hide_song">Você realmente quer excluir essa música? Os minutos ouvidos e download serão excluídos.\\nEsta ação é irreversível.</string>
     <string name="confirm_delete_playlist">Você realmente quer excluir essa playlist?</string>
     <string name="confirm_delete_piped_session">Você realmente quer excluir essa sessão do Piped?</string>
@@ -231,8 +231,8 @@
     <string name="pause_playback_history">Pausar histórico de reprodução</string>
     <string name="pause_playback_history_description">Interrompe histórico de reprodução serem usados ​​para a sessão \'Para você\'</string>
     <string name="pause_playback_history_warning">Obs: isto não afetará músicas já baixadas!</string>
-    <string name="reset_quick_picks">Resetar \'Para você\'</string>
-    <string name="quick_picks_empty">Limpa os dados do \'Para você\'</string>
+    <string name="reset_home">Resetar \'Início\'</string>
+    <string name="home_empty">Limpa os dados do \'Início\'</string>
     <string name="pause_playback_time">Pausar tempo no histórico de reprodução</string>
     <string name="format_pause_playback_time_description">Interrompe o armazenamento do tempo no histórico de reprodução. Isto pausará as estatísticas presentes na \'Meu Top %1$s \' playlist!</string>
     <string name="backup">Backup</string>
@@ -305,7 +305,7 @@
     <string name="filter_placeholder">Filtrar…</string>
     <string name="last_interaction">Última tocada</string>
     <string name="trending">Em alta</string>
-    <string name="quick_picks_source">Fonte do \'Para você\'</string>
+    <string name="home_source">Fonte do \'Início\'</string>
     <string name="piped">Piped</string>
     <string name="instance">Instância</string>
     <string name="click_to_select">Clique para selecionar</string>
@@ -362,7 +362,7 @@
         <item quantity="many">Remover todas as %1$s músicas da lista negra</item>
         <item quantity="other">Remover todas as %1$s músicas da lista negra</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Excluir %1$s evento de reprodução</item>
         <item quantity="many">Excluir %1$s eventos de reprodução</item>
         <item quantity="other">Excluir %1$s eventos de reprodução</item>

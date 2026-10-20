@@ -118,7 +118,7 @@ fun HomeScreen() {
                     }
                 },
                 tabColumnContent = {
-                    tab(0, R.string.quick_picks, R.drawable.sparkles)
+                    tab(0, R.string.home, R.drawable.sparkles)
                     tab(1, R.string.discover, R.drawable.globe)
                     tab(2, R.string.library, R.drawable.library, canHide = false)
                     tab("settings", R.string.settings, R.drawable.settings, canHide = false, actionId = SETTINGS_ACTION_ID)

@@ -51,7 +51,7 @@
     </plurals>
     <string name="discover">Avasta</string>
     <string name="local">Kohalik</string>
-    <string name="quick_picks">Kiirvalikud</string>
+    <string name="home">Avaleht</string>
     <string name="mood">Meeleolu</string>
     <string name="online">Online</string>
     <string name="videos">Videod</string>
@@ -102,7 +102,7 @@
     <string name="youtube_music_not_installed">YouTube Music ei ole sinu seadmesse installitud!</string>
     <string name="remove_from_queue">Eemalda järjekorrast</string>
     <string name="remove_from_playlist">Eemalda Esitusloendist</string>
-    <string name="hide_from_quick_picks">Peida "Kiirvalikutest"</string>
+    <string name="hide_from_home">Peida "Avalehelt"</string>
     <string name="confirm_hide_song">Kas sa tõesti tahad selle loo peita? Selle esitusaeg ja vahemälu kustutatakse.\nSee tegevus on pöördumatu.</string>
     <string name="confirm_delete_playlist">Kas sa tõesti tahad selle esitusloendi kustutada?</string>
     <string name="confirm_delete_piped_session">Kas sa tõesti tahad selle Piped\'i sessiooni kustutada?</string>
@@ -225,8 +225,8 @@
     <string name="pause_playback_history">Peata esituse ajalugu</string>
     <string name="pause_playback_history_description">Peatab esituse sündmuste kasutamise kiirvalikute jaoks</string>
     <string name="pause_playback_history_warning">Palun pane tähele: see ei mõjuta offline vahemälu!</string>
-    <string name="reset_quick_picks">Lähtesta kiirvalikud</string>
-    <string name="quick_picks_empty">Kiirvalikud on kustutatud</string>
+    <string name="reset_home">Lähtesta avaleht</string>
+    <string name="home_empty">Avaleht on kustutatud</string>
     <string name="pause_playback_time">Peata esituse aeg</string>
     <string name="format_pause_playback_time_description">Peatab esitusaega salvestamise. See peatab statistika "Minu tipp %1$s" esitusloendis!</string>
     <string name="backup">Varukoopia</string>
@@ -297,7 +297,7 @@
     <string name="filter_placeholder">Filtreeri…</string>
     <string name="last_interaction">Viimati mängitud</string>
     <string name="trending">Populaarne</string>
-    <string name="quick_picks_source">Kiirvalikute allikas</string>
+    <string name="home_source">Avalehe allikas</string>
     <string name="piped">Piped</string>
     <string name="instance">Instants</string>
     <string name="click_to_select">Vajuta, et valida</string>
@@ -352,7 +352,7 @@
         <item quantity="one">Eemalda %1$s laul mustast nimekirjast</item>
         <item quantity="other">Eemalda kõik %1$s laulu mustast nimekirjast</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Kustuta %1$s esituse sündmus</item>
         <item quantity="other">Kustuta %1$s esituse sündmused</item>
     </plurals>

@@ -4,7 +4,7 @@
     <string name="format_hours">%1$dh</string>
     <string name="format_days">%1$dd</string>
     <string name="home_feed_cache_days">Home feed cache duration</string>
-    <string name="home_feed_cache_days_description">How long Quick Picks and Discover stay cached before refetching. Off disables the cache.</string>
+    <string name="home_feed_cache_days_description">How long Home and Discover stay cached before refetching. Off disables the cache.</string>
     <string name="home_feed_cache_off">Off</string>
     <string name="format_time_left">%1$s left</string>
     <string name="format_db">%1$s dB</string>
@@ -55,7 +55,7 @@
     </plurals>
     <string name="discover">Discover</string>
     <string name="local">Local</string>
-    <string name="quick_picks">Quick picks</string>
+    <string name="home">Home</string>
     <string name="mood">Mood</string>
     <string name="online">Online</string>
     <string name="videos">Videos</string>
@@ -108,7 +108,7 @@
     <string name="youtube_music_not_installed">YouTube Music is not installed on your device!</string>
     <string name="remove_from_queue">Remove from queue</string>
     <string name="remove_from_playlist">Remove from playlist</string>
-    <string name="hide_from_quick_picks">Hide from \"Quick picks\"</string>
+    <string name="hide_from_home">Hide from \"Home\"</string>
     <string name="confirm_hide_song">Do you really want to hide this song? Its playback time and cache will be wiped.\nThis action is irreversible.</string>
     <string name="confirm_delete_playlist">Do you really want to delete this playlist?</string>
     <string name="confirm_delete_piped_session">Do you really want to delete this Piped session?</string>
@@ -259,8 +259,8 @@
     <string name="pause_playback_history">Pause playback history</string>
     <string name="pause_playback_history_description">Stops playback events being used for quick picks</string>
     <string name="pause_playback_history_warning">Please note: this won\'t affect offline caching!</string>
-    <string name="reset_quick_picks">Reset quick picks</string>
-    <string name="quick_picks_empty">Quick picks are cleared</string>
+    <string name="reset_home">Reset Home</string>
+    <string name="home_empty">Home are cleared</string>
     <string name="pause_playback_time">Pause playback time</string>
     <string name="format_pause_playback_time_description">Stops playback time from being saved. This pauses the statistics in the \'My Top %1$s\' playlist!</string>
     <string name="backup">Backup</string>
@@ -345,7 +345,7 @@
     <string name="filter_placeholder">Filter…</string>
     <string name="last_interaction">Last Played</string>
     <string name="trending">Trending</string>
-    <string name="quick_picks_source">Quick Picks Source</string>
+    <string name="home_source">Home Source</string>
     <string name="piped">Piped</string>
     <string name="instance">Instance</string>
     <string name="click_to_select">Click to select</string>
@@ -427,7 +427,7 @@
         <item quantity="one">Remove %1$s song from the blacklist</item>
         <item quantity="other">Remove all %1$s songs from the blacklist</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Delete %1$s playback event</item>
         <item quantity="other">Delete %1$s playback events</item>
     </plurals>

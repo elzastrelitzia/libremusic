@@ -56,7 +56,7 @@
     </plurals>
     <string name="discover">Descobrir</string>
     <string name="local">Local</string>
-    <string name="quick_picks">Seleccions ràpides</string>
+    <string name="home">Inici</string>
     <string name="mood">Estat d\'ànim</string>
     <string name="online">En línia</string>
     <string name="videos">Vídeos</string>
@@ -107,7 +107,7 @@
     <string name="youtube_music_not_installed">YouTube Music no està installat al teu dispositiu!</string>
     <string name="remove_from_queue">Eliminar de la cua</string>
     <string name="remove_from_playlist">Eliminar de la llista de reproducció</string>
-    <string name="hide_from_quick_picks">Amagar de "Seleccions ràpides"</string>
+    <string name="hide_from_home">Amagar de "Inici"</string>
     <string name="confirm_hide_song">Realment voleu amagar aquesta cançó? S\'esborrarà el seu temps de reproducció i memòria cau.\nAquesta acció és irreversible.</string>
     <string name="confirm_delete_playlist">Realment voleu eliminar aquesta llista de reproducció?</string>
     <string name="confirm_delete_piped_session">Realment voleu eliminar aquesta sessió de Piped?</string>
@@ -231,8 +231,8 @@
     <string name="pause_playback_history">Pausar historial de reproducció</string>
     <string name="pause_playback_history_description">Atura l\'ús d\'events de reproducció per seleccions ràpides</string>
     <string name="pause_playback_history_warning">Nota: Això no afectarà a l\'emmagatzematge en Memòria cau sense connexió!</string>
-    <string name="reset_quick_picks">Restablir seleccions ràpides</string>
-    <string name="quick_picks_empty">Les seleccions ràpides estan buides</string>
+    <string name="reset_home">Restablir inici</string>
+    <string name="home_empty">L\'inici està buit</string>
     <string name="pause_playback_time">Pausar temps de reproducció</string>
     <string name="format_pause_playback_time_description">Atura el desament del temps de reproducció. Això pausa les estadístiques a la llista de reproducció \'El meu Top %1$s\'!</string>
     <string name="backup">Còpia de seguretat</string>
@@ -305,7 +305,7 @@
     <string name="filter_placeholder">Filtrar…</string>
     <string name="last_interaction">Última reproducció</string>
     <string name="trending">Tendències</string>
-    <string name="quick_picks_source">Font de seleccions ràpides</string>
+    <string name="home_source">Font d\'inici</string>
     <string name="piped">Piped</string>
     <string name="instance">Instància</string>
     <string name="click_to_select">Fes clic per seleccionar</string>
@@ -362,7 +362,7 @@
         <item quantity="many">Eliminar totes les %1$s cançons de la llista negra</item>
         <item quantity="other">Eliminar totes les %1$s cançons de la llista negra</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Eliminar %1$s event de reproducció</item>
         <item quantity="many">Eliminar %1$s events de reproducció</item>
         <item quantity="other">Eliminar %1$s events de reproducció</item>

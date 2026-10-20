@@ -51,7 +51,7 @@
     </plurals>
     <string name="discover">Ontdekken</string>
     <string name="local">Lokaal</string>
-    <string name="quick_picks">Snelle keuzes</string>
+    <string name="home">Start</string>
     <string name="mood">Stemming</string>
     <string name="online">Online</string>
     <string name="videos">Video\'s</string>
@@ -102,7 +102,7 @@
     <string name="youtube_music_not_installed">YouTube Music is niet geïnstalleerd op je apparaat!</string>
     <string name="remove_from_queue">Verwijder van wachtrij</string>
     <string name="remove_from_playlist">Verwijder van playlist</string>
-    <string name="hide_from_quick_picks">Verberg van \"Snelle keuzes\"</string>
+    <string name="hide_from_home">Verberg van "Start"</string>
     <string name="confirm_hide_song">Wil je echt dit nummer verbergen? De afspeeltijd en cache worden weggegooid. Deze actie is onomkeerbaar.</string>
     <string name="confirm_delete_playlist">Wil je deze afspeellijst echt verwijderen?</string>
     <string name="confirm_delete_piped_session">Wil je deze Piped sessie echt verwijderen?</string>
@@ -228,8 +228,8 @@
     <string name="pause_playback_history">Pauzeer afspeelgeschiedenis</string>
     <string name="pause_playback_history_description">Stopt de verzameling van afspeelgebeurtenissen voor Snelle keuzes</string>
     <string name="pause_playback_history_warning">Let op: dit verandert niets aan offline cachen!</string>
-    <string name="reset_quick_picks">Reset Snelle keuzes</string>
-    <string name="quick_picks_empty">Snelle keuzes geleegd</string>
+    <string name="reset_home">Start resetten</string>
+    <string name="home_empty">Start geleegd</string>
     <string name="pause_playback_time">Pauzeer afspeeltijd</string>
     <string name="format_pause_playback_time_description">Stopt met het opslaan van afspeeltijd. Dit pauzeert de statistieken in de \'Mijn top %1$s\' afspeellijst</string>
     <string name="backup">Back-up</string>
@@ -304,7 +304,7 @@
     <string name="filter_placeholder">Filteren…</string>
     <string name="last_interaction">Laatst afgespeeld</string>
     <string name="trending">Trending</string>
-    <string name="quick_picks_source">Bron voor Snelle keuzes</string>
+    <string name="home_source">Bron voor Start</string>
     <string name="piped">Piped</string>
     <string name="instance">Instantie</string>
     <string name="click_to_select">Klik om te selecteren</string>
@@ -360,7 +360,7 @@
         <item quantity="one">Haal %1$s nummer van de zwarte lijst</item>
         <item quantity="other">Haal %1$s nummers van de zwarte lijst</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Verwijder %1$s afspeelgebeurtenis</item>
         <item quantity="other">Verwijder %1$s afspeelgebeurtenissen</item>
     </plurals>

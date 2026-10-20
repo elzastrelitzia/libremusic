@@ -56,7 +56,7 @@
     </plurals>
     <string name="discover">Исследуйте</string>
     <string name="local">Локальное</string>
-    <string name="quick_picks">Главное</string>
+    <string name="home">Главная</string>
     <string name="mood">Настроение</string>
     <string name="online">Онлайн</string>
     <string name="videos">Видео</string>
@@ -107,7 +107,7 @@
     <string name="youtube_music_not_installed">YouTube Music не установлен на вашем устройстве!</string>
     <string name="remove_from_queue">Удалить из очереди</string>
     <string name="remove_from_playlist">Удалить из плейлиста</string>
-    <string name="hide_from_quick_picks">Скрыть из \"Быстрого выбора\"</string>
+    <string name="hide_from_home">Скрыть с "Главной"</string>
     <string name="confirm_hide_song">Вы действительно хотите скрыть эту песню? Ее время воспроизведения и кеш будут очищены.\nЭто действие необратимо.</string>
     <string name="confirm_delete_playlist">Вы действительно хотите удалить этот плейлист?</string>
     <string name="confirm_delete_piped_session">Вы действительно хотите удалить эту сессию Piped?</string>
@@ -230,8 +230,8 @@
     <string name="pause_playback_history">Приостановить историю воспроизведений</string>
     <string name="pause_playback_history_description">Останавливает использование событий воспроизведения для быстрого выбора</string>
     <string name="pause_playback_history_warning">Обратите внимание: это не повлияет на оффлайн-кэширование!</string>
-    <string name="reset_quick_picks">Сбросить быстрый выбор</string>
-    <string name="quick_picks_empty">Быстрый выбор очищен</string>
+    <string name="reset_home">Сбросить главную</string>
+    <string name="home_empty">Главная очищена</string>
     <string name="pause_playback_time">Приостановить время воспроизведения</string>
     <string name="format_pause_playback_time_description">Останавливает сохранение времени воспроизведения. Это приостанавливает статистику в плейлисте "Мой топ %1$s"!</string>
     <string name="backup">Резервное копирование</string>
@@ -302,7 +302,7 @@
     <string name="filter_placeholder">Фильтр…</string>
     <string name="last_interaction">Последнее воспроизведение</string>
     <string name="trending">Популярное</string>
-    <string name="quick_picks_source">Источник быстрого выбора</string>
+    <string name="home_source">Источник главной</string>
     <string name="piped">Piped</string>
     <string name="instance">Экземпляр</string>
     <string name="click_to_select">Клик для выбора</string>
@@ -358,7 +358,7 @@
         <item quantity="few">Удалить все %1$s песен из черного списка</item>
         <item quantity="many">Удалить все %1$s песен из черного списка</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Удалить %1$s событие воспроизведения</item>
         <item quantity="few">Удалить %1$s событий воспроизведения</item>
         <item quantity="many">Удалить %1$s событий воспроизведения</item>

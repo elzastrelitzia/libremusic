@@ -50,7 +50,7 @@
     </plurals>
     <string name="discover">Keşfet</string>
     <string name="local">Yerel</string>
-    <string name="quick_picks">Hızlı seçimler</string>
+    <string name="home">Ana sayfa</string>
     <string name="mood">Ruh hali</string>
     <string name="online">Çevrimiçi</string>
     <string name="videos">Videolar</string>
@@ -101,7 +101,7 @@
     <string name="youtube_music_not_installed">YouTube Müzik cihazınızda yüklü değil!</string>
     <string name="remove_from_queue">Kuyruktan kaldır</string>
     <string name="remove_from_playlist">Oynatma listesinden kaldır</string>
-    <string name="hide_from_quick_picks">\"Hızlı seçimler\" den gizle</string>
+    <string name="hide_from_home">"Ana sayfa" dan gizle</string>
     <string name="confirm_hide_song">Bu şarkıyı gerçekten gizlemek istiyor musun? Oynatma süresi ve önbelleği silinecek.\nBu eylem geri alınamaz.</string>
     <string name="confirm_delete_playlist">Bu oynatma listesini gerçekten silmek istiyor musunuz?</string>
     <string name="other_versions">Diğer sürümler</string>
@@ -214,8 +214,8 @@
     <string name="pause_playback_history">Oynatma geçmişini duraklat</string>
     <string name="pause_playback_history_description">Hızlı seçimler için kullanılan oynatma etkinliklerini durdurur</string>
     <string name="pause_playback_history_warning">Lütfen unutmayın: Bu, çevrimdışı önbelleğe almayı etkilemez!</string>
-    <string name="reset_quick_picks">Hızlı seçimleri sıfırla</string>
-    <string name="quick_picks_empty">Hızlı seçimler temizlendi</string>
+    <string name="reset_home">Ana sayfayı sıfırla</string>
+    <string name="home_empty">Ana sayfa temizlendi</string>
     <string name="pause_playback_time">Oynatma süresini duraklat</string>
     <string name="format_pause_playback_time_description">Oynatma süresinin kaydedilmesini durdurur. Bu, \'En İyi %1$s\' oyna listesindeki istatistikleri duraklatır!</string>
     <string name="backup">Yedekle</string>
@@ -279,7 +279,7 @@
     <string name="filter_placeholder">Filtrele…</string>
     <string name="last_interaction">Son Oynanan</string>
     <string name="trending">Popüler</string>
-    <string name="quick_picks_source">Hızlı Seçim Kaynağı</string>
+    <string name="home_source">Ana Sayfa Kaynağı</string>
     <string name="piped">Piped</string>
     <string name="instance">Örnek</string>
     <string name="click_to_select">Seçmek için tıklayın</string>
@@ -331,7 +331,7 @@
         <item quantity="one">%1$s şarkıyı kara listeden kaldır</item>
         <item quantity="other">Tüm %1$s şarkıyı kara listeden kaldır</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">%1$s oynatma olayını sil</item>
         <item quantity="other">%1$s oynatma olayını sil</item>
     </plurals>

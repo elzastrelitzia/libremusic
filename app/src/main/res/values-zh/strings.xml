@@ -46,7 +46,7 @@
     </plurals>
     <string name="discover">发现</string>
     <string name="local">本地</string>
-    <string name="quick_picks">快速选择</string>
+    <string name="home">主页</string>
     <string name="mood">心情</string>
     <string name="online">在线</string>
     <string name="videos">视频</string>
@@ -97,7 +97,7 @@
     <string name="youtube_music_not_installed">您的设备上未安装 YouTube Music！</string>
     <string name="remove_from_queue">从队列中移除</string>
     <string name="remove_from_playlist">从播放列表中移除</string>
-    <string name="hide_from_quick_picks">从“快速选择”中隐藏</string>
+    <string name="hide_from_home">从“主页”中隐藏</string>
     <string name="confirm_hide_song">您确定要隐藏这首歌吗？它的播放时间和缓存将被清除。\n此操作不可逆。</string>
     <string name="confirm_delete_playlist">您确定要删除此播放列表吗？</string>
     <string name="confirm_delete_piped_session">您确定要删除此 Piped 会话吗？</string>
@@ -223,8 +223,8 @@
     <string name="pause_playback_history">暂停播放历史</string>
     <string name="pause_playback_history_description">停止使用播放事件进行快速选择</string>
     <string name="pause_playback_history_warning">请注意：这不会影响离线缓存！</string>
-    <string name="reset_quick_picks">重置快速选择</string>
-    <string name="quick_picks_empty">快速选择已清空</string>
+    <string name="reset_home">重置主页</string>
+    <string name="home_empty">主页已清空</string>
     <string name="pause_playback_time">暂停播放时间</string>
     <string name="format_pause_playback_time_description">停止保存播放时间。这将暂停 “我的热门 %1$s” 播放列表中的统计数据！</string>
     <string name="backup">备份</string>
@@ -299,7 +299,7 @@
     <string name="filter_placeholder">过滤器…</string>
     <string name="last_interaction">最近播放</string>
     <string name="trending">趋势</string>
-    <string name="quick_picks_source">快速选择源</string>
+    <string name="home_source">主页源</string>
     <string name="piped">Piped</string>
     <string name="instance">实例</string>
     <string name="click_to_select">点击选择</string>
@@ -354,7 +354,7 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">从黑名单中移除 %1$s 首歌曲</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="other">删除 %1$s 次播放记录</item>
     </plurals>
     <plurals name="song_count_plural">

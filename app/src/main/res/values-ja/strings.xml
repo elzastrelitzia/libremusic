@@ -45,7 +45,7 @@
     </plurals>
     <string name="discover">見つける</string>
     <string name="local">ローカル</string>
-    <string name="quick_picks">おすすめ</string>
+    <string name="home">ホーム</string>
     <string name="mood">ムード</string>
     <string name="online">オンライン</string>
     <string name="videos">動画</string>
@@ -96,7 +96,7 @@
     <string name="youtube_music_not_installed">YouTube Music がインストールされていません</string>
     <string name="remove_from_queue">キューから削除</string>
     <string name="remove_from_playlist">プレイリストから削除</string>
-    <string name="hide_from_quick_picks">おすすめから削除</string>
+    <string name="hide_from_home">ホームから削除</string>
     <string name="confirm_hide_song">この曲を削除しますか？ 再生時間とキャッシュは消去されます\nこの操作は元に戻すことができません.</string>
     <string name="confirm_delete_playlist">このプレイリストを削除しますか？</string>
     <string name="confirm_delete_piped_session">この Piped セッションを削除しますか？</string>
@@ -213,8 +213,8 @@
     <string name="pause_playback_history">再生履歴を一時停止</string>
     <string name="pause_playback_history_description">クイックピックで使用される再生イベントを停止します</string>
     <string name="pause_playback_history_warning">注意: これはオフライン キャッシュには影響しません</string>
-    <string name="reset_quick_picks">おすすめのリセット</string>
-    <string name="quick_picks_empty">おすすめはありません</string>
+    <string name="reset_home">ホームのリセット</string>
+    <string name="home_empty">ホームはありません</string>
     <string name="pause_playback_time">再生時間の保存を一時停止</string>
     <string name="format_pause_playback_time_description">再生時間の保存を停止します\n「My Top %1$s」の統計が一時停止されます</string>
     <string name="backup">バックアップ</string>
@@ -278,7 +278,7 @@
     <string name="filter_placeholder">フィルター…</string>
     <string name="last_interaction">最後に再生した曲</string>
     <string name="trending">トレンド</string>
-    <string name="quick_picks_source">おすすめの取得元</string>
+    <string name="home_source">ホームの取得元</string>
     <string name="piped">Piped</string>
     <string name="instance">一覧</string>
     <string name="click_to_select">タップして選択してください</string>
@@ -330,7 +330,7 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">ブラックリストから %1$s の曲をすべて削除する</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="other">%1$s の再生イベントを削除する</item>
     </plurals>
     <plurals name="song_count_plural">

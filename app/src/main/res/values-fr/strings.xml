@@ -56,7 +56,7 @@
     </plurals>
     <string name="discover">Découverte</string>
     <string name="local">Local</string>
-    <string name="quick_picks">Sélection Rapide</string>
+    <string name="home">Accueil</string>
     <string name="mood">Humeur</string>
     <string name="online">En Ligne</string>
     <string name="videos">Vidéos</string>
@@ -107,7 +107,7 @@
     <string name="youtube_music_not_installed">YouTube Music n\'est pas installé sur votre appareil !</string>
     <string name="remove_from_queue">Supprimer de la file d\'attente</string>
     <string name="remove_from_playlist">Supprimer de la playlist</string>
-    <string name="hide_from_quick_picks">Masquer de la « Sélection Rapide »</string>
+    <string name="hide_from_home">Masquer de l\'accueil</string>
     <string name="confirm_hide_song">Voulez-vous vraiment masquer ce titre ? Son temps de lecture et son cache seront effacés. Cette action est irréversible.</string>
     <string name="confirm_delete_playlist">Voulez-vous vraiment supprimer cette playlist ?</string>
     <string name="confirm_delete_piped_session">Voulez-vous vraiment supprimer cette session Piped ?</string>
@@ -233,8 +233,8 @@
     <string name="pause_playback_history">Mettre en pause l\'historique de lecture</string>
     <string name="pause_playback_history_description">Arrête la lecture des événements utilisés pour la sélection rapide</string>
     <string name="pause_playback_history_warning">Attention : cela n’affectera pas la mise en cache hors ligne !</string>
-    <string name="reset_quick_picks">Réinitialiser la sélection rapide</string>
-    <string name="quick_picks_empty">La sélection rapide est effacée</string>
+    <string name="reset_home">Réinitialiser l\'accueil</string>
+    <string name="home_empty">L\'accueil est effacé</string>
     <string name="pause_playback_time">Mettre en pause le temps de lecture</string>
     <string name="format_pause_playback_time_description">Arrête l\'enregistrement du temps de lecture. Cela met en pause les statistiques de la playlist « Mes %1$s préférés » !</string>
     <string name="backup">Sauvegarde</string>
@@ -307,7 +307,7 @@
     <string name="filter_placeholder">Filtre…</string>
     <string name="last_interaction">Joués Dernièrement</string>
     <string name="trending">Tendance</string>
-    <string name="quick_picks_source">Source de Sélection Rapide</string>
+    <string name="home_source">Source de l\'accueil</string>
     <string name="piped">Piped</string>
     <string name="instance">Instance</string>
     <string name="click_to_select">Cliquez pour sélectionner</string>
@@ -364,7 +364,7 @@
         <item quantity="many">Supprimer tous les titres %1$s de la liste noire</item>
         <item quantity="other">Supprimer tous les titres %1$s de la liste noire</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Supprimer l\'événement de lecture %1$s</item>
         <item quantity="many">Supprimer %1$s événements de lecture</item>
         <item quantity="other">Supprimer %1$s événements de lecture</item>

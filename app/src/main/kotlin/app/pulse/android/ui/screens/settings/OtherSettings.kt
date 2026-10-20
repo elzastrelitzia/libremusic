@@ -188,9 +188,9 @@ fun OtherSettings() {
                             range = 1..500
                         )
                     }
-                    SettingsGroup(title = stringResource(R.string.quick_picks)) {
+                    SettingsGroup(title = stringResource(R.string.home)) {
                         EnumValueSelectorSettingsEntry(
-                            title = stringResource(R.string.quick_picks_source),
+                            title = stringResource(R.string.home_source),
                             selectedValue = DataPreferences.quickPicksSource,
                             onValueSelect = { DataPreferences.quickPicksSource = it },
                             valueText = { it.displayName() }

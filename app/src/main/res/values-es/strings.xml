@@ -56,7 +56,7 @@
     </plurals>
     <string name="discover">Descubrir</string>
     <string name="local">Local</string>
-    <string name="quick_picks">Selecciones rápidas</string>
+    <string name="home">Inicio</string>
     <string name="mood">Estado de ánimo</string>
     <string name="online">En línea</string>
     <string name="videos">Vídeos</string>
@@ -107,7 +107,7 @@
     <string name="youtube_music_not_installed">¡YouTube Music no está instalado en tu dispositivo!</string>
     <string name="remove_from_queue">Eliminar de la cola</string>
     <string name="remove_from_playlist">Eliminar de la lista de reproducción</string>
-    <string name="hide_from_quick_picks">Ocultar de \"Selecciones rápidas\"</string>
+    <string name="hide_from_home">Ocultar de "Inicio"</string>
     <string name="confirm_hide_song">¿Realmente quieres ocultar esta canción? Se borrará su tiempo de reproducción y caché.\nEsta acción es irreversible.</string>
     <string name="confirm_delete_playlist">¿Realmente quieres eliminar esta lista de reproducción?</string>
     <string name="confirm_delete_piped_session">¿Realmente quieres eliminar esta sesión de Piped?</string>
@@ -231,8 +231,8 @@
     <string name="pause_playback_history">Pausar historial de reproducción</string>
     <string name="pause_playback_history_description">Detiene el uso de eventos de reproducción para selecciones rápidas</string>
     <string name="pause_playback_history_warning">Nota: ¡esto no afectará al almacenamiento en caché sin conexión!</string>
-    <string name="reset_quick_picks">Restablecer selecciones rápidas</string>
-    <string name="quick_picks_empty">Las selecciones rápidas están vacías</string>
+    <string name="reset_home">Restablecer inicio</string>
+    <string name="home_empty">El inicio está vacío</string>
     <string name="pause_playback_time">Pausar tiempo de reproducción</string>
     <string name="format_pause_playback_time_description">Detiene el guardado del tiempo de reproducción. ¡Esto pausa las estadísticas en la lista de reproducción \'Mi Top %1$s\'!</string>
     <string name="backup">Copia de seguridad</string>
@@ -305,7 +305,7 @@
     <string name="filter_placeholder">Filtrar…</string>
     <string name="last_interaction">Última reproducción</string>
     <string name="trending">Tendencias</string>
-    <string name="quick_picks_source">Fuente de selecciones rápidas</string>
+    <string name="home_source">Fuente de inicio</string>
     <string name="piped">Piped</string>
     <string name="instance">Instancia</string>
     <string name="click_to_select">Haz clic para seleccionar</string>
@@ -362,7 +362,7 @@
         <item quantity="many">Eliminar todas las %1$s canciones de la lista negra</item>
         <item quantity="other">Eliminar todas las %1$s canciones de la lista negra</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Eliminar %1$s evento de reproducción</item>
         <item quantity="many">Eliminar %1$s eventos de reproducción</item>
         <item quantity="other">Eliminar %1$s eventos de reproducción</item>

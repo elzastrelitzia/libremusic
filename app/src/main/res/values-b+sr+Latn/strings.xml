@@ -51,7 +51,7 @@
     </plurals>
     <string name="discover">Otkrij</string>
     <string name="local">Lokalno</string>
-    <string name="quick_picks">Brzi izbor</string>
+    <string name="home">Početna</string>
     <string name="mood">Raspoloženje</string>
     <string name="online">Na mreži</string>
     <string name="videos">Video snimci</string>
@@ -102,7 +102,7 @@
     <string name="youtube_music_not_installed">YouTube Music nije instaliran na vašem uređaju!</string>
     <string name="remove_from_queue">Ukloni iz reda</string>
     <string name="remove_from_playlist">Ukloni iz plejliste</string>
-    <string name="hide_from_quick_picks">Sakrij iz "Brzi izbor"</string>
+    <string name="hide_from_home">Sakrij sa "Početne"</string>
     <string name="confirm_hide_song">Zaista želite da sakrijete ovu pesmu? Vreme reprodukcije i keš će biti obrisani.\nOva radnja je nepovratna.</string>
     <string name="confirm_delete_playlist">Da li stvarno želite da obrišete ovu plejlistu?</string>
     <string name="confirm_delete_piped_session">Da li zaista želite da obrišete ovu Piped sesiju?</string>
@@ -223,8 +223,8 @@
     <string name="pause_playback_history">Pauziraj istoriju reprodukcije</string>
     <string name="pause_playback_history_description">Zaustavlja praćenje reprodukcija za brzi izbor</string>
     <string name="pause_playback_history_warning">Napomena: ovo neće uticati na keširanje van mreže!</string>
-    <string name="reset_quick_picks">Resetuj brze izbore</string>
-    <string name="quick_picks_empty">Brzi izbor je obrisan</string>
+    <string name="reset_home">Resetuj početnu</string>
+    <string name="home_empty">Početna je obrisana</string>
     <string name="pause_playback_time">Pauziraj vreme reprodukcije</string>
     <string name="format_pause_playback_time_description">Zaustavlja beleženje vremena reprodukcije. Ovo pauzira statistike u plejlisti "Moj top %1$s"!</string>
     <string name="backup">Bekap</string>
@@ -293,7 +293,7 @@
     <string name="filter_placeholder">Filter…</string>
     <string name="last_interaction">Poslednje reprodukovano</string>
     <string name="trending">Popularno</string>
-    <string name="quick_picks_source">Izvor brzih izbora</string>
+    <string name="home_source">Izvor početne</string>
     <string name="piped">Piped</string>
     <string name="instance">Instanca</string>
     <string name="click_to_select">Klikni za izbor</string>
@@ -348,7 +348,7 @@
         <item quantity="one">Ukloni %1$s pesmu sa crne liste</item>
         <item quantity="other">Ukloni sve %1$s pesme sa crne liste</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Obriši %1$s reprodukciju</item>
         <item quantity="other">Obriši %1$s reprodukcija</item>
     </plurals>

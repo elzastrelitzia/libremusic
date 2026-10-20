@@ -45,7 +45,7 @@
     </plurals>
     <string name="discover">Jelajahi</string>
     <string name="local">Lokal</string>
-    <string name="quick_picks">Pilihan cepat</string>
+    <string name="home">Beranda</string>
     <string name="mood">Mood</string>
     <string name="online">Daring</string>
     <string name="videos">Video</string>
@@ -95,7 +95,7 @@
     <string name="youtube_music_not_installed">YouTube Music tidak terinstal di perangkat Anda!</string>
     <string name="remove_from_queue">Hapus dari antrian</string>
     <string name="remove_from_playlist">Hapus dari daftar putar</string>
-    <string name="hide_from_quick_picks">Sembunyikan dari \"Pilihan Cepat\"</string>
+    <string name="hide_from_home">Sembunyikan dari "Beranda"</string>
     <string name="confirm_hide_song">Apakah Anda ingin menyembunyikan lagu ini? Waktu pemutaran dan cache-nya akan dihapus.\nTindakan ini tidak dapat diubah.</string>
     <string name="confirm_delete_playlist">Apakah Anda ingin menghapus daftar putar ini?</string>
     <string name="other_versions">Versi lain</string>
@@ -205,8 +205,8 @@
     <string name="pause_playback_history">Jeda riwayat pemutaran</string>
     <string name="pause_playback_history_description">Hentikan pemutaran yang sedang digunakan untuk pilihan cepat</string>
     <string name="pause_playback_history_warning">Harap diperhatikan: hal ini tidak akan memengaruhi cache offline!</string>
-    <string name="reset_quick_picks">Setel ulang pilihan cepat</string>
-    <string name="quick_picks_empty">Pilihan cepat telat dibersihkan</string>
+    <string name="reset_home">Setel ulang beranda</string>
+    <string name="home_empty">Beranda telah dibersihkan</string>
     <string name="pause_playback_time">Jeda waktu pemutaran</string>
     <string name="format_pause_playback_time_description">Berhenti menyimpan waktu pemutaran. Ini menghentikan statistik di daftar putar \'%1$s teratas saya\'!</string>
     <string name="backup">Cadangkan</string>
@@ -269,7 +269,7 @@
     <string name="filter_placeholder">Filter…</string>
     <string name="last_interaction">Terakhir diputar</string>
     <string name="trending">Trending</string>
-    <string name="quick_picks_source">Sumber Pilihan Cepat</string>
+    <string name="home_source">Sumber Beranda</string>
     <string name="piped">Piped</string>
     <string name="instance">Instansi</string>
     <string name="click_to_select">Klik untuk memilih</string>
@@ -312,7 +312,7 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">Hapus semua %1$s lagu dari daftar hitam</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="other">Hapus %1$s peristiwa pemutaran</item>
     </plurals>
     <plurals name="song_count_plural">

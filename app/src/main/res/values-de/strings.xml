@@ -51,7 +51,7 @@
     </plurals>
     <string name="discover">Entdecken</string>
     <string name="local">Lokal</string>
-    <string name="quick_picks">Startseite</string>
+    <string name="home">Startseite</string>
     <string name="mood">Stimmung</string>
     <string name="online">Online</string>
     <string name="videos">Videos</string>
@@ -102,7 +102,7 @@
     <string name="youtube_music_not_installed">YouTube Music ist auf deinem Gerät nicht installiert!</string>
     <string name="remove_from_queue">Aus der Warteschlange entfernen</string>
     <string name="remove_from_playlist">Aus der Wiedergabeliste entfernen</string>
-    <string name="hide_from_quick_picks">Auf Startseite verstecken</string>
+    <string name="hide_from_home">Auf Startseite verstecken</string>
     <string name="confirm_hide_song">Möchten Sie dieses Lied wirklich ausblenden? Die Wiedergabezeit und der Cache werden gelöscht. Diese Aktion ist nicht umkehrbar.</string>
     <string name="confirm_delete_playlist">Willst du diese Wiedergabeliste wirklich löschen?</string>
     <string name="confirm_delete_piped_session">Willst du diese Piped-Sitzung wirklich löschen?</string>
@@ -226,8 +226,8 @@
     <string name="pause_playback_history">Pausieren des Wiedergabeverlaufs</string>
     <string name="pause_playback_history_description">Stoppt die Verwendung von Wiedergabeereignissen für die Startseite</string>
     <string name="pause_playback_history_warning">Bitte beachten Sie: Dies hat keine Auswirkungen auf das Offline-Caching!</string>
-    <string name="reset_quick_picks">Startseite zurücksetzen</string>
-    <string name="quick_picks_empty">Startseite wird zurückgesetzt</string>
+    <string name="reset_home">Startseite zurücksetzen</string>
+    <string name="home_empty">Startseite wird zurückgesetzt</string>
     <string name="pause_playback_time">Wiedergabezeit pausieren</string>
     <string name="format_pause_playback_time_description">Stoppt die Speicherung der Wiedergabedauer. Dadurch wird die Statistik in der Wiedergabeliste \"Meine Top %1$s\" angehalten!</string>
     <string name="backup">Sicherung</string>
@@ -300,7 +300,7 @@
     <string name="filter_placeholder">Suchen…</string>
     <string name="last_interaction">Basierend auf dem letzten Lied</string>
     <string name="trending">Trend</string>
-    <string name="quick_picks_source">Startseite - Datenquelle</string>
+    <string name="home_source">Startseite - Datenquelle</string>
     <string name="piped">Piped</string>
     <string name="instance">Instanz</string>
     <string name="click_to_select">Zum Auswählen anklicken</string>
@@ -356,7 +356,7 @@
         <item quantity="one">Entferne %1$s Lied von der schwarzen Liste</item>
         <item quantity="other">Alle %1$s Songs von der Schwarzen Liste entfernen</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Wiedergabeereignis %1$s löschen</item>
         <item quantity="other">%1$s Wiedergabeereignisse löschen</item>
     </plurals>

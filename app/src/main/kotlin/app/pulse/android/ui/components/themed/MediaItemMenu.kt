@@ -839,7 +839,7 @@ fun MediaItemMenu(
             if (!isLocal) onRemoveFromQuickPicks?.let {
                 MenuEntry(
                     icon = R.drawable.trash,
-                    text = stringResource(R.string.hide_from_quick_picks),
+                    text = stringResource(R.string.hide_from_home),
                     onClick = {
                         onDismiss()
                         onRemoveFromQuickPicks()

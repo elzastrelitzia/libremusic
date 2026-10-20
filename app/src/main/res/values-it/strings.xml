@@ -60,7 +60,7 @@
     </plurals>
     <string name="discover">Scopri</string>
     <string name="local">Locale</string>
-    <string name="quick_picks">Selezioni rapide</string>
+    <string name="home">Home</string>
     <string name="mood">Mood</string>
     <string name="online">Online</string>
     <string name="videos">Video</string>
@@ -120,7 +120,7 @@
     <string name="remove_from_queue">Rimuovi dalla coda</string>
     <string name="remove_from_playlist">Rimuovi dalla playlist</string>
 
-    <string name="hide_from_quick_picks">Nascondi da \"Selezioni rapide\"</string>
+    <string name="hide_from_home">Nascondi da "Home"</string>
     <string name="confirm_hide_song">Vuoi davvero nascondere questo brano? Il tempo di riproduzione e la cache verranno cancellati.\nQuesta azione è irreversibile.</string>
     <string name="confirm_delete_playlist">Vuoi davvero eliminare questa playlist?</string>
     <string name="confirm_delete_piped_session">Vuoi davvero eliminare questa sessione Piped?</string>
@@ -268,8 +268,8 @@
     <string name="pause_playback_history">Pausa cronologia riproduzione</string>
     <string name="pause_playback_history_description">Impedisce l\'utilizzo degli eventi di riproduzione per le selezioni rapide</string>
     <string name="pause_playback_history_warning">Nota: questo non influirà sulla memorizzazione offline!</string>
-    <string name="reset_quick_picks">Reimposta selezioni rapide</string>
-    <string name="quick_picks_empty">Le selezioni rapide sono state cancellate</string>
+    <string name="reset_home">Reimposta Home</string>
+    <string name="home_empty">La Home è stata cancellata</string>
     <string name="pause_playback_time">Pausa tempo di riproduzione</string>
     <string name="format_pause_playback_time_description">Impedisce il salvataggio del tempo di riproduzione. Questo mette in pausa le statistiche nella playlist \'I miei Top %1$s\'!</string>
 
@@ -352,7 +352,7 @@
 
     <string name="last_interaction">Ultimo ascolto</string>
     <string name="trending">Di tendenza</string>
-    <string name="quick_picks_source">Fonte selezioni rapide</string>
+    <string name="home_source">Fonte Home</string>
 
 
     <string name="piped">Piped</string>
@@ -423,7 +423,7 @@
         <item quantity="many">Rimuovi tutti i %1$s brani dalla blacklist</item>
     </plurals>
 
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">Elimina %1$s evento di riproduzione</item>
         <item quantity="other">Elimina %1$s eventi di riproduzione</item>
         <item quantity="many">Elimina %1$s eventi di riproduzione</item>

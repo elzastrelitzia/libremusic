@@ -51,7 +51,7 @@
     </plurals>
     <string name="discover">खोज</string>
     <string name="local">स्थानीय</string>
-    <string name="quick_picks">त्वरित चयन</string>
+    <string name="home">होम</string>
     <string name="mood">मनोदशा</string>
     <string name="online">ऑनलाइन</string>
     <string name="videos">वीडियो</string>
@@ -102,7 +102,7 @@
     <string name="youtube_music_not_installed">आपके डिवाइस पर YouTube Music इंस्टॉल नहीं है!</string>
     <string name="remove_from_queue">कतार से हटाएँ</string>
     <string name="remove_from_playlist">प्लेलिस्ट से हटाएँ</string>
-    <string name="hide_from_quick_picks">\"त्वरित चयन\" से छिपाएं</string>
+    <string name="hide_from_home">"होम" से छिपाएं</string>
     <string name="confirm_hide_song">क्या आप वाकई इस गाने को छिपाना चाहते हैं? इसका प्लेबैक समय और कैश मिटा दिया जाएगा। यह क्रिया अपरिवर्तनीय है।</string>
     <string name="confirm_delete_playlist">क्या आप वाकई इस प्लेलिस्ट को हटाना चाहते हैं?</string>
     <string name="confirm_delete_piped_session">क्या आप वाकई इस Piped सत्र को हटाना चाहते हैं?</string>
@@ -228,8 +228,8 @@
     <string name="pause_playback_history">प्लेबैक इतिहास रोकें</string>
     <string name="pause_playback_history_description">त्वरित चयन के लिए उपयोग किए जा रहे प्लेबैक ईवेंट को रोकता है</string>
     <string name="pause_playback_history_warning">कृपया ध्यान दें: इससे ऑफ़लाइन कैशिंग प्रभावित नहीं होगी!</string>
-    <string name="reset_quick_picks">त्वरित चयन रीसेट करें</string>
-    <string name="quick_picks_empty">त्वरित चयन साफ़ कर दिए गए हैं</string>
+    <string name="reset_home">होम रीसेट करें</string>
+    <string name="home_empty">होम साफ़ कर दिए गए हैं</string>
     <string name="pause_playback_time">प्लेबैक समय रोकें</string>
     <string name="format_pause_playback_time_description">प्लेबैक समय को सहेजे जाने से रोकता है। यह \'मेरी शीर्ष %1$s\'प्लेलिस्ट में सांख्यिकी को रोक देता है!</string>
     <string name="backup">बैकअप</string>
@@ -304,7 +304,7 @@
     <string name="filter_placeholder">फ़िल्टर…</string>
     <string name="last_interaction">पहले बजाया गया</string>
     <string name="trending">प्रचलित</string>
-    <string name="quick_picks_source">त्वरित चयन स्रोत</string>
+    <string name="home_source">होम स्रोत</string>
     <string name="piped">Piped</string>
     <string name="instance">उदाहरण</string>
     <string name="click_to_select">चुनने के लिए क्लिक करें</string>
@@ -360,7 +360,7 @@
         <item quantity="one">%1$s गाने को ब्लैकलिस्ट से हटाएँ</item>
         <item quantity="other">सभी %1$s गानों को ब्लैकलिस्ट से हटाएँ</item>
     </plurals>
-    <plurals name="format_reset_quick_picks_amount">
+    <plurals name="format_reset_home_amount">
         <item quantity="one">%1$s प्लेबैक ईवेंट हटाएं</item>
         <item quantity="other">%1$s प्लेबैक ईवेंट हटाएं</item>
     </plurals>

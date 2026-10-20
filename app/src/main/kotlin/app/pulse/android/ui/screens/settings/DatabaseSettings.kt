@@ -125,13 +125,13 @@ fun DatabaseSettings() {
 
                             AnimatedVisibility(visible = !(pauseHistory && eventsCount == 0)) {
                                 SettingsEntry(
-                                    title = stringResource(R.string.reset_quick_picks),
+                                    title = stringResource(R.string.reset_home),
                                     text = if (eventsCount > 0) pluralStringResource(
-                                        R.plurals.format_reset_quick_picks_amount,
+                                        R.plurals.format_reset_home_amount,
                                         eventsCount,
                                         eventsCount
                                     )
-                                    else stringResource(R.string.quick_picks_empty),
+                                    else stringResource(R.string.home_empty),
                                     onClick = { query(Database::clearEvents) },
                                     isEnabled = eventsCount > 0
                                 )
