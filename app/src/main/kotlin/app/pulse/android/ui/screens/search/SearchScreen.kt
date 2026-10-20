@@ -23,7 +23,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +44,6 @@ import app.pulse.android.LocalPlayerAwareWindowInsets
 import app.pulse.android.R
 import app.pulse.android.ui.components.themed.Header
 import app.pulse.android.ui.components.themed.HeaderIconButton
-import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.SecondaryTextButton
 import app.pulse.android.ui.components.themed.SegmentedControl
 import app.pulse.android.ui.screens.GlobalRoutes
@@ -88,12 +86,6 @@ fun SearchScreen(
         GlobalRoutes()
 
         Content {
-            val dockHiddenCount = LocalDockHiddenCount.current
-            DisposableEffect(Unit) {
-                dockHiddenCount.value++
-                onDispose { dockHiddenCount.value-- }
-            }
-
             val (colorPalette, typography) = LocalAppearance.current
             val focusRequester = remember { FocusRequester() }
 
