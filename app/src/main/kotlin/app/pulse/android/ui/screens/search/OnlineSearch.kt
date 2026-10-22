@@ -172,6 +172,68 @@ fun OnlineSearch(
             }
         }
 
+        suggestionsResult?.getOrNull()?.take(SUGGESTION_LIMIT)?.let { suggestions ->
+            items(items = suggestions) { suggestion ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable { onSearch(suggestion) }
+                        .fillMaxWidth()
+                        .padding(all = 16.dp)
+                ) {
+                    Spacer(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .size(20.dp)
+                            .paint(
+                                painter = painterResource(R.drawable.search),
+                                colorFilter = ColorFilter.disabled
+                            )
+                    )
+
+                    BasicText(
+                        text = suggestion,
+                        style = typography.s.secondary,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .weight(1f)
+                    )
+
+                    Image(
+                        painter = painterResource(R.drawable.arrow_forward),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.disabled,
+                        modifier = Modifier
+                            .clickable(
+                                indication = ripple(bounded = false),
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = {
+                                    onTextFieldValueChange(
+                                        TextFieldValue(
+                                            text = suggestion,
+                                            selection = TextRange(suggestion.length)
+                                        )
+                                    )
+                                }
+                            )
+                            .rotate(225f)
+                            .padding(horizontal = 8.dp)
+                            .size(22.dp)
+                    )
+                }
+            }
+        } ?: suggestionsResult?.exceptionOrNull()?.let {
+            item {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    BasicText(
+                        text = stringResource(R.string.error_message),
+                        style = typography.s.secondary.center,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+        }
+
         previewResult?.getOrNull()?.let { previews ->
             items(
                 items = previews,
@@ -337,67 +399,6 @@ fun OnlineSearch(
             }
         }
 
-        suggestionsResult?.getOrNull()?.take(SUGGESTION_LIMIT)?.let { suggestions ->
-            items(items = suggestions) { suggestion ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable { onSearch(suggestion) }
-                        .fillMaxWidth()
-                        .padding(all = 16.dp)
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .size(20.dp)
-                            .paint(
-                                painter = painterResource(R.drawable.search),
-                                colorFilter = ColorFilter.disabled
-                            )
-                    )
-
-                    BasicText(
-                        text = suggestion,
-                        style = typography.s.secondary,
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .weight(1f)
-                    )
-
-                    Image(
-                        painter = painterResource(R.drawable.arrow_forward),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.disabled,
-                        modifier = Modifier
-                            .clickable(
-                                indication = ripple(bounded = false),
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = {
-                                    onTextFieldValueChange(
-                                        TextFieldValue(
-                                            text = suggestion,
-                                            selection = TextRange(suggestion.length)
-                                        )
-                                    )
-                                }
-                            )
-                            .rotate(225f)
-                            .padding(horizontal = 8.dp)
-                            .size(22.dp)
-                    )
-                }
-            }
-        } ?: suggestionsResult?.exceptionOrNull()?.let {
-            item {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    BasicText(
-                        text = stringResource(R.string.error_message),
-                        style = typography.s.secondary.center,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-        }
     }
 
     FloatingActionsContainerWithScrollToTop(lazyListState = lazyListState)
