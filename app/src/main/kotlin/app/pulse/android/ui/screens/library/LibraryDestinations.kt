@@ -28,8 +28,8 @@ import app.pulse.compose.routing.RouteHandler
 private fun DockBackArrow() {
     val backArrow = LocalDockBackArrow.current
     DisposableEffect(Unit) {
-        backArrow.value = true
-        onDispose { backArrow.value = false }
+        backArrow.value++
+        onDispose { backArrow.value-- }
     }
 }
 

@@ -90,8 +90,8 @@ fun SearchScreen(
         Content {
             val backArrow = LocalDockBackArrow.current
             DisposableEffect(Unit) {
-                backArrow.value = true
-                onDispose { backArrow.value = false }
+                backArrow.value++
+                onDispose { backArrow.value-- }
             }
 
             val (colorPalette, typography) = LocalAppearance.current

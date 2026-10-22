@@ -632,7 +632,7 @@ private fun FloatingDock(
     val progress = app.pulse.android.ui.components.themed.rememberDockMorphProgress()
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     val scope = rememberCoroutineScope()
-    val showBackArrow = LocalDockBackArrow.current.value
+    val showBackArrow = LocalDockBackArrow.current.value > 0
 
     app.pulse.android.ui.components.themed.MorphingDock(
         progress = progress,

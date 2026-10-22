@@ -219,7 +219,7 @@ fun MorphingDock(
             HomeCircleButton(
                 modifier = Modifier.fillMaxSize(),
                 onClick = onHomeClick,
-                icon = if (LocalDockBackArrow.current.value) R.drawable.chevron_back else R.drawable.home
+                icon = if (LocalDockBackArrow.current.value > 0) R.drawable.chevron_back else R.drawable.home
             )
         }
 

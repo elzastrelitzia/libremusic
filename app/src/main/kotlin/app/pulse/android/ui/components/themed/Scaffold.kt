@@ -69,12 +69,12 @@ val LocalDockScrolled = staticCompositionLocalOf<MutableState<Boolean>> {
 }
 
 /**
- * Set by pushed screens that show the dock, so its round button becomes a back
- * arrow that pops one screen rather than a home button that unwinds to QuickPicks.
- * Search result leaves this false and keeps the home button.
- */
-val LocalDockBackArrow = staticCompositionLocalOf<MutableState<Boolean>> {
-    mutableStateOf(false)
+ * Number of composed pushed screens that show the dock, so its round button becomes a back
+ * arrow that pops one screen rather than a home button that unwinds to QuickPicks. Search
+ * result does not register and keeps the home button. **/
+
+val LocalDockBackArrow = staticCompositionLocalOf<MutableState<Int>> {
+    mutableStateOf(0)
 }
 
 @Composable
@@ -110,8 +110,8 @@ fun Scaffold(
     if (!isGlobalNav && dockBackArrow) {
         val backArrow = LocalDockBackArrow.current
         DisposableEffect(Unit) {
-            backArrow.value = true
-            onDispose { backArrow.value = false }
+            backArrow.value++
+            onDispose { backArrow.value-- }
         }
     }
 
