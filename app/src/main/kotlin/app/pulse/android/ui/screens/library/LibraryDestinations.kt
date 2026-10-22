@@ -3,6 +3,7 @@ package app.pulse.android.ui.screens.library
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import app.pulse.android.ui.components.themed.LocalDockBackArrow
+import app.pulse.android.ui.screens.GlobalRoutes
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.ui.screens.albumRoute
 import app.pulse.android.ui.screens.artistRoute
@@ -12,8 +13,10 @@ import app.pulse.android.ui.screens.home.HomeLocalSongs
 import app.pulse.android.ui.screens.home.HomePlaylists
 import app.pulse.android.ui.screens.home.HomeSongs
 import app.pulse.android.ui.screens.localPlaylistRoute
+import app.pulse.android.ui.screens.localplaylist.LocalPlaylistScreen
 import app.pulse.android.ui.screens.pipedPlaylistRoute
 import app.pulse.android.ui.screens.searchRoute
+import app.pulse.compose.routing.RouteHandler
 
 // These are pushed screens, so HomeScreen's Scaffold is disposed and the dock sees a null
 // NavigationState. That already makes it morph to its compact sub-page shape, so these
@@ -30,17 +33,37 @@ private fun DockBackArrow() {
     }
 }
 
+/**
+ * A route handler has to own the next push. HomeScreen's handler stops listening once one
+ * of these screens is its child, so without this wrapper everything these screens push
+ * (a local playlist, search, an artist) had no listener and was dropped silently.
+ * Only this handler is listening here, so pushes stay single.
+ */
+@Composable
+private fun LibraryDestination(content: @Composable () -> Unit) {
+    RouteHandler {
+        GlobalRoutes()
+
+        localPlaylistRoute { playlistId ->
+            LocalPlaylistScreen(playlistId = playlistId)
+        }
+
+        Content {
+            DockBackArrow()
+            content()
+        }
+    }
+}
+
 @Route
 @Composable
-fun SongsScreen() {
-    DockBackArrow()
+fun SongsScreen() = LibraryDestination {
     HomeSongs(onSearchClick = { searchRoute.global("") })
 }
 
 @Route
 @Composable
-fun PlaylistsScreen() {
-    DockBackArrow()
+fun PlaylistsScreen() = LibraryDestination {
     HomePlaylists(
         onPlaylistClick = { localPlaylistRoute.global(it.id) },
         onPipedPlaylistClick = { session, playlist ->
@@ -56,8 +79,7 @@ fun PlaylistsScreen() {
 
 @Route
 @Composable
-fun ArtistsScreen() {
-    DockBackArrow()
+fun ArtistsScreen() = LibraryDestination {
     HomeArtistList(
         onArtistClick = { artistRoute.global(it.id) },
         onSearchClick = { searchRoute.global("") }
@@ -66,8 +88,7 @@ fun ArtistsScreen() {
 
 @Route
 @Composable
-fun AlbumsScreen() {
-    DockBackArrow()
+fun AlbumsScreen() = LibraryDestination {
     HomeAlbums(
         onAlbumClick = { albumRoute.global(it.id) },
         onSearchClick = { searchRoute.global("") }
@@ -76,7 +97,6 @@ fun AlbumsScreen() {
 
 @Route
 @Composable
-fun LocalSongsScreen() {
-    DockBackArrow()
+fun LocalSongsScreen() = LibraryDestination {
     HomeLocalSongs(onSearchClick = { searchRoute.global("") })
 }
