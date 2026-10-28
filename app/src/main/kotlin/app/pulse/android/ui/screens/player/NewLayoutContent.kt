@@ -585,7 +585,11 @@ fun NewLayoutContent(
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(colorPalette.accent),
                                 modifier = Modifier
-                                    .clickable(enabled = controlsEnabled) { player.forceSeekToPrevious() }
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        enabled = controlsEnabled
+                                    ) { player.forceSeekToPrevious() }
                                     .size(38.dp)
                             )
 
@@ -594,7 +598,11 @@ fun NewLayoutContent(
                             Box(
                                 modifier = Modifier
                                     .size(60.dp)
-                                    .clickable(enabled = controlsEnabled) {
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        enabled = controlsEnabled
+                                    ) {
                                         if (shouldBePlaying) player.pause()
                                         else {
                                             if (player.playbackState == Player.STATE_IDLE) player.prepare()
@@ -626,7 +634,11 @@ fun NewLayoutContent(
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(colorPalette.accent),
                                 modifier = Modifier
-                                    .clickable(enabled = controlsEnabled) { player.forceSeekToNext() }
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        enabled = controlsEnabled
+                                    ) { player.forceSeekToNext() }
                                     .size(38.dp)
                             )
 
