@@ -241,7 +241,7 @@ fun MorphingDock(
                 progress = playerMorphProgress,
                 onClick  = onPlayerClick,
                 modifier = Modifier.fillMaxSize(),
-                contentWidth = fullWidth
+                contentWidth = currentPlayerWidth
             )
         }
     }

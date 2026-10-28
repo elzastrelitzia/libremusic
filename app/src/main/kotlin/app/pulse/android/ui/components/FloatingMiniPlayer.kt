@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TransformOrigin
@@ -228,14 +227,21 @@ fun MorphingMiniPlayer(
                 )
             }
 
+            val compactDock = AppearancePreferences.compactDock
+            // The pill rests at progress 0 (expanded) and 1 (collapsed), so the
+            // controls must be fully visible at both ends and only tuck away
+            // mid-morph. `pulse` is 0 at both rest states, 1 at the midpoint.
+            val controlsAlpha = 1f - 0.85f * pulse
+            // Play/pause only once the pill is collapsed or the dock is compact;
+            // next stays in the expanded dock where there is room for it.
+            val showNext = !compactDock && progress < 0.5f
             Row(
                 modifier = Modifier
                     .graphicsLayer {
-                        alpha = (1f - (progress / 0.8f)).coerceIn(0f, 1f)
+                        alpha = controlsAlpha
                         // Spin the controls as they tuck away
-                        rotationZ = -15f * (progress / 0.8f).coerceIn(0f, 1f)
-                    }
-                    .then(if (progress > 0.5f) Modifier.pointerInput(Unit) {} else Modifier),
+                        rotationZ = -15f * pulse
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (activeMediaItem != null) {
@@ -246,8 +252,8 @@ fun MorphingMiniPlayer(
                     ) { (isPlaying, buffering) ->
                         Box(
                             modifier = Modifier
-                                .padding(all = 4.dp)
-                                .size(28.dp)
+                                .padding(all = if (compactDock) 6.dp else 4.dp)
+                                .size(if (compactDock) 32.dp else 28.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -261,35 +267,37 @@ fun MorphingMiniPlayer(
                         ) {
                             if (buffering && isPlaying) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(if (compactDock) 20.dp else 18.dp)
                                 )
                             } else {
                                 androidx.compose.foundation.Image(
                                     painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
                                     contentDescription = null,
                                     colorFilter = ColorFilter.tint(colorPalette.accent),
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(if (compactDock) 22.dp else 20.dp)
                                 )
                             }
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .padding(all = 4.dp)
-                            .size(28.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = { binder?.player?.seekToNext() }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(R.drawable.play_skip_forward),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(colorPalette.accent),
-                            modifier = Modifier.size(20.dp)
-                        )
+                    if (showNext) {
+                        Box(
+                            modifier = Modifier
+                                .padding(all = 4.dp)
+                                .size(28.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = { binder?.player?.seekToNext() }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.foundation.Image(
+                                painter = painterResource(R.drawable.play_skip_forward),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(colorPalette.accent),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
