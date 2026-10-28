@@ -246,8 +246,8 @@ fun MorphingMiniPlayer(
                     ) { (isPlaying, buffering) ->
                         Box(
                             modifier = Modifier
-                                .padding(all = 8.dp)
-                                .size(24.dp)
+                                .padding(all = 4.dp)
+                                .size(28.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -272,6 +272,24 @@ fun MorphingMiniPlayer(
                                 )
                             }
                         }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .padding(all = 4.dp)
+                            .size(28.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { binder?.player?.seekToNext() }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(R.drawable.play_skip_forward),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(colorPalette.accent),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
