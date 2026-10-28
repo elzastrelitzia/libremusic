@@ -762,7 +762,7 @@ fun NewLayoutContent(
                         .padding(horizontal = 48.dp).padding(top = 28.dp, bottom = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.lyrics),
+                        painter = painterResource(if (isShowingLyrics) R.drawable.lyrics_active else R.drawable.lyrics),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(
                             if (lyricsReady) colorPalette.accent
@@ -771,7 +771,7 @@ fun NewLayoutContent(
                         modifier = Modifier
                             .clickable(
                                 enabled = controlsEnabled && lyricsReady,
-                                onClick = onLyricsClick
+                                onClick = { onShowLyrics(!isShowingLyrics) }
                             )
                             .size(24.dp)
                     )
