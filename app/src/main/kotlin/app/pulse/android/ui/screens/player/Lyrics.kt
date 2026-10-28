@@ -9,6 +9,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -446,7 +447,7 @@ fun Lyrics(
     AnimatedVisibility(
         visible = isDisplayed,
         enter = fadeIn(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)),
-        exit = fadeOut(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+        exit = ExitTransition.None
     ) {
         if (editing) TextFieldDialog(
         hintText = stringResource(R.string.enter_lyrics),
@@ -634,10 +635,22 @@ fun Lyrics(
                 }
 
                 // reset auto-follow when lyrics become visible again
-                LaunchedEffect(isDisplayed) {
+                LaunchedEffect(isDisplayed, synchronizedLyrics) {
                     if (isDisplayed) {
                         autoFollowEnabled = true
-                        resumeTargetIndex = synchronizedLyrics?.index?.let { it + 1 }
+                        val s = synchronizedLyrics
+                        if (s != null) {
+                            resumeTargetIndex = s.index + 1
+                            s.update()
+                            // wait for layout to be ready
+                            while (lazyListState.layoutInfo.visibleItemsInfo.isEmpty()) {
+                                delay(UPDATE_DELAY)
+                            }
+                            try {
+                                lazyListState.centerActiveItem(s.index + 1, animated = true)
+                            } catch (_: CancellationException) {
+                            }
+                        }
                     } else {
                         resumeTargetIndex = null
                     }

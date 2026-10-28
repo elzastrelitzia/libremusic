@@ -642,9 +642,9 @@ fun NewLayoutContent(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    if (isShowingLyrics) Lyrics(
+                    Lyrics(
                         mediaId = mediaId,
-                        isDisplayed = true,
+                        isDisplayed = isShowingLyrics,
                         onDismiss = { onShowLyrics(false) },
                         mediaMetadataProvider = { mediaItem!!.mediaMetadata },
                         durationProvider = { player.duration },
