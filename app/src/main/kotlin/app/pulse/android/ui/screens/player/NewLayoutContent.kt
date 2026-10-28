@@ -761,38 +761,65 @@ fun NewLayoutContent(
                         .fillMaxWidth()
                         .padding(horizontal = 48.dp).padding(top = 28.dp, bottom = 16.dp)
                 ) {
-                    Image(
-                        painter = painterResource(if (isShowingLyrics) R.drawable.lyrics_active else R.drawable.lyrics),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(
-                            if (lyricsReady) colorPalette.accent
-                            else colorPalette.accent.copy(alpha = 0.25f)
-                        ),
+                    Box(
                         modifier = Modifier
+                            .size(48.dp)
                             .clickable(
                                 enabled = controlsEnabled && lyricsReady,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
                                 onClick = { onShowLyrics(!isShowingLyrics) }
-                            )
-                            .size(24.dp)
-                    )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(if (isShowingLyrics) R.drawable.lyrics_active else R.drawable.lyrics),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(
+                                if (lyricsReady) colorPalette.accent
+                                else colorPalette.accent.copy(alpha = 0.25f)
+                            ),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
 
-                    Image(
-                        painter = painterResource(R.drawable.list),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorPalette.accent),
+                    Box(
                         modifier = Modifier
-                            .clickable(enabled = controlsEnabled, onClick = onQueueClick)
-                            .size(24.dp)
-                    )
+                            .size(48.dp)
+                            .clickable(
+                                enabled = controlsEnabled,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = onQueueClick
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.list),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(colorPalette.accent),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
 
-                    Image(
-                        painter = painterResource(R.drawable.ellipsis_horizontal),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorPalette.accent),
+                    Box(
                         modifier = Modifier
-                            .clickable(enabled = controlsEnabled, onClick = onMenuLaunch)
-                            .size(24.dp)
-                    )
+                            .size(48.dp)
+                            .clickable(
+                                enabled = controlsEnabled,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = onMenuLaunch
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ellipsis_horizontal),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(colorPalette.accent),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }
