@@ -127,6 +127,8 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.map
+import androidx.compose.runtime.snapshotFlow
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -592,10 +594,9 @@ fun Lyrics(
         ) { synchronized ->
             if (synchronized) {
 
-                var autoFollowPausedUntil by remember { mutableStateOf(0L) }
+                var autoFollowEnabled by remember(mediaId) { mutableStateOf(true) }
 
                 val manualScrollConnection = remember {
-                    var lastScrollTime = 0L
                     object : NestedScrollConnection {
                         override fun onPostScroll(
                             consumed: Offset,
@@ -603,12 +604,7 @@ fun Lyrics(
                             source: NestedScrollSource
                         ): Offset {
                             if (source == NestedScrollSource.UserInput) {
-                                val now = System.currentTimeMillis()
-                                if (now - lastScrollTime > 50) {
-                                    autoFollowPausedUntil =
-                                        now + 2.seconds.inWholeMilliseconds
-                                    lastScrollTime = now
-                                }
+                                autoFollowEnabled = false
                             }
                             return super.onPostScroll(consumed, available, source)
                         }
@@ -617,16 +613,46 @@ fun Lyrics(
                             consumed: Velocity,
                             available: Velocity
                         ): Velocity {
-                            autoFollowPausedUntil =
-                                System.currentTimeMillis() + 2.seconds.inWholeMilliseconds
+                            autoFollowEnabled = false
                             return super.onPostFling(consumed, available)
                         }
                     }
                 }
 
-                // reset scroll on song change
+                // reset scroll and auto-follow on song change
                 LaunchedEffect(mediaId) {
+                    autoFollowEnabled = true
                     lazyListState.scrollToItem(0)
+                }
+
+                // reset auto-follow when lyrics become visible again
+                LaunchedEffect(isDisplayed) {
+                    if (isDisplayed) {
+                        autoFollowEnabled = true
+                    }
+                }
+
+                val syncedState = rememberUpdatedState(synchronizedLyrics)
+                LaunchedEffect(lazyListState) {
+                    snapshotFlow {
+                        if (autoFollowEnabled) return@snapshotFlow null
+                        val s = syncedState.value ?: return@snapshotFlow null
+                        val idx = s.index
+                        if (idx < 0) return@snapshotFlow null
+                        val target = idx + 1
+                        val visible = lazyListState.layoutInfo.visibleItemsInfo.any { it.index == target }
+                        target to visible
+                    }.distinctUntilChanged().collect { pair ->
+                        if (pair == null) return@collect
+                        val (target, visible) = pair
+                        if (!visible) return@collect
+                        if (lazyListState.isScrollInProgress) return@collect
+                        try {
+                            lazyListState.centerActiveItem(target, animated = true)
+                        } catch (_: CancellationException) {
+                        }
+                        autoFollowEnabled = true
+                    }
                 }
 
                 LaunchedEffect(synchronizedLyrics, lyricsFontSize) {
@@ -647,7 +673,7 @@ fun Lyrics(
                     while (true) {
                         delay(UPDATE_DELAY)
                         currentSynchronizedLyrics.update()
-                        if (autoFollowPausedUntil > System.currentTimeMillis()) continue
+                        if (!autoFollowEnabled) continue
                         if (lazyListState.isScrollInProgress) continue
 
                         val targetIndex = currentSynchronizedLyrics.index + 1
