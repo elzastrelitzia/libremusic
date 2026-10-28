@@ -166,9 +166,13 @@ private suspend fun LazyListState.centerActiveItem(
             else scrollBy(delta.toFloat())
         }
     } else {
-        val distance = abs(targetIndex - firstVisibleItemIndex)
-        if (distance > 15) scrollToItem(targetIndex)
-        else animateScrollToItem(targetIndex, 0)
+        val viewportHeight = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+        val centerOffset = (viewportHeight * 0.35f).toInt()
+        if (animated || seek) {
+            animateScrollToItem(targetIndex, -centerOffset)
+        } else {
+            scrollToItem(targetIndex, -centerOffset)
+        }
     }
 }
 
@@ -595,6 +599,7 @@ fun Lyrics(
             if (synchronized) {
 
                 var autoFollowEnabled by remember(mediaId) { mutableStateOf(true) }
+                var resumeTargetIndex by remember(mediaId) { mutableStateOf<Int?>(null) }
 
                 val manualScrollConnection = remember {
                     object : NestedScrollConnection {
@@ -605,6 +610,7 @@ fun Lyrics(
                         ): Offset {
                             if (source == NestedScrollSource.UserInput) {
                                 autoFollowEnabled = false
+                                resumeTargetIndex = null
                             }
                             return super.onPostScroll(consumed, available, source)
                         }
@@ -614,6 +620,7 @@ fun Lyrics(
                             available: Velocity
                         ): Velocity {
                             autoFollowEnabled = false
+                            resumeTargetIndex = null
                             return super.onPostFling(consumed, available)
                         }
                     }
@@ -622,6 +629,7 @@ fun Lyrics(
                 // reset scroll and auto-follow on song change
                 LaunchedEffect(mediaId) {
                     autoFollowEnabled = true
+                    resumeTargetIndex = null
                     lazyListState.scrollToItem(0)
                 }
 
@@ -629,6 +637,9 @@ fun Lyrics(
                 LaunchedEffect(isDisplayed) {
                     if (isDisplayed) {
                         autoFollowEnabled = true
+                        resumeTargetIndex = synchronizedLyrics?.index?.let { it + 1 }
+                    } else {
+                        resumeTargetIndex = null
                     }
                 }
 
@@ -651,6 +662,7 @@ fun Lyrics(
                             lazyListState.centerActiveItem(target, animated = true)
                         } catch (_: CancellationException) {
                         }
+                        resumeTargetIndex = target
                         autoFollowEnabled = true
                     }
                 }
@@ -667,7 +679,8 @@ fun Lyrics(
                     }
 
                     val initIdx = currentSynchronizedLyrics.index + 1
-                    lazyListState.centerActiveItem(initIdx)
+                    lazyListState.centerActiveItem(initIdx, animated = !isDisplayed || resumeTargetIndex != initIdx)
+                    resumeTargetIndex = null
 
                     var lastIndex = initIdx
                     while (true) {
@@ -680,8 +693,8 @@ fun Lyrics(
                         try {
                             lazyListState.centerActiveItem(
                                 targetIndex,
-                                animated = targetIndex != lastIndex,
-                                seek = abs(targetIndex - lastIndex) > 1
+                                animated = targetIndex != lastIndex || resumeTargetIndex == targetIndex,
+                                seek = abs(targetIndex - lastIndex) > 1 || resumeTargetIndex == targetIndex
                             )
                         } catch (e: CancellationException) {
                             // user drag or fling scrolls at UserInput priority,
@@ -691,6 +704,7 @@ fun Lyrics(
                             // own scope is gone, otherwise keep following.
                             ensureActive()
                         }
+                        if (resumeTargetIndex == targetIndex) resumeTargetIndex = null
                         lastIndex = targetIndex
                     }
                 }
