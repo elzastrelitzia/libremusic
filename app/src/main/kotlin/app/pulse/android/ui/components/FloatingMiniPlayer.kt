@@ -163,7 +163,7 @@ fun MorphingMiniPlayer(
             // 0 at both rest states, 1 mid-morph: tuck/twist peaks in the middle.
             val pulse = 4f * progress.coerceIn(0f, 1f) * (1f - progress.coerceIn(0f, 1f))
             val textScale = 1f - 0.08f * pulse
-            val thumbSize = (if (AppearancePreferences.compactDock) Dimensions.items.collapsedPlayerHeight else 64.dp) * (1f - 0.45f * progress)
+            val thumbSize = (if (AppearancePreferences.compactDock) Dimensions.items.collapsedPlayerHeight else 48.dp) * (1f - 0.45f * progress)
 
             activeMediaItem?.mediaMetadata?.artworkUri?.thumbnail(Dimensions.thumbnails.song.px)?.let { art ->
                 AsyncImage(
