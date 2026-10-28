@@ -759,7 +759,12 @@ fun NewLayoutContent(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 48.dp).padding(top = 28.dp, bottom = 16.dp)
+                        // 48dp hitboxes below would add 24dp of height to this
+                        // row and shove the volume slider up with it (the column
+                        // is bottom-anchored). Absorb that here so the row keeps
+                        // its original 68dp height, and the 24dp icons stay
+                        // centered exactly where they were.
+                        .padding(horizontal = 48.dp).padding(top = 16.dp, bottom = 4.dp)
                 ) {
                     Box(
                         modifier = Modifier
