@@ -149,6 +149,9 @@ fun NewLayoutContent(
     // from showing the controls again between drag events
     var pointerDown by remember { mutableStateOf(false) }
     var scrollHidControls by remember { mutableStateOf(false) }
+    var lastScrollHideAt by remember { mutableStateOf(0L) }
+    var ignoreNextPointerShow by remember { mutableStateOf(false) }
+    var lyricsControlsLocked by remember { mutableStateOf(false) }
 
     val controlsEnabled = !isShowingLyrics || controlsVisible
     val controlsAutoHide = isShowingLyrics && shouldBePlaying && !isBuffering
@@ -304,15 +307,17 @@ fun NewLayoutContent(
                         if (event.changes.any { it.pressed }) {
                             val wasDown = pointerDown
                             pointerDown = true
-                            if (!wasDown || !scrollHidControls) {
+                            val now = System.currentTimeMillis()
+                            if (!wasDown && !scrollHidControls && now - lastScrollHideAt > 1028 && !ignoreNextPointerShow && !lyricsControlsLocked) {
                                 controlsVisible = true
                                 scrollHidControls = false
                             }
+                            if (wasDown) ignoreNextPointerShow = false
 
-                            val now = System.currentTimeMillis()
                             if (now - lastTouchAt > 1_000) lastTouchAt = now
                         } else {
                             pointerDown = false
+                            ignoreNextPointerShow = false
                         }
                     }
                 }
@@ -497,9 +502,12 @@ fun NewLayoutContent(
                 val queueListState = rememberLazyListState()
                 var hasScrolledQueueToCurrent by remember { mutableStateOf(false) }
 
-                // Swipe up (list advances) hides the controls
+                // Swipe up (list advances) hides the controls; lock until swipe down
                 LaunchedEffect(lyricsListState, isShowingLyrics) {
-                    if (!isShowingLyrics) return@LaunchedEffect
+                    if (!isShowingLyrics) {
+                        lyricsControlsLocked = false
+                        return@LaunchedEffect
+                    }
                     var prevIndex = lyricsListState.firstVisibleItemIndex
                     var prevOffset = lyricsListState.firstVisibleItemScrollOffset
                     snapshotFlow {
@@ -512,10 +520,17 @@ fun NewLayoutContent(
                             (index == prevIndex && offset < prevOffset)
                         prevIndex = index
                         prevOffset = offset
-                        if (advanced && pointerDown) {
+                        if (advanced && pointerDown && lyricsListState.isScrollInProgress) {
                             controlsVisible = false
                             scrollHidControls = true
-                        } else if (reversed || (index == 0 && offset == 0)) {
+                            lastScrollHideAt = System.currentTimeMillis()
+                            ignoreNextPointerShow = true
+                            lyricsControlsLocked = true
+                        } else if (reversed && lyricsListState.isScrollInProgress) {
+                            controlsVisible = true
+                            scrollHidControls = false
+                            lyricsControlsLocked = false
+                        } else if ((index == 0 && offset == 0) && !lyricsControlsLocked) {
                             controlsVisible = true
                             scrollHidControls = false
                         }
