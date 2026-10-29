@@ -72,7 +72,6 @@ private const val REF_LYRICS_FOOTER_TOP = 124f
 private const val REF_LYRICS_LYRIC_SIZE = 44f
 private const val REF_LYRICS_LYRIC_WIDTH = 473f
 private const val REF_LYRICS_LYRIC_TOP = 198f
-private const val REF_LYRICS_LYRIC_LINES = 3
 
 private const val SHOW_FOOTER_LOGO = false
 
@@ -85,14 +84,18 @@ private val storyScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
  * With [lyric] the card carries that lyric line, otherwise it is the plain card.
  */
 fun shareToInstagramStory(context: Context, mediaItem: MediaItem, lyric: String? = null) {
+    shareToInstagramStory(context, mediaItem, listOfNotNull(lyric?.takeIf { it.isNotBlank() }))
+}
+
+fun shareToInstagramStory(context: Context, mediaItem: MediaItem, lines: List<String>) {
     storyScope.launch {
-        runCatching { share(context, mediaItem, lyric) }
+        runCatching { share(context, mediaItem, lines) }
             .onFailure { Log.e("InstagramStory", "story share failed", it) }
     }
 }
 
-private suspend fun share(context: Context, mediaItem: MediaItem, lyric: String?) {
-    val uri = renderStoryCard(context, mediaItem, lyric)
+private suspend fun share(context: Context, mediaItem: MediaItem, lines: List<String>) {
+    val uri = renderStoryCard(context, mediaItem, lines)
 
     val stories = Intent("com.instagram.share.ADD_TO_STORY").apply {
         setPackage(INSTAGRAM_PACKAGE)
@@ -115,15 +118,15 @@ private suspend fun share(context: Context, mediaItem: MediaItem, lyric: String?
     }
 }
 
-private suspend fun renderStoryCard(context: Context, mediaItem: MediaItem, lyric: String?): Uri =
+private suspend fun renderStoryCard(context: Context, mediaItem: MediaItem, lines: List<String>): Uri =
     withContext(Dispatchers.IO) {
         val density = context.resources.displayMetrics.density
         val blurRadius = 32f * density
         val art = loadArtwork(context, mediaItem)
         val title = mediaItem.mediaMetadata.title?.toString().orEmpty()
         val artist = mediaItem.mediaMetadata.artist?.toString().orEmpty()
-        val card = if (lyric != null) {
-            drawLyricsCard(art, title, artist, lyric, blurRadius)
+        val card = if (lines.isNotEmpty()) {
+            drawLyricsCard(art, title, artist, lines, blurRadius)
         } else {
             drawNoLyricsCard(
                 art = art,
@@ -268,7 +271,7 @@ private fun drawLyricsCard(
     art: Bitmap?,
     title: String,
     artist: String,
-    lyric: String,
+    lines: List<String>,
     blurRadius: Float,
 ): Bitmap {
     val out = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
@@ -282,7 +285,39 @@ private fun drawLyricsCard(
     // boxes hug their placeholder text and would clip real titles early.
     val textWidth = cardWidth - REF_LYRICS_TEXT_LEFT * scale - padding
 
-    val cardHeight = REF_LYRICS_CARD_HEIGHT * scale
+    val lyricWidth = (REF_LYRICS_LYRIC_WIDTH * scale).roundToInt()
+    val lyricText = lines.joinToString("\n")
+    val baseLyricSize = REF_LYRICS_LYRIC_SIZE * scale
+
+    fun lyricLayout(size: Float, maxLines: Int = 0, ellipsize: Boolean = false) =
+        StaticLayout.Builder
+            .obtain(lyricText, 0, lyricText.length, textPaint(Color.WHITE, size, Typeface.DEFAULT_BOLD), lyricWidth)
+            .setIncludePad(false)
+            .apply {
+                if (maxLines > 0) setMaxLines(maxLines)
+                if (ellipsize) setEllipsize(TextUtils.TruncateAt.END)
+            }
+            .build()
+
+    // The card keeps its reference height for one line and grows for extra lines,
+    // capped at 80% of the canvas so it never crowds the story chrome.
+    val baseCardHeight = REF_LYRICS_CARD_HEIGHT * scale
+    val singleLineHeight = lyricLayout(baseLyricSize, maxLines = 1).height.toFloat()
+    val availableLyricHeight = singleLineHeight + (CARD_HEIGHT * 0.8f - baseCardHeight)
+    val baseLayout = lyricLayout(baseLyricSize)
+    val layout = when {
+        baseLayout.height <= availableLyricHeight -> baseLayout
+        else -> fittedLyricTextSize(baseLyricSize, baseLayout.height.toFloat(), availableLyricHeight)
+            ?.let { lyricLayout(it) }
+            ?: lyricLayout(
+                baseLyricSize,
+                maxLines = (availableLyricHeight / singleLineHeight).toInt().coerceAtLeast(1),
+                ellipsize = true,
+            )
+    }
+
+    val extraHeight = (layout.height - singleLineHeight).coerceAtLeast(0f)
+    val cardHeight = baseCardHeight + extraHeight
     val left = (CARD_WIDTH - cardWidth) / 2f
     val top = (CARD_HEIGHT - cardHeight) / 2f
     val radius = REF_LYRICS_CARD_RADIUS * scale
@@ -332,16 +367,11 @@ private fun drawLyricsCard(
     canvas.drawText("libre", textLeft, footerBaseline, footerMedium)
     canvas.drawText("music", textLeft + footerMedium.measureText("libre"), footerBaseline, footerLight)
 
-    val lyricPaint = textPaint(Color.WHITE, REF_LYRICS_LYRIC_SIZE * scale, Typeface.DEFAULT_BOLD)
-    val lyricLayout = StaticLayout.Builder
-        .obtain(lyric, 0, lyric.length, lyricPaint, (REF_LYRICS_LYRIC_WIDTH * scale).roundToInt())
-        .setIncludePad(false)
-        .setMaxLines(REF_LYRICS_LYRIC_LINES)
-        .setEllipsize(TextUtils.TruncateAt.END)
-        .build()
+    // The card grows symmetrically around the canvas centre, so the lyric block
+    // keeps its reference offset from the card top.
     canvas.save()
     canvas.translate(left + padding, top + REF_LYRICS_LYRIC_TOP * scale)
-    lyricLayout.draw(canvas)
+    layout.draw(canvas)
     canvas.restore()
 
     return out
