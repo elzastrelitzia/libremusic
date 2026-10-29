@@ -211,6 +211,8 @@ composeCompiler {
 dependencies {
     coreLibraryDesugaring(libs.desugaring)
 
+    testImplementation("junit:junit:4.13.2")
+
     implementation(projects.compose.persist)
     implementation(projects.compose.preferences)
     implementation(projects.compose.routing)
