@@ -357,4 +357,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d / %2$d karakter</string>
     <string name="share_lyrics_close">Kapat</string>
+    <string name="glass_dock_blur">Cam dok bulanıklığı</string>
+    <string name="glass_dock_blur_description">Arama, navigasyon çubuğu ve mini oynatıcının arkasında dok arka planını bulanıklıkla kapla</string>
 </resources>

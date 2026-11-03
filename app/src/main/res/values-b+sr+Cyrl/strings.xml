@@ -374,4 +374,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d од %2$d карактера</string>
     <string name="share_lyrics_close">Затвори</string>
+    <string name="glass_dock_blur">Размићење стакленог дока</string>
+    <string name="glass_dock_blur_description">Размитите позадину дока иза претраге, навигационе траке и минни плејера</string>
 </resources>

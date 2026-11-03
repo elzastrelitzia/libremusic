@@ -40,6 +40,7 @@ fun MorphingDock(
     modifier: Modifier = Modifier
 ) {
     val compact = AppearancePreferences.compactDock
+    val glassDockBlur = AppearancePreferences.glassDockBlur
     val dockPad = if (compact) 16.dp else 24.dp
     val dockSpacing = if (compact) 6.dp else 8.dp
     val baseSize = if (compact) Dimensions.items.collapsedPlayerHeight else 64.dp
@@ -161,7 +162,7 @@ fun MorphingDock(
                     scaleY       = 1f - navHideFactor
                 }
         ) {
-            FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, modifier = Modifier.fillMaxSize())
+            FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, useGlass = glassDockBlur, modifier = Modifier.fillMaxSize())
         }
 
         // Navigation bar
@@ -191,6 +192,7 @@ fun MorphingDock(
                     hiddenTabs      = currentNavState.hiddenTabs,
                     expandedWidth   = expandedNavWidth,
                     dockHazeState   = dockHazeState,
+                    useGlass        = glassDockBlur,
                     modifier        = Modifier.fillMaxSize()
                 )
             }
@@ -246,6 +248,7 @@ fun MorphingDock(
             MorphingMiniPlayer(
                 progress = playerMorphProgress,
                 dockHazeState = dockHazeState,
+                useGlass = glassDockBlur,
                 onClick  = onPlayerClick,
                 modifier = Modifier.fillMaxSize(),
                 contentWidth = currentPlayerWidth

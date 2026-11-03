@@ -423,6 +423,8 @@
     <string name="reverb_plate">Plate</string>
     <string name="compact_dock">Compact dock</string>
     <string name="compact_dock_description">Reduce bottom dock height and spacing</string>
+    <string name="glass_dock_blur">Glass dock blur</string>
+    <string name="glass_dock_blur_description">Blur the dock background behind search, nav bar, and mini player</string>
     <string name="tabs">Tabs</string>
     <string name="please_wait">Please wait, this may take some time</string>
     <string name="yt_dlp_success">Upgrading yt-dlp succeeded</string>

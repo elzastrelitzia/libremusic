@@ -382,4 +382,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d von %2$d Zeichen</string>
     <string name="share_lyrics_close">Schließen</string>
+    <string name="glass_dock_blur">Dock-Glas-Unschärfe</string>
+    <string name="glass_dock_blur_description">Den Dock-Hintergrund hinter Suche, Navigationsleiste und Mini-Player unscharf machen</string>
 </resources>

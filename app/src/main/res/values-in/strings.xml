@@ -336,4 +336,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d dari %2$d karakter</string>
     <string name="share_lyrics_close">Tutup</string>
+    <string name="glass_dock_blur">Blur kaca dock</string>
+    <string name="glass_dock_blur_description">Mengaburkan latar belakang dock di belakang pencarian, bilah navigasi, dan pemutar mini</string>
 </resources>

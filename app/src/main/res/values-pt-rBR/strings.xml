@@ -394,4 +394,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d de %2$d caracteres</string>
     <string name="share_lyrics_close">Fechar</string>
+    <string name="glass_dock_blur">Desfoque de vidro do dock</string>
+    <string name="glass_dock_blur_description">Desfoque o fundo do dock atrás de pesquisa, barra de navegação e reprodutor mini</string>
 </resources>

@@ -137,6 +137,7 @@ data class MiniPlayerState(
 fun MorphingMiniPlayer(
     progress: Float,
     dockHazeState: HazeState,
+    useGlass: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     contentWidth: Dp
@@ -156,10 +157,12 @@ fun MorphingMiniPlayer(
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .hazeGlass(
-                input = HazeInput.Sources(dockHazeState),
-                style = glassStyle,
-            )
+            .let {
+                if (useGlass) it.hazeGlass(
+                    input = HazeInput.Sources(dockHazeState),
+                    style = glassStyle,
+                ) else it.background(colorPalette.background1, CircleShape)
+            }
             .clickable(
                 enabled = activeMediaItem != null,
                 onClick = onClick

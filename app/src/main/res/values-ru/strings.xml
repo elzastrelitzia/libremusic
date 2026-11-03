@@ -386,4 +386,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d из %2$d символов</string>
     <string name="share_lyrics_close">Закрыть</string>
+    <string name="glass_dock_blur">Размытие стёкла дока</string>
+    <string name="glass_dock_blur_description">Размыть фон дока позади поиска, панели навигации и мини-плеера</string>
 </resources>

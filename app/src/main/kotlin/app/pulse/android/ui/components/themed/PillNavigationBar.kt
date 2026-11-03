@@ -122,25 +122,27 @@ internal fun PillNavigationItem(
 fun FloatingSearchButton(
     onClick: () -> Unit,
     dockHazeState: HazeState,
+    useGlass: Boolean,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
-    val glassStyle = GlassStyle.clear.then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
-        tint(colorPalette.background1.copy(alpha = 0.30f))
-        specularIntensity(0f)
-        edgeSoftness(2.dp)
-        edgeShadow(Color.Transparent)
-    }
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .hazeGlass(
-                input = HazeInput.Sources(dockHazeState),
-                style = glassStyle,
-            )
+            .let {
+                if (useGlass) it.hazeGlass(
+                    input = HazeInput.Sources(dockHazeState),
+                    style = GlassStyle.clear.then {
+                        backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
+                        tint(colorPalette.background1.copy(alpha = 0.30f))
+                        specularIntensity(0f)
+                        edgeSoftness(2.dp)
+                        edgeShadow(Color.Transparent)
+                    }
+                ) else it.background(colorPalette.background1, CircleShape)
+            }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -170,6 +172,7 @@ fun MorphingNavigationBar(
     // width, so the row does not reflow while the bar contracts around it.
     expandedWidth: Dp = Dp.Unspecified,
     dockHazeState: HazeState,
+    useGlass: Boolean,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
@@ -209,10 +212,12 @@ fun MorphingNavigationBar(
     BoxWithConstraints(
         modifier = modifier
             .clip(CircleShape)
-            .hazeGlass(
-                input = HazeInput.Sources(dockHazeState),
-                style = glassStyle,
-            )
+            .let {
+                if (useGlass) it.hazeGlass(
+                    input = HazeInput.Sources(dockHazeState),
+                    style = glassStyle,
+                ) else it.background(colorPalette.background1, CircleShape)
+            }
             .clickable(
                 enabled = progress > EXPANDED_PROGRESS,
                 onClick = { dockScrolled.value = false }

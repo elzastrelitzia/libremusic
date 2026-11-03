@@ -390,4 +390,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d de %2$d caràcters</string>
     <string name="share_lyrics_close">Tanca</string>
+    <string name="glass_dock_blur">Desfoc de vidre del dock</string>
+    <string name="glass_dock_blur_description">Desfoca el fons del dock darrere el cercador, la barra de navegació i el mini-reproductor</string>
 </resources>

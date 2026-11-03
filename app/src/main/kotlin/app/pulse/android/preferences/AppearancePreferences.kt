@@ -1,5 +1,6 @@
 package app.pulse.android.preferences
 
+import android.os.Build
 import app.pulse.android.GlobalPreferencesHolder
 import app.pulse.android.preferences.OldPreferences.ColorPaletteMode
 import app.pulse.android.preferences.OldPreferences.ColorPaletteName
@@ -33,4 +34,5 @@ object AppearancePreferences : GlobalPreferencesHolder() {
     var autoPip by boolean(false)
     var openPlayer by boolean(true)
     var compactDock by boolean(false)
+    var glassDockBlur by boolean(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 }

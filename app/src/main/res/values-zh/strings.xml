@@ -378,4 +378,6 @@
     </plurals>
     <string name="share_lyrics_characters">%1$d / %2$d 字符</string>
     <string name="share_lyrics_close">关闭</string>
+    <string name="glass_dock_blur">码头玻璃模糊</string>
+    <string name="glass_dock_blur_description">模糊搜索、导航栏和迷你播放器后面的码头背景</string>
 </resources>

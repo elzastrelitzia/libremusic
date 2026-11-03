@@ -105,6 +105,12 @@ fun AppearanceSettings() {
                 isChecked = compactDock,
                 onCheckedChange = { compactDock = it }
             )
+            SwitchSettingsEntry(
+                title = stringResource(R.string.glass_dock_blur),
+                text = stringResource(R.string.glass_dock_blur_description),
+                isChecked = glassDockBlur,
+                onCheckedChange = { glassDockBlur = it }
+            )
         }
         SettingsGroup(title = stringResource(R.string.text)) {
             if (isAtLeastAndroid13) SettingsEntry(
