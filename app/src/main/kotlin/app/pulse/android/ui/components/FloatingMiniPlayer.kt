@@ -61,6 +61,11 @@ import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.android.models.ui.UiMedia
 import coil3.compose.AsyncImage
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.hazeGlass
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun rememberMiniPlayerState(): MiniPlayerState {
@@ -131,6 +136,7 @@ data class MiniPlayerState(
 @Composable
 fun MorphingMiniPlayer(
     progress: Float,
+    dockHazeState: HazeState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     contentWidth: Dp
@@ -139,10 +145,21 @@ fun MorphingMiniPlayer(
     val state = rememberMiniPlayerState()
     val (activeMediaItem, metadata, shouldBePlaying, isBuffering, binder) = state
 
+    val glassStyle = GlassStyle.clear.then {
+        backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
+        tint(colorPalette.background1.copy(alpha = 0.30f))
+        specularIntensity(0f)
+        edgeSoftness(2.dp)
+        edgeShadow(Color.Transparent)
+    }
+
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(colorPalette.background1)
+            .hazeGlass(
+                input = HazeInput.Sources(dockHazeState),
+                style = glassStyle,
+            )
             .clickable(
                 enabled = activeMediaItem != null,
                 onClick = onClick

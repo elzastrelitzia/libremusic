@@ -57,6 +57,11 @@ import app.pulse.android.utils.shareToInstagramStory
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.overlay
 import coil3.compose.AsyncImage
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.hazeGlass
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 
 /**
@@ -79,6 +84,7 @@ fun LyricsShareSelection(
     val artworkUri = mediaItem?.mediaMetadata?.artworkUri
     val lyricsFontSize =
         (PlayerPreferences.lyricsFontSize * CARD_FONT_SCALE).coerceIn(MIN_CARD_FONT, MAX_CARD_FONT).sp
+    val hazeState = rememberHazeState()
 
     val initialSelection = if (
         lines.isNotEmpty() &&
@@ -154,190 +160,206 @@ fun LyricsShareSelection(
                     .clip(RoundedCornerShape(28.dp))
                     .background(colorPalette.background0)
             ) {
-                Column(
-                    modifier = Modifier
+                // Backdrop content captured for the share-button glass blur. The blur
+                // button is a SIBLING of this box (below), never inside it, so the
+                // capture/consumer graph stays acyclic and the render thread doesn't
+                // crash (Cloudy-style cyclic RenderNode SIGSEGV).
+                Box(
+                    Modifier
                         .fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},
-                        )
+                        .hazeSource(hazeState)
                 ) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 96.dp),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {},
+                            )
                     ) {
-                        item { Spacer(Modifier.height(HEADER_SPACE)) }
-                        itemsIndexed(lines) { index, line ->
-                            val selected = index in selection
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 6.dp)
-                                    .clip(RoundedCornerShape(26.dp))
-                                    .background(
-                                        if (selected) {
-                                            Brush.verticalGradient(
-                                                listOf(
-                                                    colorPalette.accent.copy(alpha = 0.22f),
-                                                    colorPalette.accent.copy(alpha = 0.10f),
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 96.dp),
+                        ) {
+                            item { Spacer(Modifier.height(HEADER_SPACE)) }
+                            itemsIndexed(lines) { index, line ->
+                                val selected = index in selection
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 6.dp)
+                                        .clip(RoundedCornerShape(26.dp))
+                                        .background(
+                                            if (selected) {
+                                                Brush.verticalGradient(
+                                                    listOf(
+                                                        colorPalette.accent.copy(alpha = 0.22f),
+                                                        colorPalette.accent.copy(alpha = 0.10f),
+                                                    )
                                                 )
-                                            )
-                                        } else {
-                                            Brush.verticalGradient(
-                                                listOf(colorPalette.background1, colorPalette.background1)
-                                            )
+                                            } else {
+                                                Brush.verticalGradient(
+                                                    listOf(colorPalette.background1, colorPalette.background1)
+                                                )
+                                            }
+                                        )
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                        ) {
+                                            if (line.isBlank()) return@clickable
+                                            val updated = toggleSelection(lines, selection, index)
+                                            if (updated == selection) {
+                                                if (!selected) limitHit = true
+                                            } else {
+                                                selection = updated
+                                            }
                                         }
-                                    )
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
-                                        if (line.isBlank()) return@clickable
-                                        val updated = toggleSelection(lines, selection, index)
-                                        if (updated == selection) {
-                                            if (!selected) limitHit = true
-                                        } else {
-                                            selection = updated
-                                        }
+                                        .padding(horizontal = 29.dp, vertical = 24.dp)
+                                ) {
+                                    if (line.isBlank()) {
+                                        Image(
+                                            painter = painterResource(R.drawable.musical_notes),
+                                            contentDescription = null,
+                                            colorFilter = ColorFilter.tint(colorPalette.text.copy(alpha = 0.4f)),
+                                            modifier = Modifier.size(lyricsFontSize.value.dp),
+                                        )
+                                    } else {
+                                        BasicText(
+                                            text = line,
+                                            style = typography.l.bold.copy(fontSize = lyricsFontSize).color(
+                                                if (selected) colorPalette.text
+                                                else colorPalette.text.copy(alpha = 0.55f)
+                                            ),
+                                        )
                                     }
-                                    .padding(horizontal = 29.dp, vertical = 24.dp)
-                            ) {
-                                if (line.isBlank()) {
-                                    Image(
-                                        painter = painterResource(R.drawable.musical_notes),
-                                        contentDescription = null,
-                                        colorFilter = ColorFilter.tint(colorPalette.text.copy(alpha = 0.4f)),
-                                        modifier = Modifier.size(lyricsFontSize.value.dp),
-                                    )
-                                } else {
-                                    BasicText(
-                                        text = line,
-                                        style = typography.l.bold.copy(fontSize = lyricsFontSize).color(
-                                            if (selected) colorPalette.text
-                                            else colorPalette.text.copy(alpha = 0.55f)
-                                        ),
-                                    )
                                 }
                             }
                         }
                     }
-                }
 
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(HEADER_FADE_HEIGHT)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    colorPalette.background0,
-                                    colorPalette.background0.copy(alpha = 0.8f),
-                                    Color.Transparent,
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(HEADER_FADE_HEIGHT)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        colorPalette.background0,
+                                        colorPalette.background0.copy(alpha = 0.8f),
+                                        Color.Transparent,
+                                    )
                                 )
                             )
-                        )
-                )
+                    )
 
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},
-                        )
-                        .padding(start = 20.dp, top = 20.dp, end = 12.dp, bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (artworkUri != null) {
-                        AsyncImage(
-                            model = artworkUri,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(thumbnailShape),
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(thumbnailShape)
-                                .background(colorPalette.background1)
-                        )
-                    }
-
-                    Column(
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 16.dp)
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {},
+                            )
+                            .padding(start = 20.dp, top = 20.dp, end = 12.dp, bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BasicText(
-                            text = pluralStringResource(
-                                R.plurals.share_lyrics_lines_selected,
-                                selection.size,
-                                selection.size,
-                            ),
-                            style = typography.m.bold.color(colorPalette.text),
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        BasicText(
-                            text = stringResource(
-                                R.string.share_lyrics_characters,
-                                characterCount(lines, selection),
-                                MAX_SELECTION_CHARACTERS,
-                            ),
-                            style = typography.xs.color(
-                                if (limitHit) colorPalette.accent else colorPalette.textSecondary
-                            ),
+                        if (artworkUri != null) {
+                            AsyncImage(
+                                model = artworkUri,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(thumbnailShape),
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(thumbnailShape)
+                                    .background(colorPalette.background1)
+                                )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            BasicText(
+                                text = pluralStringResource(
+                                    R.plurals.share_lyrics_lines_selected,
+                                    selection.size,
+                                    selection.size,
+                                ),
+                                style = typography.m.bold.color(colorPalette.text),
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            BasicText(
+                                text = stringResource(
+                                    R.string.share_lyrics_characters,
+                                    characterCount(lines, selection),
+                                    MAX_SELECTION_CHARACTERS,
+                                ),
+                                style = typography.xs.color(
+                                    if (limitHit) colorPalette.accent else colorPalette.textSecondary
+                                ),
+                            )
+                        }
+
+                        Image(
+                            painter = painterResource(R.drawable.close),
+                            contentDescription = stringResource(R.string.share_lyrics_close),
+                            colorFilter = ColorFilter.tint(colorPalette.text),
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable(onClick = dismiss)
+                                .padding(12.dp)
+                                .size(20.dp)
                         )
                     }
 
-                    Image(
-                        painter = painterResource(R.drawable.close),
-                        contentDescription = stringResource(R.string.share_lyrics_close),
-                        colorFilter = ColorFilter.tint(colorPalette.text),
+                    Box(
                         modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable(onClick = dismiss)
-                            .padding(12.dp)
-                            .size(20.dp)
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(170.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, colorPalette.background0)
+                                )
+                            )
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(170.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Transparent, colorPalette.background0)
-                            )
-                        )
-                )
-
+                // Share button overlay: sibling of hazeSource box so the glass blur
+                // consumes captured backdrop content, not this node itself.
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(top = 12.dp, bottom = 24.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},
-                        ),
+                        .padding(top = 12.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val enabled = selection.isNotEmpty()
+                    val glassStyle = GlassStyle.clear.then {
+                        backgroundColor(colorPalette.background1.copy(alpha = 0.75f))
+                        tint(colorPalette.background1.copy(alpha = 0.30f))
+                        specularIntensity(0f)
+                        edgeSoftness(2.dp)
+                        edgeShadow(Color.Transparent)
+                    }
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .alpha(if (enabled) 1f else 0.5f)
                             .clip(CircleShape)
-                            .background(colorPalette.background1)
+                            .hazeGlass(
+                                input = HazeInput.Backdrop(hazeState),
+                                style = glassStyle,
+                            )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,

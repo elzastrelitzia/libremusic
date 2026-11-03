@@ -42,6 +42,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.hazeGlass
+import androidx.compose.ui.graphics.Color
 import app.pulse.android.R
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.core.ui.Dimensions
@@ -116,15 +121,26 @@ internal fun PillNavigationItem(
 @Composable
 fun FloatingSearchButton(
     onClick: () -> Unit,
+    dockHazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
+    val glassStyle = GlassStyle.clear.then {
+        backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
+        tint(colorPalette.background1.copy(alpha = 0.30f))
+        specularIntensity(0f)
+        edgeSoftness(2.dp)
+        edgeShadow(Color.Transparent)
+    }
     Box(
         modifier = modifier
-            .background(colorPalette.background1, CircleShape)
             .clip(CircleShape)
+            .hazeGlass(
+                input = HazeInput.Sources(dockHazeState),
+                style = glassStyle,
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -153,12 +169,21 @@ fun MorphingNavigationBar(
     // The bar's width when fully expanded. Tab widths come from this, not from the live
     // width, so the row does not reflow while the bar contracts around it.
     expandedWidth: Dp = Dp.Unspecified,
+    dockHazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     val dockScrolled = LocalDockScrolled.current
     val lazyListState = rememberLazyListState()
     val haptics = LocalHapticFeedback.current
+
+    val glassStyle = GlassStyle.clear.then {
+        backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
+        tint(colorPalette.background1.copy(alpha = 0.30f))
+        specularIntensity(0f)
+        edgeSoftness(2.dp)
+        edgeShadow(Color.Transparent)
+    }
 
     // The pill is the dock's only selection highlight. It sits on the selected tab at rest
     // and follows the finger during a drag.
@@ -183,8 +208,11 @@ fun MorphingNavigationBar(
 
     BoxWithConstraints(
         modifier = modifier
-            .background(colorPalette.background1, CircleShape)
             .clip(CircleShape)
+            .hazeGlass(
+                input = HazeInput.Sources(dockHazeState),
+                style = glassStyle,
+            )
             .clickable(
                 enabled = progress > EXPANDED_PROGRESS,
                 onClick = { dockScrolled.value = false }

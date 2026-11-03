@@ -15,6 +15,10 @@ import app.pulse.core.ui.Dimensions
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import app.pulse.core.ui.LocalAppearance
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.hazeGlass
 
 /**
  * Fade band behind the dock, as a multiple of the dock's own height, so the band
@@ -32,6 +36,7 @@ fun MorphingDock(
     onHomeClick: () -> Unit,
     onAction: (String) -> Unit,
     isLandscape: Boolean,
+    dockHazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     val compact = AppearancePreferences.compactDock
@@ -156,7 +161,7 @@ fun MorphingDock(
                     scaleY       = 1f - navHideFactor
                 }
         ) {
-            FloatingSearchButton(onClick = onSearchClick, modifier = Modifier.fillMaxSize())
+            FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, modifier = Modifier.fillMaxSize())
         }
 
         // Navigation bar
@@ -185,6 +190,7 @@ fun MorphingDock(
                     onAction        = currentNavState.onAction,
                     hiddenTabs      = currentNavState.hiddenTabs,
                     expandedWidth   = expandedNavWidth,
+                    dockHazeState   = dockHazeState,
                     modifier        = Modifier.fillMaxSize()
                 )
             }
@@ -239,6 +245,7 @@ fun MorphingDock(
             // the fixed-width content is masked by the pill
             MorphingMiniPlayer(
                 progress = playerMorphProgress,
+                dockHazeState = dockHazeState,
                 onClick  = onPlayerClick,
                 modifier = Modifier.fillMaxSize(),
                 contentWidth = currentPlayerWidth

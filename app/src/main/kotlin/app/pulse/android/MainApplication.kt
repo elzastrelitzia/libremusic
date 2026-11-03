@@ -168,6 +168,10 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kieronquinn.monetcompat.core.MonetActivityAccessException
@@ -403,15 +407,21 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                     val coroutineScope = rememberCoroutineScope()
                     val dockScrolled = app.pulse.android.ui.components.themed.LocalDockScrolled.current
                     val dockScrollConnection = app.pulse.android.ui.components.themed.rememberDockScrollConnection(dockScrolled)
+                    val dockHazeState = rememberHazeState()
+                    val isDownloading by downloadState.collectAsState()
 
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .nestedScroll(dockScrollConnection)
                     ) {
-                        val isDownloading by downloadState.collectAsState()
-
-                        HomeScreen()
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .hazeSource(dockHazeState)
+                        ) {
+                            HomeScreen()
+                        }
 
                         val context = LocalContext.current
                         if (!DataPreferences.batteryPromptShown && !context.isIgnoringBatteryOptimizations) {
@@ -446,7 +456,8 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         ) {
                             FloatingDock(
                                 onPlayerClick = { playerBottomSheetState.expandSoft() },
-                                onSearchClick = { coroutineScope.launch { searchRoute.ensureGlobal("") } }
+                                onSearchClick = { coroutineScope.launch { searchRoute.ensureGlobal("") } },
+                                dockHazeState = dockHazeState
                             )
                         }
 
@@ -625,6 +636,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
 private fun FloatingDock(
     onPlayerClick: () -> Unit,
     onSearchClick: () -> Unit,
+    dockHazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     val navigationState = LocalNavigationState.current
@@ -662,7 +674,8 @@ private fun FloatingDock(
         },
         isLandscape = isLandscape,
         onAction = { navigationState.value?.onAction?.invoke(it) },
-        modifier = modifier
+        modifier = modifier,
+        dockHazeState = dockHazeState
     )
 }
 
