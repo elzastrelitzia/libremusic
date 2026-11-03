@@ -60,6 +60,7 @@ import coil3.compose.AsyncImage
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
+import dev.chrisbanes.haze.glass.material3.material3
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
@@ -345,7 +346,7 @@ fun LyricsShareSelection(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val enabled = selection.isNotEmpty()
-                    val glassStyle = GlassStyle.clear.then {
+                    val glassStyle = GlassStyle.clear.material3().then {
                         backgroundColor(colorPalette.background1.copy(alpha = 0.75f))
                         tint(colorPalette.background1.copy(alpha = 0.30f))
                         specularIntensity(0f)

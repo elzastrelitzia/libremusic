@@ -62,6 +62,7 @@ compose_cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy"
 
 haze_core = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze_glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "haze" }
+haze_glass_material3 = { module = "dev.chrisbanes.haze:haze-glass-material3", version.ref = "haze" }
 
 mlkit_translate = { module = "com.google.mlkit:translate", version.ref = "mlkit_translate" }
 mlkit_language_id = { module = "com.google.mlkit:language-id", version.ref = "mlkit_language_id" }

@@ -46,6 +46,7 @@ import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
+import dev.chrisbanes.haze.glass.material3.material3
 import androidx.compose.ui.graphics.Color
 import app.pulse.android.R
 import app.pulse.android.preferences.AppearancePreferences
@@ -134,7 +135,7 @@ fun FloatingSearchButton(
             .let {
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
-                    style = GlassStyle.clear.then {
+                    style = GlassStyle.clear.material3().then {
                         backgroundColor(colorPalette.background1.copy(alpha = 0.8f))
                         tint(colorPalette.background1.copy(alpha = 0.30f))
                         specularIntensity(0f)

@@ -238,6 +238,7 @@ dependencies {
 
     implementation(libs.haze.core)
     implementation(libs.haze.glass)
+    implementation(libs.haze.glass.material3)
 
     implementation(libs.mlkit.translate)
     implementation(libs.mlkit.language.id)
