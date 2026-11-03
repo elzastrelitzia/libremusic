@@ -347,8 +347,8 @@ fun LyricsShareSelection(
                 ) {
                     val enabled = selection.isNotEmpty()
                     val glassStyle = GlassStyle.clear.material3().then {
-                        backgroundColor(colorPalette.background1.copy(alpha = 0.75f))
-                        tint(colorPalette.background1.copy(alpha = 0.30f))
+                        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
+                        tint(colorPalette.background1.copy(alpha = 0.5f))
                         specularIntensity(0f)
                         edgeSoftness(2.dp)
                         edgeShadow(Color.Transparent)
