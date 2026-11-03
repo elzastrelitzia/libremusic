@@ -76,7 +76,8 @@ fun LyricsShareSelection(
     val binder = LocalPlayerServiceBinder.current
     val mediaItem = binder?.player?.currentMediaItem
     val artworkUri = mediaItem?.mediaMetadata?.artworkUri
-    val lyricsFontSize = PlayerPreferences.lyricsFontSize.sp
+    val lyricsFontSize =
+        (PlayerPreferences.lyricsFontSize * CARD_FONT_SCALE).coerceIn(MIN_CARD_FONT, MAX_CARD_FONT).sp
 
     val initialSelection = if (
         lines.isNotEmpty() &&
@@ -351,3 +352,6 @@ private const val EXIT_FADE_MS = 180
 private const val EXIT_SLIDE_MS = 240
 private const val EXIT_ANIMATION_MS = 260L
 private const val CARD_HEIGHT_FRACTION = 0.9f
+private const val CARD_FONT_SCALE = 0.65f
+private const val MIN_CARD_FONT = 14f
+private const val MAX_CARD_FONT = 20f
