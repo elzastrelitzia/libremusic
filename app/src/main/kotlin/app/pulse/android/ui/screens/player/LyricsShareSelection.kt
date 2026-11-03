@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -93,11 +94,11 @@ fun LyricsShareSelection(
         }
     }
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex + 1)
     var initialScrollDone by remember { mutableStateOf(false) }
     LaunchedEffect(initialIndex) {
         if (!initialScrollDone) {
-            listState.scrollToItem(initialIndex)
+            listState.scrollToItem(initialIndex + 1)
             initialScrollDone = true
         }
     }
@@ -162,71 +163,12 @@ fun LyricsShareSelection(
                             onClick = {},
                         )
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, top = 20.dp, end = 12.dp, bottom = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (artworkUri != null) {
-                            AsyncImage(
-                                model = artworkUri,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(thumbnailShape),
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(thumbnailShape)
-                                    .background(colorPalette.background1)
-                            )
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 16.dp)
-                        ) {
-                            BasicText(
-                                text = pluralStringResource(
-                                    R.plurals.share_lyrics_lines_selected,
-                                    selection.size,
-                                    selection.size,
-                                ),
-                                style = typography.m.bold.color(colorPalette.text),
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            BasicText(
-                                text = stringResource(
-                                    R.string.share_lyrics_characters,
-                                    characterCount(lines, selection),
-                                    MAX_SELECTION_CHARACTERS,
-                                ),
-                                style = typography.xs.color(
-                                    if (limitHit) colorPalette.accent else colorPalette.textSecondary
-                                ),
-                            )
-                        }
-
-                        Image(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.share_lyrics_close),
-                            colorFilter = ColorFilter.tint(colorPalette.text),
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .clickable(onClick = dismiss)
-                                .padding(12.dp)
-                                .size(20.dp)
-                        )
-                    }
-
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 96.dp),
                     ) {
+                        item { Spacer(Modifier.height(HEADER_SPACE)) }
                         itemsIndexed(lines) { index, line ->
                             val selected = index in selection
                             Box(
@@ -280,8 +222,90 @@ fun LyricsShareSelection(
                                 }
                             }
                         }
-                        item { Spacer(Modifier.height(96.dp)) }
                     }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(HEADER_FADE_HEIGHT)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    colorPalette.background0,
+                                    colorPalette.background0.copy(alpha = 0.8f),
+                                    Color.Transparent,
+                                )
+                            )
+                        )
+                )
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        )
+                        .padding(start = 20.dp, top = 20.dp, end = 12.dp, bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (artworkUri != null) {
+                        AsyncImage(
+                            model = artworkUri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(thumbnailShape),
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(thumbnailShape)
+                                .background(colorPalette.background1)
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        BasicText(
+                            text = pluralStringResource(
+                                R.plurals.share_lyrics_lines_selected,
+                                selection.size,
+                                selection.size,
+                            ),
+                            style = typography.m.bold.color(colorPalette.text),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        BasicText(
+                            text = stringResource(
+                                R.string.share_lyrics_characters,
+                                characterCount(lines, selection),
+                                MAX_SELECTION_CHARACTERS,
+                            ),
+                            style = typography.xs.color(
+                                if (limitHit) colorPalette.accent else colorPalette.textSecondary
+                            ),
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(R.drawable.close),
+                        contentDescription = stringResource(R.string.share_lyrics_close),
+                        colorFilter = ColorFilter.tint(colorPalette.text),
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable(onClick = dismiss)
+                            .padding(12.dp)
+                            .size(20.dp)
+                    )
                 }
 
                 Box(
@@ -355,3 +379,5 @@ private const val CARD_HEIGHT_FRACTION = 0.9f
 private const val CARD_FONT_SCALE = 0.65f
 private const val MIN_CARD_FONT = 14f
 private const val MAX_CARD_FONT = 20f
+private val HEADER_SPACE = 96.dp
+private val HEADER_FADE_HEIGHT = 150.dp
