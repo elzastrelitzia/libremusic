@@ -14,7 +14,7 @@ workmanager = "2.11.2"
 credentials = "1.5.0"
 coil = "3.4.0"
 cloudy = "0.6.1"
-haze = "2.0.1"
+haze = "2.1.0"
 mlkit_translate = "17.0.3"
 mlkit_language_id = "17.0.6"
 
