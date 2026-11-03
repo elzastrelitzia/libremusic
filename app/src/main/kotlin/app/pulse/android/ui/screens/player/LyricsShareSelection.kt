@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -252,7 +253,19 @@ fun LyricsShareSelection(
                     item { Spacer(Modifier.height(96.dp)) }
                 }
             }
-    
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(170.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, colorPalette.background0)
+                        )
+                    )
+            )
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
