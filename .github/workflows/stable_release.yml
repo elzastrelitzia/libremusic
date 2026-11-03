@@ -83,9 +83,9 @@ jobs:
 
       - name: Rename APK for Distribution
         run: |
-          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          mv "$APK_PATH" "app/build/outputs/apk/release/pulse-v${{ env.VERSION }}.apk"
-          echo "APK_FINAL_PATH=app/build/outputs/apk/release/pulse-v${{ env.VERSION }}.apk" >> $GITHUB_ENV
+          APK_PATH=$(find app/build/outputs/apk/release -name "*arm64-v8a*.apk" | head -n 1)
+          mv "$APK_PATH" "app/build/outputs/apk/release/arm64-v8a-release.apk"
+          echo "APK_FINAL_PATH=app/build/outputs/apk/release/arm64-v8a-release.apk" >> $GITHUB_ENV
 
       - name: Hash APK
         run: |
@@ -120,6 +120,10 @@ jobs:
             ${{ steps.vars.outputs.truncated_changelog }}
           document: "${{ env.APK_FINAL_PATH }},${{ env.APK_FINAL_PATH }}.asc"
 
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f app/release.jks
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -139,5 +143,3 @@ jobs:
 
             Changelog:
             ${{ steps.vars.outputs.full_changelog }}
-
-
