@@ -14,6 +14,7 @@ workmanager = "2.11.2"
 credentials = "1.5.0"
 coil = "3.4.0"
 cloudy = "0.6.1"
+haze = "2.0.1"
 mlkit_translate = "17.0.3"
 mlkit_language_id = "17.0.6"
 
@@ -58,6 +59,9 @@ coil_compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil_ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 compose_cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy" }
+
+haze_core = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze_glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "haze" }
 
 mlkit_translate = { module = "com.google.mlkit:translate", version.ref = "mlkit_translate" }
 mlkit_language_id = { module = "com.google.mlkit:language-id", version.ref = "mlkit_language_id" }

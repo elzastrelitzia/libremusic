@@ -236,6 +236,9 @@ dependencies {
 
     implementation(libs.compose.cloudy)
 
+    implementation(libs.haze.core)
+    implementation(libs.haze.glass)
+
     implementation(libs.mlkit.translate)
     implementation(libs.mlkit.language.id)
 
