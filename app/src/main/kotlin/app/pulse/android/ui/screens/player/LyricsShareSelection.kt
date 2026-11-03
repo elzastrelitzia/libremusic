@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,12 +70,26 @@ fun LyricsShareSelection(
     val artworkUri = mediaItem?.mediaMetadata?.artworkUri
     val lyricsFontSize = PlayerPreferences.lyricsFontSize.sp
 
-    var selection by remember(mediaId) { mutableStateOf(setOf(initialIndex)) }
+    val initialSelection = if (
+        lines.isNotEmpty() &&
+        initialIndex in lines.indices &&
+        !lines[initialIndex].isBlank()
+    ) setOf(initialIndex) else emptySet()
+    var selection by remember(mediaId) { mutableStateOf(initialSelection) }
     var limitHit by remember { mutableStateOf(false) }
     LaunchedEffect(limitHit) {
         if (limitHit) {
             delay(400)
             limitHit = false
+        }
+    }
+
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+    var initialScrollDone by remember { mutableStateOf(false) }
+    LaunchedEffect(initialIndex) {
+        if (!initialScrollDone) {
+            listState.scrollToItem(initialIndex)
+            initialScrollDone = true
         }
     }
 
@@ -120,7 +135,11 @@ fun LyricsShareSelection(
                         .padding(horizontal = 16.dp)
                 ) {
                     BasicText(
-                        text = stringResource(R.string.share_lyrics_lines_selected, selection.size),
+                        text = pluralStringResource(
+                            R.plurals.share_lyrics_lines_selected,
+                            selection.size,
+                            selection.size,
+                        ),
                         style = typography.m.bold.color(colorPalette.text),
                     )
                     Spacer(Modifier.height(2.dp))
@@ -149,7 +168,7 @@ fun LyricsShareSelection(
             }
 
             LazyColumn(
-                state = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex),
+                state = listState,
                 modifier = Modifier.weight(1f),
             ) {
                 itemsIndexed(lines) { index, line ->

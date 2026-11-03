@@ -374,4 +374,12 @@
     <string name="feedback_sent">Feedback gesendet</string>
     <string name="feedback_failed">Feedback konnte nicht gesendet werden, überprüfe deine Verbindung</string>
     <string name="feedback_limited">Zu viel Feedback, versuche es morgen erneut</string>
+    <string name="share_to_instagram_story">In Instagram-Story teilen</string>
+    <string name="share_lyrics">Songtexte teilen</string>
+    <plurals name="share_lyrics_lines_selected">
+        <item quantity="one">%1$d Zeile ausgewählt</item>
+        <item quantity="other">%1$d Zeilen ausgewählt</item>
+    </plurals>
+    <string name="share_lyrics_characters">%1$d von %2$d Zeichen</string>
+    <string name="share_lyrics_close">Schließen</string>
 </resources>

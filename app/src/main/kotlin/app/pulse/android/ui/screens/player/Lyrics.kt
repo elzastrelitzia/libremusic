@@ -100,7 +100,6 @@ import app.pulse.android.utils.color
 import app.pulse.android.utils.isInPip
 import app.pulse.android.utils.medium
 import app.pulse.android.utils.semiBold
-import app.pulse.android.utils.shareToInstagramStory
 import app.pulse.android.utils.toast
 import app.pulse.core.data.utils.formatDuration
 import app.pulse.core.ui.LocalAppearance
@@ -257,6 +256,7 @@ fun Lyrics(
     setShouldShowTranslation: (Boolean) -> Unit = {},
     setTranslationBusy: (Boolean) -> Unit = {},
     showControls: Boolean = true,
+    onShareLyrics: ((lines: List<String>, index: Int) -> Unit)? = null,
     lazyListState: LazyListState = rememberLazyListState()
 ) {
     val currentEnsureSongInserted by rememberUpdatedState(ensureSongInserted)
@@ -786,21 +786,12 @@ fun Lyrics(
                                     onClick = {
                                         binder?.player?.seekTo(synchronizedLyrics.sentences.keys.elementAt(index))
                                     },
-                                    onLongClick = if (sentence.isBlank()) null else {
+                                    onLongClick = if (sentence.isBlank() || onShareLyrics == null) null else {
                                         {
-                                            val mediaItem = binder?.player?.currentMediaItem
-                                            if (mediaItem != null) menuState.display {
-                                                Menu {
-                                                    MenuEntry(
-                                                        icon = R.drawable.share_social,
-                                                        text = stringResource(R.string.share_to_instagram_story),
-                                                        onClick = {
-                                                            menuState.hide()
-                                                            shareToInstagramStory(context, mediaItem, sentence)
-                                                        }
-                                                    )
-                                                }
-                                            }
+                                            onShareLyrics(
+                                                synchronizedLyrics.sentences.values.toList(),
+                                                index
+                                            )
                                         }
                                     }
                                 )

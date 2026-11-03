@@ -378,4 +378,12 @@
     <string name="feedback_sent">फ़ीडबैक भेजा गया</string>
     <string name="feedback_failed">फ़ीडबैक भेजा नहीं जा सका, अपना कनेक्शन जांचें</string>
     <string name="feedback_limited">बहुत अधिक फ़ीडबैक, कल पुनः प्रयास करें</string>
+    <string name="share_to_instagram_story">इंस्टाग्राम स्टोरी पर शेयर करें</string>
+    <string name="share_lyrics">गीत बोल शेयर करें</string>
+    <plurals name="share_lyrics_lines_selected">
+        <item quantity="one">%1$d पंक्ति चुनी गई</item>
+        <item quantity="other">%1$d पंक्तियां चुनी गईं</item>
+    </plurals>
+    <string name="share_lyrics_characters">%1$d / %2$d वर्ण</string>
+    <string name="share_lyrics_close">बंद करें</string>
 </resources>

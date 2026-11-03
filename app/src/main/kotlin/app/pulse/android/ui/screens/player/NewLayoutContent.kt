@@ -117,6 +117,12 @@ import kotlin.math.roundToInt
 
 private const val CONTROLS_AUTO_HIDE_MS = 3_000L
 
+private data class ShareSelection(
+    val mediaId: String,
+    val lines: List<String>,
+    val index: Int,
+)
+
 @Composable
 fun NewLayoutContent(
     mediaItem: MediaItem?,
@@ -220,6 +226,12 @@ fun NewLayoutContent(
     }
     var translationBusy by remember(mediaId) { mutableStateOf(false) }
     var showingTranslatorDialog by remember { mutableStateOf(false) }
+    var shareSelection by remember { mutableStateOf<ShareSelection?>(null) }
+
+    // The picker holds the previous song's lines, so a track change closes it.
+    LaunchedEffect(mediaId) {
+        if (shareSelection?.mediaId != mediaId) shareSelection = null
+    }
 
     if (showingTranslatorDialog) TranslationLanguageDialog(
         translationActive = showTranslation,
@@ -666,6 +678,9 @@ fun NewLayoutContent(
                         setShouldShowTranslation = { showTranslation = it },
                         setTranslationBusy = { translationBusy = it },
                         showControls = false,
+                        onShareLyrics = { lines, index ->
+                            shareSelection = ShareSelection(mediaId, lines, index)
+                        },
                         lazyListState = lyricsListState
                     )
 
@@ -839,6 +854,15 @@ fun NewLayoutContent(
                     }
                 }
             }
+        }
+
+        shareSelection?.let { selection ->
+            LyricsShareSelection(
+                mediaId = selection.mediaId,
+                lines = selection.lines,
+                initialIndex = selection.index,
+                onDismiss = { shareSelection = null }
+            )
         }
     }
 }
