@@ -383,7 +383,7 @@ fun MorphingNavigationBar(
                     .fillMaxHeight()
                     .padding(vertical = 4.dp)
                     .clip(CircleShape)
-                    .background(colorPalette.background2)
+                    .background(colorPalette.background2.copy(alpha = 0.5f))
             )
         }
 
