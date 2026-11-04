@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -44,7 +46,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassOptics
 import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.glass.material3.material3
 import androidx.compose.ui.graphics.Color
@@ -141,9 +145,18 @@ fun FloatingSearchButton(
                         specularIntensity(0f)
                         edgeSoftness(2.dp)
                         edgeShadow(Color.Transparent)
+                        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
                     }
                 ) else it.background(colorPalette.background1, CircleShape)
             }
+            .border(
+                width = 0.5.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.5f),
+                    0.5f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -187,6 +200,7 @@ fun MorphingNavigationBar(
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)
+        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
 
     // The pill is the dock's only selection highlight. It sits on the selected tab at rest
@@ -219,6 +233,14 @@ fun MorphingNavigationBar(
                     style = glassStyle,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
+            .border(
+                width = 0.5.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.5f),
+                    0.5f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clickable(
                 enabled = progress > EXPANDED_PROGRESS,
                 onClick = { dockScrolled.value = false }

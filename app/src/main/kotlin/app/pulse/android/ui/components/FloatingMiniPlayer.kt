@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -63,10 +64,13 @@ import app.pulse.android.models.ui.UiMedia
 import coil3.compose.AsyncImage
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassOptics
 import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.glass.material3.material3
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 
 @Composable
 fun rememberMiniPlayerState(): MiniPlayerState {
@@ -153,6 +157,7 @@ fun MorphingMiniPlayer(
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)
+        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
 
     Box(
@@ -164,6 +169,14 @@ fun MorphingMiniPlayer(
                     style = glassStyle,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
+            .border(
+                width = 0.5.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.5f),
+                    0.5f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clickable(
                 enabled = activeMediaItem != null,
                 onClick = onClick
