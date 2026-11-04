@@ -48,6 +48,7 @@ import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.glass.GlassOptics
 import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.GlassTransformTarget
 import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.glass.material3.material3
@@ -133,6 +134,7 @@ fun FloatingSearchButton(
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
             .border(
@@ -144,6 +146,11 @@ fun FloatingSearchButton(
                 shape = CircleShape,
             )
             .clip(CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
             .let {
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
@@ -154,14 +161,11 @@ fun FloatingSearchButton(
                         edgeSoftness(2.dp)
                         edgeShadow(Color.Transparent)
                         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
-                    }
-                ) else it.background(colorPalette.background1, CircleShape)
-            }
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            ),
+                    },
+                    interactionSource = interactionSource,
+                    interactionTransformTarget = GlassTransformTarget.MaterialAndContent,
+                ) else it.background(colorPalette.background1.copy(alpha = 0.9f), CircleShape)
+            },
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -202,6 +206,7 @@ fun MorphingNavigationBar(
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
+    val interactionSource = remember { MutableInteractionSource() }
 
     // The pill is the dock's only selection highlight. It sits on the selected tab at rest
     // and follows the finger during a drag.
@@ -239,9 +244,12 @@ fun MorphingNavigationBar(
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
                     style = glassStyle,
+                    interactionSource = interactionSource,
+                    interactionTransformTarget = GlassTransformTarget.MaterialAndContent,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
             .clickable(
+                interactionSource = interactionSource,
                 enabled = progress > EXPANDED_PROGRESS,
                 onClick = { dockScrolled.value = false }
             )
@@ -498,6 +506,7 @@ fun HomeCircleButton(
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
             .border(
@@ -513,10 +522,12 @@ fun HomeCircleButton(
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
                     style = glassStyle,
+                    interactionSource = interactionSource,
+                    interactionTransformTarget = GlassTransformTarget.MaterialAndContent,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             ),

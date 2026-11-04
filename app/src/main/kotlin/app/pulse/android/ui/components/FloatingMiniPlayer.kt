@@ -66,6 +66,7 @@ import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.glass.GlassOptics
 import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.GlassTransformTarget
 import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.glass.material3.material3
@@ -159,6 +160,7 @@ fun MorphingMiniPlayer(
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
@@ -175,9 +177,13 @@ fun MorphingMiniPlayer(
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
                     style = glassStyle,
+                    interactionSource = interactionSource,
+                    interactionTransformTarget = GlassTransformTarget.MaterialAndContent,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
             .clickable(
+                interactionSource = interactionSource,
+                indication = null,
                 enabled = activeMediaItem != null,
                 onClick = onClick
             ),
