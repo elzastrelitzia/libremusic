@@ -152,17 +152,19 @@ fun MorphingDock(
         val currentCircleSize = baseSize * (1f - 0.2f * p.coerceIn(0f, 1f))
 
         // Search btn
-        Box(
-            modifier = Modifier
-                .size(currentCircleSize)
-                .align(Alignment.BottomEnd)
-                .graphicsLayer {
-                    alpha        = 1f - navHideFactor
-                    scaleX       = 1f - navHideFactor
-                    scaleY       = 1f - navHideFactor
-                }
-        ) {
-            FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, useGlass = glassDockBlur, modifier = Modifier.fillMaxSize())
+        if ((1f - navHideFactor) > 0f) {
+            Box(
+                modifier = Modifier
+                    .size(currentCircleSize)
+                    .align(Alignment.BottomEnd)
+                    .graphicsLayer {
+                        alpha        = 1f - navHideFactor
+                        scaleX       = 1f - navHideFactor
+                        scaleY       = 1f - navHideFactor
+                    }
+            ) {
+                FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, useGlass = glassDockBlur, modifier = Modifier.fillMaxSize())
+            }
         }
 
         // Navigation bar
