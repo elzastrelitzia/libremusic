@@ -213,26 +213,28 @@ fun MorphingDock(
         }
 
         // home button
-        Box(
-            modifier = Modifier
-                .size(currentCircleSize)
-                .align(Alignment.BottomCenter)
-                .graphicsLayer {
-                    translationX = (currentPlayerWidth / 2 + dockSpacing / 2).toPx() * radioShowFactor
-                    alpha        = radioShowFactor
-                    scaleX       = radioShowFactor
-                    scaleY       = radioShowFactor
-                    val liftDistance = dockSpacing.toPx() * (p - 1f).coerceIn(0f, 1f)
-                    translationY = -liftDistance
-                }
-        ) {
-            HomeCircleButton(
-                modifier = Modifier.fillMaxSize(),
-                onClick = onHomeClick,
-                icon = if (LocalDockBackArrow.current.value > 0) R.drawable.chevron_back else R.drawable.home,
-                dockHazeState = dockHazeState,
-                useGlass = glassDockBlur,
-            )
+        if (radioShowFactor > 0f) {
+            Box(
+                modifier = Modifier
+                    .size(currentCircleSize)
+                    .align(Alignment.BottomCenter)
+                    .graphicsLayer {
+                        translationX = (currentPlayerWidth / 2 + dockSpacing / 2).toPx() * radioShowFactor
+                        alpha        = radioShowFactor
+                        scaleX       = radioShowFactor
+                        scaleY       = radioShowFactor
+                        val liftDistance = dockSpacing.toPx() * (p - 1f).coerceIn(0f, 1f)
+                        translationY = -liftDistance
+                    }
+            ) {
+                HomeCircleButton(
+                    modifier = Modifier.fillMaxSize(),
+                    onClick = onHomeClick,
+                    icon = if (LocalDockBackArrow.current.value > 0) R.drawable.chevron_back else R.drawable.home,
+                    dockHazeState = dockHazeState,
+                    useGlass = glassDockBlur,
+                )
+            }
         }
 
         // Mini player

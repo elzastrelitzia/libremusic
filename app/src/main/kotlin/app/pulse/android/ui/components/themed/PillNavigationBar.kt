@@ -8,7 +8,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -29,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -137,14 +135,6 @@ fun FloatingSearchButton(
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.3f),
-                    0.3f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
@@ -231,14 +221,6 @@ fun MorphingNavigationBar(
 
     BoxWithConstraints(
         modifier = modifier
-            .border(
-                width = 0.5.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.5f),
-                    0.5f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clip(CircleShape)
             .let {
                 if (useGlass) it.hazeGlass(
@@ -500,7 +482,7 @@ fun HomeCircleButton(
     val iconSize = if (compact) 20.dp else 24.dp
     val glassStyle = GlassStyle.clear.material3().then {
         backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
+        tint(colorPalette.background1.copy(alpha = 0.30f))
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)
@@ -509,14 +491,6 @@ fun HomeCircleButton(
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.3f),
-                    0.3f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clip(CircleShape)
             .let {
                 if (useGlass) it.hazeGlass(
