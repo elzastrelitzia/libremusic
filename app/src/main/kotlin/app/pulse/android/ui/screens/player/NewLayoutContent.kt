@@ -43,6 +43,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -144,8 +145,13 @@ fun NewLayoutContent(
 ) {
     val (baseColorPalette, typography, thumbnailCornerSize) = LocalAppearance.current
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val player = binder?.player ?: return
     val shouldBePlaying = player.shouldBePlaying
+
+    LaunchedEffect(mediaItem?.mediaId) {
+        keyboardController?.hide()
+    }
     val isBuffering = player.rememberIsBuffering() ||
         (shouldBePlaying && player.playbackState != Player.STATE_READY)
 
