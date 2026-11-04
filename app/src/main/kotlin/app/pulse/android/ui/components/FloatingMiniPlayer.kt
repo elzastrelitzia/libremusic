@@ -162,6 +162,14 @@ fun MorphingMiniPlayer(
 
     Box(
         modifier = modifier
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.3f),
+                    0.3f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clip(CircleShape)
             .let {
                 if (useGlass) it.hazeGlass(
@@ -169,14 +177,6 @@ fun MorphingMiniPlayer(
                     style = glassStyle,
                 ) else it.background(colorPalette.background1, CircleShape)
             }
-            .border(
-                width = 0.5.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.5f),
-                    0.5f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clickable(
                 enabled = activeMediaItem != null,
                 onClick = onClick

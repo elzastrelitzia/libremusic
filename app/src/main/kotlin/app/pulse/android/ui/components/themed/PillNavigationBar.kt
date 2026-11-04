@@ -135,6 +135,14 @@ fun FloatingSearchButton(
     val iconSize = if (compact) 20.dp else 24.dp
     Box(
         modifier = modifier
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.3f),
+                    0.3f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clip(CircleShape)
             .let {
                 if (useGlass) it.hazeGlass(
@@ -149,14 +157,6 @@ fun FloatingSearchButton(
                     }
                 ) else it.background(colorPalette.background1, CircleShape)
             }
-            .border(
-                width = 0.5.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.5f),
-                    0.5f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -226,13 +226,6 @@ fun MorphingNavigationBar(
 
     BoxWithConstraints(
         modifier = modifier
-            .clip(CircleShape)
-            .let {
-                if (useGlass) it.hazeGlass(
-                    input = HazeInput.Sources(dockHazeState),
-                    style = glassStyle,
-                ) else it.background(colorPalette.background1, CircleShape)
-            }
             .border(
                 width = 0.5.dp,
                 brush = Brush.verticalGradient(
@@ -241,6 +234,13 @@ fun MorphingNavigationBar(
                 ),
                 shape = CircleShape,
             )
+            .clip(CircleShape)
+            .let {
+                if (useGlass) it.hazeGlass(
+                    input = HazeInput.Sources(dockHazeState),
+                    style = glassStyle,
+                ) else it.background(colorPalette.background1, CircleShape)
+            }
             .clickable(
                 enabled = progress > EXPANDED_PROGRESS,
                 onClick = { dockScrolled.value = false }
