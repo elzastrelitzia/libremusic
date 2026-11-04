@@ -50,7 +50,8 @@ inline fun <T : Innertube.Item> ItemsPage(
     emptyItemsText: String = stringResource(R.string.no_items_found),
     stickyHeader: Boolean = false,
     noinline backdrop: (@Composable () -> Unit)? = null,
-    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null,
+    showScrollToTop: Boolean = true
 ) = ItemsPage(
     tag = tag,
     header = { before, _ -> header(before) },
@@ -62,7 +63,8 @@ inline fun <T : Innertube.Item> ItemsPage(
     emptyItemsText = emptyItemsText,
     stickyHeader = stickyHeader,
     backdrop = backdrop,
-    provider = provider
+    provider = provider,
+    showScrollToTop = showScrollToTop
 )
 
 @Composable
@@ -80,7 +82,8 @@ inline fun <T : Innertube.Item> ItemsPage(
     emptyItemsText: String = stringResource(R.string.no_items_found),
     stickyHeader: Boolean = false,
     noinline backdrop: (@Composable () -> Unit)? = null,
-    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null,
+    showScrollToTop: Boolean = true
 ) {
     val (_, typography) = LocalAppearance.current
     val updatedProvider by rememberUpdatedState(provider)
@@ -182,6 +185,6 @@ inline fun <T : Innertube.Item> ItemsPage(
             header(null, null)
         }
 
-        FloatingActionsContainerWithScrollToTop(lazyListState = lazyListState)
+        FloatingActionsContainerWithScrollToTop(lazyListState = lazyListState, visible = showScrollToTop)
     }
 }

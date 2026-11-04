@@ -184,6 +184,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             header = headerContent,
                             stickyHeader = true,
                             backdrop = backdropContent,
+                            showScrollToTop = false,
                             itemContent = { song ->
                                 SongItem(
                                     song = song,
@@ -233,6 +234,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             header = headerContent,
                             stickyHeader = true,
                             backdrop = backdropContent,
+                            showScrollToTop = false,
                             itemContent = { album ->
                                 AlbumItem(
                                     album = album,
@@ -267,6 +269,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             header = headerContent,
                             stickyHeader = true,
                             backdrop = backdropContent,
+                            showScrollToTop = false,
                             itemContent = { artist ->
                                 ArtistItem(
                                     artist = artist,
@@ -298,6 +301,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             header = headerContent,
                             stickyHeader = true,
                             backdrop = backdropContent,
+                            showScrollToTop = false,
                             itemContent = { video ->
                                 VideoItem(
                                     video = video,
@@ -346,6 +350,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             header = headerContent,
                             stickyHeader = true,
                             backdrop = backdropContent,
+                            showScrollToTop = false,
                             itemContent = { playlist ->
                                 PlaylistItem(
                                     playlist = playlist,
