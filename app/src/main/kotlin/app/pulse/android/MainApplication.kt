@@ -98,7 +98,6 @@ import app.pulse.android.preferences.UIStatePreferences
 import app.pulse.android.service.PlayerService
 import app.pulse.android.service.ServiceNotifications
 import app.pulse.android.service.downloadState
-import app.pulse.android.service.whatsNewForInstalledVersion
 import app.pulse.android.ui.components.BottomSheetMenu
 import app.pulse.android.ui.components.BottomSheetState
 import app.pulse.android.ui.components.rememberBottomSheetState
@@ -107,7 +106,6 @@ import app.pulse.android.ui.components.themed.LocalDockBackArrow
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
-import app.pulse.android.ui.components.themed.WhatsNewDialog
 import app.pulse.android.ui.components.themed.YtDlpUpdateDialog
 import app.pulse.android.ui.components.themed.BatteryOptimizationPrompt
 import androidx.compose.ui.platform.LocalContext
@@ -482,18 +480,6 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
             // once per versionCode. The fetch runs here rather than on every
             // launch, and the dialog is gated last so it never stacks with the
             // update or yt-dlp dialogs.
-            var whatsNew by remember { mutableStateOf<Pair<String, String>?>(null) }
-
-            LaunchedEffect(Unit) {
-                val isUpdate = BuildConfig.VERSION_CODE > DataPreferences.lastSeenVersionCode
-                if (isUpdate) {
-                    val newWhatsNew = whatsNewForInstalledVersion()
-                    if (newWhatsNew != null) {
-                        whatsNew = newWhatsNew
-                        DataPreferences.lastSeenVersionCode = BuildConfig.VERSION_CODE
-                    }
-                }
-            }
 
             val pendingVersion = DataPreferences.pendingUpdateVersion
             val pendingUrl = DataPreferences.pendingUpdateUrl
@@ -514,16 +500,6 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                     version = pendingYtDlp,
                     onDismiss = { DataPreferences.pendingYtDlpVersion = "" }
                 )
-            }
-
-            whatsNew?.let { (version, body) ->
-                if (pendingVersion.isEmpty() && pendingYtDlp.isEmpty()) {
-                    WhatsNewDialog(
-                        version = version,
-                        body = body,
-                        onDismiss = { whatsNew = null }
-                    )
-                }
             }
 
             vm.binder?.player.DisposableListener {
