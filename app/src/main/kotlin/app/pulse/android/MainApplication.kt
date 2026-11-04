@@ -485,13 +485,14 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
             var whatsNew by remember { mutableStateOf<Pair<String, String>?>(null) }
 
             LaunchedEffect(Unit) {
-                // The anchor is written on every launch.
                 val isUpdate = BuildConfig.VERSION_CODE > DataPreferences.lastSeenVersionCode
-
-                // Marked seen before the request, so failed or missing notes never surface on a later launch.
-                DataPreferences.lastSeenVersionCode = BuildConfig.VERSION_CODE
-
-                if (isUpdate) whatsNew = whatsNewForInstalledVersion()
+                if (isUpdate) {
+                    val newWhatsNew = whatsNewForInstalledVersion()
+                    if (newWhatsNew != null) {
+                        whatsNew = newWhatsNew
+                        DataPreferences.lastSeenVersionCode = BuildConfig.VERSION_CODE
+                    }
+                }
             }
 
             val pendingVersion = DataPreferences.pendingUpdateVersion
