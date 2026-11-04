@@ -483,15 +483,38 @@ fun MorphingNavigationBar(
 fun HomeCircleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: Int = R.drawable.home
+    icon: Int = R.drawable.home,
+    dockHazeState: HazeState,
+    useGlass: Boolean,
 ) {
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
+    val glassStyle = GlassStyle.clear.material3().then {
+        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
+        tint(colorPalette.background1.copy(alpha = 0.5f))
+        specularIntensity(0f)
+        edgeSoftness(2.dp)
+        edgeShadow(Color.Transparent)
+        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
+    }
     Box(
         modifier = modifier
-            .background(colorPalette.background1, CircleShape)
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    0f to colorPalette.accent.copy(alpha = 0.3f),
+                    0.3f to Color.Transparent,
+                ),
+                shape = CircleShape,
+            )
             .clip(CircleShape)
+            .let {
+                if (useGlass) it.hazeGlass(
+                    input = HazeInput.Sources(dockHazeState),
+                    style = glassStyle,
+                ) else it.background(colorPalette.background1, CircleShape)
+            }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
