@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -71,7 +70,6 @@ import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.glass.material3.material3
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 
 @Composable
 fun rememberMiniPlayerState(): MiniPlayerState {
@@ -164,14 +162,6 @@ fun MorphingMiniPlayer(
 
     Box(
         modifier = modifier
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    0f to colorPalette.accent.copy(alpha = 0.3f),
-                    0.3f to Color.Transparent,
-                ),
-                shape = CircleShape,
-            )
             .clip(CircleShape)
             .let {
                 if (useGlass) it.hazeGlass(
