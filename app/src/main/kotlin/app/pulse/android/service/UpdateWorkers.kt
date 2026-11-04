@@ -61,7 +61,6 @@ private fun whatsNewFrom(releaseBody: String?): String? {
     val lines = releaseBody
         ?.lines()
         ?.map { it.trim() }
-        ?.filter { it.isNotEmpty() }
         ?.filterNot { line ->
             line.contains("SHA-256") ||
                 line.contains("GPG") ||
@@ -79,7 +78,7 @@ private fun whatsNewFrom(releaseBody: String?): String? {
     // A hand-written summary is normally written after the generated bullets
     // show it first, where it is actually read.
     val (prose, bullets) = lines.partition { !it.startsWith("-") }
-    return (prose + bullets).joinToString("\n").takeIf { it.isNotEmpty() }
+    return (prose + bullets).joinToString("\n").trim().takeIf { it.isNotEmpty() }
 }
 
 /**
