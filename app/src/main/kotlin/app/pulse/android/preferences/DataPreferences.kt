@@ -32,8 +32,8 @@ object DataPreferences : GlobalPreferencesHolder() {
     var autoSyncPlaylists by boolean(true)
     var pendingUpdateVersion by string("")
     var pendingUpdateUrl by string("")
-    // defaults to the running build so a fresh install never counts as an update
-    var lastSeenVersionCode by int(BuildConfig.VERSION_CODE)
+    // defaults to 0 so a fresh install always counts as an update
+    var lastSeenVersionCode by int(0)
     var batteryPromptShown by boolean(false)
 
     enum class TopListPeriod(
