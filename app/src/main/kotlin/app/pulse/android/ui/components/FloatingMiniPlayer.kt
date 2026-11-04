@@ -151,10 +151,10 @@ fun MorphingMiniPlayer(
     val (activeMediaItem, metadata, shouldBePlaying, isBuffering, binder) = state
 
     val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.8f))
+        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
+        tint(colorPalette.background1.copy(alpha = 0.5f))
         specularIntensity(0f)
-        edgeSoftness(2.dp)
+        edgeSoftness(0.dp)
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }

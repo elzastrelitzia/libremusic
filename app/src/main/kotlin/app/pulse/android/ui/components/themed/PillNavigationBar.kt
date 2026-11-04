@@ -145,10 +145,10 @@ fun FloatingSearchButton(
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
                     style = GlassStyle.clear.material3().then {
-                        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-                        tint(colorPalette.background1.copy(alpha = 0.8f))
+                        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
+                        tint(colorPalette.background1.copy(alpha = 0.5f))
                         specularIntensity(0f)
-                        edgeSoftness(2.dp)
+                        edgeSoftness(0.dp)
                         edgeShadow(Color.Transparent)
                         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
                     },
@@ -189,10 +189,10 @@ fun MorphingNavigationBar(
     val haptics = LocalHapticFeedback.current
 
     val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.8f))
+        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
+        tint(colorPalette.background1.copy(alpha = 0.5f))
         specularIntensity(0f)
-        edgeSoftness(2.dp)
+        edgeSoftness(0.dp)
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
@@ -481,10 +481,10 @@ fun HomeCircleButton(
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
     val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.8f))
+        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
+        tint(colorPalette.background1.copy(alpha = 0.5f))
         specularIntensity(0f)
-        edgeSoftness(2.dp)
+        edgeSoftness(0.dp)
         edgeShadow(Color.Transparent)
         optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
     }
