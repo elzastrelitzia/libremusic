@@ -146,7 +146,7 @@ fun FloatingSearchButton(
                     input = HazeInput.Sources(dockHazeState),
                     style = GlassStyle.clear.material3().then {
                         backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-                        tint(colorPalette.background1.copy(alpha = 0.30f))
+                        tint(colorPalette.background1.copy(alpha = 0.8f))
                         specularIntensity(0f)
                         edgeSoftness(2.dp)
                         edgeShadow(Color.Transparent)
@@ -188,9 +188,9 @@ fun MorphingNavigationBar(
     val lazyListState = rememberLazyListState()
     val haptics = LocalHapticFeedback.current
 
-    val glassStyle = GlassStyle.clear.then {
+    val glassStyle = GlassStyle.clear.material3().then {
         backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
+        tint(colorPalette.background1.copy(alpha = 0.8f))
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)
@@ -482,7 +482,7 @@ fun HomeCircleButton(
     val iconSize = if (compact) 20.dp else 24.dp
     val glassStyle = GlassStyle.clear.material3().then {
         backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.30f))
+        tint(colorPalette.background1.copy(alpha = 0.8f))
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)

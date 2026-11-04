@@ -152,7 +152,7 @@ fun MorphingMiniPlayer(
 
     val glassStyle = GlassStyle.clear.material3().then {
         backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
+        tint(colorPalette.background1.copy(alpha = 0.8f))
         specularIntensity(0f)
         edgeSoftness(2.dp)
         edgeShadow(Color.Transparent)
