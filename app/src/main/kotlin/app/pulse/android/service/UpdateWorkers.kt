@@ -183,10 +183,11 @@ class YtDlpUpdateWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        // Resolve the newest nightly and record it. The dialog installs it, because
-        // the update is mandatory, so the worker itself downloads nothing.
         val latest = Dependencies.ytDlpUpdateAvailable()
-        if (latest != null) DataPreferences.pendingYtDlpVersion = latest
+        if (latest != null) {
+            val success = Dependencies.upgradeYoutubeDl()
+            Log.i("MusicEngine", "yt-dlp auto-update: latest=$latest success=$success")
+        }
         Log.i("MusicEngine", "yt-dlp update check: latest=$latest")
 
         Result.success()

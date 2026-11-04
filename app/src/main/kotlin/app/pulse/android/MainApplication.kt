@@ -106,7 +106,6 @@ import app.pulse.android.ui.components.themed.LocalDockBackArrow
 import app.pulse.android.ui.components.themed.LocalDockHiddenCount
 import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
-import app.pulse.android.ui.components.themed.YtDlpUpdateDialog
 import app.pulse.android.ui.components.themed.BatteryOptimizationPrompt
 import androidx.compose.ui.platform.LocalContext
 import app.pulse.android.utils.isIgnoringBatteryOptimizations
@@ -490,15 +489,6 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         DataPreferences.pendingUpdateVersion = ""
                         DataPreferences.pendingUpdateUrl = ""
                     }
-                )
-            }
-
-            // Shown only once the app-update prompt is gone, so the two never stack.
-            val pendingYtDlp = DataPreferences.pendingYtDlpVersion
-            if (pendingVersion.isEmpty() && pendingYtDlp.isNotEmpty()) {
-                YtDlpUpdateDialog(
-                    version = pendingYtDlp,
-                    onDismiss = { DataPreferences.pendingYtDlpVersion = "" }
                 )
             }
 
