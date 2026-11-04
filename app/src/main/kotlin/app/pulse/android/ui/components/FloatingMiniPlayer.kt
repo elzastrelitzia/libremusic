@@ -274,7 +274,7 @@ fun MorphingMiniPlayer(
                         Box(
                             modifier = Modifier
                                 .padding(all = if (compactDock) 6.dp else 4.dp)
-                                .size(if (compactDock) 32.dp else 28.dp)
+                                .size(if (compactDock) 33.dp else 29.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -288,14 +288,14 @@ fun MorphingMiniPlayer(
                         ) {
                             if (buffering && isPlaying) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(if (compactDock) 20.dp else 18.dp)
+                                    modifier = Modifier.size(if (compactDock) 21.dp else 19.dp)
                                 )
                             } else {
                                 androidx.compose.foundation.Image(
                                     painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
                                     contentDescription = null,
                                     colorFilter = ColorFilter.tint(colorPalette.accent),
-                                    modifier = Modifier.size(if (compactDock) 22.dp else 20.dp)
+                                    modifier = Modifier.size(if (compactDock) 23.dp else 21.dp)
                                 )
                             }
                         }
@@ -304,7 +304,7 @@ fun MorphingMiniPlayer(
                         Box(
                             modifier = Modifier
                                 .padding(all = 4.dp)
-                                .size(28.dp)
+                                .size(29.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -316,7 +316,7 @@ fun MorphingMiniPlayer(
                                 painter = painterResource(R.drawable.play_skip_forward),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(colorPalette.accent),
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(23.dp)
                             )
                         }
                     }
