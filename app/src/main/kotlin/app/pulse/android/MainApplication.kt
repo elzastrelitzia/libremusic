@@ -782,13 +782,17 @@ object Dependencies {
     @Volatile
     private var engineWarmed = false
 
-    fun runDownload(id: String): String {
-        // warmed on first resolve, not at launch, importing yt-dlp costs tens of
-        // MB, and most launches never play anything.
+    private fun ensureWarm() {
         if (!engineWarmed) {
             engineWarmed = true
             warmUp()
         }
+    }
+
+    fun runDownload(id: String): String {
+        // warmed on first resolve, not at launch, importing yt-dlp costs tens of
+        // MB, and most launches never play anything.
+        ensureWarm()
         return module.callAttr("download", quickjsPath.absolutePath, id).toString()
     }
 
