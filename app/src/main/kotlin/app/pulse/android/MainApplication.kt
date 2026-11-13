@@ -134,6 +134,7 @@ import app.pulse.android.utils.maybeExitPip
 import app.pulse.android.utils.setDefaultPalette
 import app.pulse.android.utils.shouldBePlaying
 import app.pulse.android.utils.toast
+import app.pulse.android.utils.SaveProgressListener
 import app.pulse.compose.persist.LocalPersistMap
 import app.pulse.compose.persist.PersistMap
 import app.pulse.compose.preferences.PreferencesHolder
@@ -796,9 +797,16 @@ object Dependencies {
         return module.callAttr("download", quickjsPath.absolutePath, id).toString()
     }
 
-    fun runSave(id: String, destDir: String, baseName: String): String {
+    fun runSave(
+        id: String,
+        destDir: String,
+        baseName: String,
+        progress: SaveProgressListener? = null
+    ): String {
         ensureWarm()
-        return module.callAttr("save", quickjsPath.absolutePath, id, destDir, baseName).toString()
+        return module.callAttr(
+            "save", quickjsPath.absolutePath, id, destDir, baseName, progress
+        ).toString()
     }
 
     fun runEmbedCover(path: String, imagePath: String): Boolean =

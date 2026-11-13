@@ -53,7 +53,17 @@ def download(quickjs_bin: str, video_id: str) -> str:
     return json.dumps(_slim(yt_dlp.YoutubeDL(opts).extract_info(video_id, download=False)))
 
 
-def save(quickjs_bin: str, video_id: str, dest_dir: str, base_name: str = "") -> str:
+def _progress_hook(status, progress):
+    if progress is None or status.get("status") != "downloading":
+        return
+    if progress.isCancelled():
+        raise RuntimeError("save cancelled")
+    total = status.get("total_bytes") or status.get("total_bytes_estimate") or 0
+    if total:
+        progress.onProgress(int(status.get("downloaded_bytes") or 0), int(total))
+
+
+def save(quickjs_bin: str, video_id: str, dest_dir: str, base_name: str = "", progress=None) -> str:
     """Download the best audio of `video_id` into `dest_dir`.
 
     Prefers m4a (AAC) so the cover can be embedded. Falls back to best audio.
@@ -74,6 +84,7 @@ def save(quickjs_bin: str, video_id: str, dest_dir: str, base_name: str = "") ->
         'js_runtimes': {"quickjs": {"path": quickjs_bin}},
         # yt-dlp's default is 3.
         'extractor_retries': 1,
+        'progress_hooks': [lambda s: _progress_hook(s, progress)],
     }
 
     with yt_dlp.YoutubeDL(opts) as ydl:
@@ -340,4 +351,27 @@ if __name__ == "__main__":
     assert _slim({"id": "x", "filesize": 1}) == {"id": "x", "format_id": None, "url": None, "filesize": 1}
     assert _template_name("100% Love") == "100%% Love"
     assert embed_cover("/tmp/none.webm", "/tmp/none.jpg") is False
+
+    class _FakeProgress:
+        def __init__(self, cancel=False):
+            self.cancel = cancel
+            self.calls = []
+
+        def onProgress(self, downloaded, total):
+            self.calls.append((downloaded, total))
+
+        def isCancelled(self):
+            return self.cancel
+
+    _fake = _FakeProgress()
+    _progress_hook({"status": "downloading", "downloaded_bytes": 50, "total_bytes": 100}, _fake)
+    assert _fake.calls == [(50, 100)]
+    _progress_hook({"status": "finished"}, _fake)
+    assert _fake.calls == [(50, 100)]
+    try:
+        _progress_hook({"status": "downloading"}, _FakeProgress(cancel=True))
+        raise AssertionError("a cancelled hook must raise")
+    except RuntimeError:
+        pass
+    print("progress self-check ok")
     print("_slim self-check ok")
