@@ -26,6 +26,11 @@ _KEYS = ("id", "format_id", "url", "filesize")
 _FORMAT_KEYS = ("format_id", "abr")
 
 
+def _template_name(name: str) -> str:
+    """Escape yt-dlp outtmpl markers in a literal file name."""
+    return name.replace("%", "%%")
+
+
 def _slim(info):
     out = {k: info.get(k) for k in _KEYS}
     formats = info.get("formats")
@@ -46,6 +51,67 @@ def download(quickjs_bin: str, video_id: str) -> str:
     }
 
     return json.dumps(_slim(yt_dlp.YoutubeDL(opts).extract_info(video_id, download=False)))
+
+
+def save(quickjs_bin: str, video_id: str, dest_dir: str, base_name: str = "") -> str:
+    """Download the best audio of `video_id` into `dest_dir`.
+
+    Prefers m4a (AAC) so the cover can be embedded. Falls back to best audio.
+    `base_name` is the sanitized display name from the caller; empty falls back
+    to the video id. Writes the thumbnail next to the audio.
+    Returns JSON `{"path": ..., "thumb": ...}`.
+    """
+    _restore()
+    import yt_dlp  # imported per call so an in-app upgrade takes effect
+
+    os.makedirs(dest_dir, exist_ok=True)
+    name = base_name or video_id
+    opts = {
+        'format': 'bestaudio[ext=m4a]/bestaudio[ext=mp4]/bestaudio',
+        'outtmpl': os.path.join(dest_dir, _template_name(name) + '.%(ext)s'),
+        'writethumbnail': True,
+        'noplaylist': True,
+        'js_runtimes': {"quickjs": {"path": quickjs_bin}},
+        # yt-dlp's default is 3.
+        'extractor_retries': 1,
+    }
+
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(video_id, download=True)
+        downloads = info.get("requested_downloads") or []
+        path = downloads[0].get("filepath") if downloads else None
+        if not path:
+            path = ydl.prepare_filename(info)
+
+    # Find the thumbnail that was written next to the audio.
+    thumb = None
+    for entry in os.listdir(dest_dir):
+        if entry.startswith(name + ".") and entry.lower().endswith((".webp", ".jpg", ".jpeg", ".png")):
+            thumb = os.path.join(dest_dir, entry)
+            break
+
+    return json.dumps({"path": path, "thumb": thumb})
+
+
+def embed_cover(path: str, image_path: str) -> bool:
+    """Embed a JPEG cover into an m4a/mp4 file using mutagen.
+
+    Returns True on success, False if the container cannot hold an MP4 cover.
+    """
+    if not path.lower().endswith((".m4a", ".mp4")):
+        return False
+    try:
+        from mutagen.mp4 import MP4, MP4Cover
+        with open(image_path, "rb") as image:
+            data = image.read()
+        audio = MP4(path)
+        if audio.tags is None:
+            audio.add_tags()
+        audio.tags["covr"] = [MP4Cover(data, imageformat=MP4Cover.FORMAT_JPEG)]
+        audio.save()
+        return True
+    except Exception:
+        return False
 
 
 def upgrade(package_name="yt-dlp"):
@@ -272,4 +338,6 @@ if __name__ == "__main__":
         "formats": [{"format_id": "251", "abr": 130.0}, {"format_id": "140", "abr": None}],
     }
     assert _slim({"id": "x", "filesize": 1}) == {"id": "x", "format_id": None, "url": None, "filesize": 1}
+    assert _template_name("100% Love") == "100%% Love"
+    assert embed_cover("/tmp/none.webm", "/tmp/none.jpg") is False
     print("_slim self-check ok")

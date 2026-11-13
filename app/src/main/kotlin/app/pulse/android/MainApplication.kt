@@ -796,6 +796,14 @@ object Dependencies {
         return module.callAttr("download", quickjsPath.absolutePath, id).toString()
     }
 
+    fun runSave(id: String, destDir: String, baseName: String): String {
+        ensureWarm()
+        return module.callAttr("save", quickjsPath.absolutePath, id, destDir, baseName).toString()
+    }
+
+    fun runEmbedCover(path: String, imagePath: String): Boolean =
+        module.callAttr("embed_cover", path, imagePath).toBoolean()
+
     fun warmUp() {
         runCatching {
             module.callAttr("warm_up")
