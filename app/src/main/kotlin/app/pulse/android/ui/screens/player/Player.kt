@@ -1,5 +1,12 @@
 package app.pulse.android.ui.screens.player
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -56,6 +64,7 @@ import app.pulse.android.ui.components.themed.SecondaryTextButton
 import app.pulse.android.ui.components.themed.SliderDialog
 import app.pulse.android.ui.components.themed.SliderDialogBody
 import app.pulse.android.utils.DisposableListener
+import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.positionAndDurationState
 import app.pulse.android.utils.rememberEqualizerLauncher
@@ -229,7 +238,8 @@ fun Player(
                             onShowSpeedDialog = { audioDialogOpen = true },
                             onShowNormalizationDialog = {
                                 boostDialogOpen = true
-                            }.takeIf { volumeNormalization }
+                            }.takeIf { volumeNormalization },
+                            likedAt = likedAt
                         )
                     }
                 }
@@ -342,9 +352,23 @@ private fun PlayerMenu(
     mediaItem: MediaItem,
     onDismiss: () -> Unit,
     onShowSpeedDialog: (() -> Unit)? = null,
-    onShowNormalizationDialog: (() -> Unit)? = null
+    onShowNormalizationDialog: (() -> Unit)? = null,
+    likedAt: Long?
 ) {
     val launchEqualizer by rememberEqualizerLauncher(audioSessionId = { binder.player.audioSessionId })
+    val context = LocalContext.current
+
+    // API 24-29: runtime WRITE_EXTERNAL_STORAGE permission launcher
+    val writePermLauncher = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { granted ->
+                if (granted && LocalDownloads.canWrite(context)) {
+                    LocalDownloads.save(context, mediaItem, likedAt)
+                }
+            }
+        )
+    } else null
 
     BaseMediaItemMenu(
         mediaItem = mediaItem,
@@ -357,7 +381,25 @@ private fun PlayerMenu(
         onShowSleepTimer = {},
         onDismiss = onDismiss,
         onShowSpeedDialog = onShowSpeedDialog,
-        onShowNormalizationDialog = onShowNormalizationDialog
+        onShowNormalizationDialog = onShowNormalizationDialog,
+        onSaveToLocal = {
+            if (LocalDownloads.canWrite(context)) {
+                LocalDownloads.save(context, mediaItem, likedAt)
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                                .apply { data = Uri.fromParts("package", context.packageName, null) }
+                        )
+                    }.onFailure {
+                        context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                    }
+                } else {
+                    writePermLauncher?.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            }
+        }
     )
 }
 

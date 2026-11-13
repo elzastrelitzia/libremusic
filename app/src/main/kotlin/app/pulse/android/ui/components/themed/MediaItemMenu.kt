@@ -214,7 +214,8 @@ fun BaseMediaItemMenu(
     onHideFromDatabase: (() -> Unit)? = null,
     onRemoveFromQuickPicks: (() -> Unit)? = null,
     onShowSpeedDialog: (() -> Unit)? = null,
-    onShowNormalizationDialog: (() -> Unit)? = null
+    onShowNormalizationDialog: (() -> Unit)? = null,
+    onSaveToLocal: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -261,6 +262,7 @@ fun BaseMediaItemMenu(
         onRemoveFromQuickPicks = onRemoveFromQuickPicks,
         onShowSpeedDialog = onShowSpeedDialog,
         onShowNormalizationDialog = onShowNormalizationDialog,
+        onSaveToLocal = onSaveToLocal,
         modifier = modifier
     )
 }
@@ -285,7 +287,8 @@ fun MediaItemMenu(
     onGoToArtist: ((String) -> Unit)? = null,
     onRemoveFromQuickPicks: (() -> Unit)? = null,
     onShowSpeedDialog: (() -> Unit)? = null,
-    onShowNormalizationDialog: (() -> Unit)? = null
+    onShowNormalizationDialog: (() -> Unit)? = null,
+    onSaveToLocal: (() -> Unit)? = null
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     val density = LocalDensity.current
@@ -787,6 +790,17 @@ fun MediaItemMenu(
                     }.exceptionOrNull()?.printStackTrace()
                 }
             )
+
+            if (!isLocal) onSaveToLocal?.let {
+                MenuEntry(
+                    icon = R.drawable.download,
+                    text = stringResource(R.string.save_to_local),
+                    onClick = {
+                        onDismiss()
+                        it()
+                    }
+                )
+            }
 
             if (!mediaItem.isLocal) AnimatedContent(
                 targetState = isBlacklisted,
