@@ -73,6 +73,7 @@ import app.pulse.android.utils.rememberPipHandler
 import app.pulse.android.utils.seamlessPlay
 import app.pulse.android.utils.rememberIsBuffering
 import app.pulse.android.utils.shouldBePlaying
+import app.pulse.android.utils.hasPermission
 import app.pulse.compose.persist.PersistMapCleanup
 import app.pulse.compose.routing.OnGlobalRoute
 import app.pulse.core.ui.LocalAppearance
@@ -371,6 +372,29 @@ private fun PlayerMenu(
         )
     } else null
 
+    fun startSave() {
+        if (LocalDownloads.canWrite(context)) {
+            SaveService.enqueue(context, mediaItem, likedAt)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching {
+                context.startActivity(
+                    Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                        .apply { data = Uri.fromParts("package", context.packageName, null) }
+                )
+            }.onFailure {
+                context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            }
+        } else {
+            writePermLauncher?.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    val notificationPermLauncher = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            startSave()
+        }
+    } else null
+
     BaseMediaItemMenu(
         mediaItem = mediaItem,
         onStartRadio = {
@@ -384,21 +408,12 @@ private fun PlayerMenu(
         onShowSpeedDialog = onShowSpeedDialog,
         onShowNormalizationDialog = onShowNormalizationDialog,
         onSaveToLocal = {
-            if (LocalDownloads.canWrite(context)) {
-                SaveService.enqueue(context, mediaItem, likedAt)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                !context.hasPermission(Manifest.permission.POST_NOTIFICATIONS)
+            ) {
+                notificationPermLauncher?.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    runCatching {
-                        context.startActivity(
-                            Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                                .apply { data = Uri.fromParts("package", context.packageName, null) }
-                        )
-                    }.onFailure {
-                        context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                    }
-                } else {
-                    writePermLauncher?.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
+                startSave()
             }
         }
     )
