@@ -77,6 +77,7 @@ import app.pulse.android.ui.components.themed.TextField
 import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.modifiers.swipeToClose
 import app.pulse.android.ui.screens.Route
+import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.center
 import app.pulse.android.utils.color
@@ -330,6 +331,7 @@ fun HomeSongs(
                                 if (AppearancePreferences.swipeToHideSongConfirm)
                                     hidingSong = song.id
                                 else {
+                                    LocalDownloads.delete(song.id)
                                     if (!song.isLocal) binder?.cache?.removeResource(song.id)
                                     transaction { Database.delete(song.toEntity()) }
                                 }
@@ -391,6 +393,7 @@ fun HideSongDialog(
             onConfirm()
             query {
                 runCatching {
+                    LocalDownloads.delete(song.id)
                     if (!song.isLocal) binder?.cache?.removeResource(song.id)
                     Database.delete(song.toEntity())
                 }
