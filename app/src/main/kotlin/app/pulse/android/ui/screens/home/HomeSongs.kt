@@ -131,7 +131,8 @@ fun HomeSongs(
     sortOrder: SortOrder,
     setSortOrder: (SortOrder) -> Unit,
     title: String,
-    persistTag: String
+    persistTag: String,
+    headerContent: (@Composable () -> Unit)? = null
 ) {
     val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
 
@@ -286,6 +287,8 @@ fun HomeSongs(
             item {
                 Spacer(modifier = Modifier.height(CollapsingHeaderContentSpacer))
             }
+
+            headerContent?.let { item { it() } }
 
             items(
                 items = filteredItems,

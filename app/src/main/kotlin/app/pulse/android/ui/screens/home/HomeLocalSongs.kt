@@ -37,6 +37,7 @@ import app.pulse.android.transaction
 import app.pulse.android.ui.components.themed.SecondaryTextButton
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.utils.AudioMediaCursor
+import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.utils.hasPermission
 import app.pulse.android.utils.medium
 import app.pulse.core.ui.LocalAppearance
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 private val permission = if (isAtLeastAndroid13) Manifest.permission.READ_MEDIA_AUDIO
@@ -62,7 +64,6 @@ else Manifest.permission.READ_EXTERNAL_STORAGE
 @Composable
 fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
     val context = LocalContext.current
-    val (_, typography) = LocalAppearance.current
 
     var hasPermission by remember(isCompositionLaunched()) {
         mutableStateOf(context.applicationContext.hasPermission(permission))
@@ -77,7 +78,15 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
         if (hasPermission) context.musicFilesAsFlow().collect()
     }
 
-    if (hasPermission) HomeSongs(
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) { LocalDownloads.pruneMissing() }
+    }
+
+    if (!hasPermission) {
+        LaunchedEffect(Unit) { launcher.launch(permission) }
+    }
+
+    HomeSongs(
         onSearchClick = onSearchClick,
         songProvider = {
             Database.songs(
@@ -91,32 +100,38 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
         sortOrder = localSongSortOrder,
         setSortOrder = { localSongSortOrder = it },
         title = stringResource(R.string.local),
-        persistTag = "home/localSongs/songs"
-    ) else {
-        LaunchedEffect(Unit) { launcher.launch(permission) }
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            BasicText(
-                text = stringResource(R.string.media_permission_declined),
-                modifier = Modifier.fillMaxWidth(0.75f),
-                style = typography.m.medium
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SecondaryTextButton(
-                text = stringResource(R.string.open_settings),
-                onClick = {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                    )
-                }
-            )
+        persistTag = "home/localSongs/songs",
+        headerContent = if (hasPermission) null else {
+            { LocalSongsPermissionBanner(context = context) }
         }
+    )
+}
+
+@Composable
+private fun LocalSongsPermissionBanner(context: Context) {
+    val (_, typography) = LocalAppearance.current
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BasicText(
+            text = stringResource(R.string.media_permission_declined),
+            style = typography.m.medium,
+            modifier = Modifier.fillMaxWidth(0.75f)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        SecondaryTextButton(
+            text = stringResource(R.string.open_settings),
+            onClick = {
+                context.startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                )
+            }
+        )
     }
 }
 
