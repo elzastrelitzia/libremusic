@@ -142,10 +142,10 @@ class SaveService : Service() {
     private fun showProgress(request: SaveRequest, percent: Int?, waiting: Int) {
         val builder = NotificationCompat.Builder(this, ServiceNotifications.save.id)
             .setSmallIcon(R.drawable.download)
-            .setContentTitle(request.title.ifBlank { request.baseName })
+            .setContentTitle(getString(R.string.saving_song, request.title.ifBlank { request.baseName }))
             .setContentText(
                 if (percent != null) getString(R.string.saving_percent, percent)
-                else getString(R.string.saving_to_local)
+                else ""
             )
             .setSubText(if (waiting > 0) getString(R.string.save_waiting, waiting) else "")
             .setOngoing(true)

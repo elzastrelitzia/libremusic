@@ -208,7 +208,8 @@
     <string name="already_saved_to_local">Song already saved locally</string>
     <string name="grant_file_access_to_save">Grant file access to save songs</string>
     <string name="save_channel_name">Saving songs</string>
-    <string name="saving_percent">Saving %1$d%%</string>
+    <string name="saving_song">Saving %1$s</string>
+    <string name="saving_percent">%1$d%%</string>
     <string name="save_waiting">%1$d waiting</string>
     <string name="save_cancelled">Save cancelled</string>
     <string name="update_available_description">A newer version of libremusic is available. Would you like to update it now?</string>
