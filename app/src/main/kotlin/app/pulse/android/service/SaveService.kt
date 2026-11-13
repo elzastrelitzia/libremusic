@@ -8,6 +8,8 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
+import android.view.View
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
@@ -164,6 +166,23 @@ class SaveService : Service() {
                     )
                 ).build()
             )
+
+        val songName = request.title.ifBlank { request.baseName }
+        val content = RemoteViews(packageName, R.layout.notification_save).apply {
+            setTextViewText(R.id.save_notification_title, getString(R.string.saving_song, songName))
+            setTextViewText(
+                R.id.save_notification_percent,
+                if (percent != null) getString(R.string.saving_percent, percent) else ""
+            )
+            setViewVisibility(
+                R.id.save_notification_percent,
+                if (percent != null) View.VISIBLE else View.GONE
+            )
+            setProgressBar(R.id.save_notification_progress, 100, percent ?: 0, percent == null)
+        }
+        builder
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(content)
 
         if (!foregroundStarted) {
             ServiceNotifications.save.startForeground(this, { builder })
