@@ -1,6 +1,7 @@
 package app.pulse.android.service
 
 import android.app.Service
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -54,6 +55,10 @@ class SaveService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         synchronized(lock) { lastStartId = startId }
+        if (intent?.action == ACTION_CANCEL) {
+            cancelAll()
+            return START_NOT_STICKY
+        }
         val request = intent?.toSaveRequest()
         if (request == null) {
             maybeStop()
@@ -73,6 +78,18 @@ class SaveService : Service() {
 
         wake.trySend(Unit)
         return START_NOT_STICKY
+    }
+
+    private fun cancelAll() {
+        cancelled = true
+        synchronized(lock) {
+            queue.clear()
+            keys.clear()
+        }
+        if (currentRequest == null && waitingCount() == 0) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf(lastStartId)
+        }
     }
 
     override fun onDestroy() {
@@ -135,6 +152,18 @@ class SaveService : Service() {
             .setOnlyAlertOnce(true)
             .setProgress(100, percent ?: 0, percent == null)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.close,
+                    getString(R.string.cancel),
+                    PendingIntent.getService(
+                        this@SaveService,
+                        0,
+                        Intent(this@SaveService, SaveService::class.java).setAction(ACTION_CANCEL),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                ).build()
+            )
 
         if (!foregroundStarted) {
             ServiceNotifications.save.startForeground(this, { builder })
