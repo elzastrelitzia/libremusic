@@ -173,6 +173,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import android.os.Binder as AndroidBinder
 
 const val LOCAL_KEY_PREFIX = "local:"
+const val DOWNLOAD_KEY_PREFIX = "local:download:"
 private const val TAG = "PlayerService"
 
 @get:OptIn(UnstableApi::class)

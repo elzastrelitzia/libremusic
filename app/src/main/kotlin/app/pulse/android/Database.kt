@@ -65,6 +65,7 @@ import app.pulse.android.models.SongArtistMap
 import app.pulse.android.models.SongPlaylistMap
 import app.pulse.android.models.SongWithContentLength
 import app.pulse.android.models.SortedSongPlaylistMap
+import app.pulse.android.service.DOWNLOAD_KEY_PREFIX
 import app.pulse.android.service.LOCAL_KEY_PREFIX
 import app.pulse.core.data.enums.AlbumSortBy
 import app.pulse.core.data.enums.ArtistSortBy
@@ -188,8 +189,14 @@ interface DatabaseAccessor {
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByPlayTimeDesc(): Flow<List<SongModel>>
 
-    @Query("SELECT id FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%'")
+    @Query("SELECT id FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' AND id NOT LIKE '$DOWNLOAD_KEY_PREFIX%'")
     fun localSongIds(): List<String>
+
+    @Query("SELECT id FROM Song WHERE id LIKE '$DOWNLOAD_KEY_PREFIX%'")
+    fun downloadSongIds(): List<String>
+
+    @Query("DELETE FROM Song WHERE id = :id")
+    fun deleteSongById(id: String)
 
     @Query("UPDATE Song SET missing = :missing WHERE id = :id AND missing != :missing")
     fun setSongMissing(id: String, missing: Boolean)
