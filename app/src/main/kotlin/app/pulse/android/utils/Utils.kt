@@ -16,7 +16,9 @@ import androidx.media3.common.util.UnstableApi
 import app.pulse.android.R
 import app.pulse.core.data.models.Song
 import app.pulse.android.preferences.AppearancePreferences
+import app.pulse.android.service.DOWNLOAD_KEY_PREFIX
 import app.pulse.android.service.LOCAL_KEY_PREFIX
+import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.service.isLocal
 import app.pulse.core.data.utils.SongBundleAccessor
 import app.pulse.core.data.utils.formatDuration
@@ -127,10 +129,17 @@ val Song.asMediaItem: MediaItem
         )
         .setMediaId(id)
         .setUri(
-            if (isLocal) ContentUris.withAppendedId(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                id.substringAfter(LOCAL_KEY_PREFIX).toLong()
-            ) else id.toUri()
+            when {
+                id.startsWith(DOWNLOAD_KEY_PREFIX) ->
+                    LocalDownloads.fileFor(id)?.toUri() ?: id.toUri()
+
+                isLocal -> ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    id.substringAfter(LOCAL_KEY_PREFIX).toLong()
+                )
+
+                else -> id.toUri()
+            }
         )
         .setCustomCacheKey(id)
         .build()
