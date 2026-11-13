@@ -159,6 +159,13 @@ object ServiceNotifications {
         singleNotification = true
     )
 
+    val save by channel(
+        name = "save",
+        description = R.string.save_channel_name,
+        importance = NotificationManagerCompat.IMPORTANCE_LOW,
+        singleNotification = true
+    )
+
     val version by channel(
         description = R.string.version_check,
         importance = NotificationManagerCompat.IMPORTANCE_HIGH,

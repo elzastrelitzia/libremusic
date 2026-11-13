@@ -1,9 +1,7 @@
 package app.pulse.android.utils
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LocalDownloadsTest {
@@ -52,25 +50,5 @@ class LocalDownloadsTest {
         assertEquals("a b c - c", downloadBaseName("a\\b|c?", "c"))
         assertEquals("Title", downloadBaseName("../Title...", null))
         assertEquals(60, downloadBaseName("x".repeat(300), null).length)
-    }
-
-    @Test
-    fun `download gate blocks the same song until released`() {
-        val key = "gate-same-song"
-        assertTrue(LocalDownloads.beginDownload(key))
-        assertFalse(LocalDownloads.beginDownload(key))
-
-        LocalDownloads.endDownload(key)
-        assertTrue(LocalDownloads.beginDownload(key))
-        LocalDownloads.endDownload(key)
-    }
-
-    @Test
-    fun `download gate allows different songs`() {
-        assertTrue(LocalDownloads.beginDownload("gate-song-a"))
-        assertTrue(LocalDownloads.beginDownload("gate-song-b"))
-
-        LocalDownloads.endDownload("gate-song-a")
-        LocalDownloads.endDownload("gate-song-b")
     }
 }

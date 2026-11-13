@@ -262,6 +262,11 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".service.SaveService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
 
         <provider
             android:name="androidx.core.content.FileProvider"

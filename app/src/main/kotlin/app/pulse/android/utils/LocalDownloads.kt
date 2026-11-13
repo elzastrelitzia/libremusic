@@ -6,19 +6,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Environment
-import android.widget.Toast
 import app.pulse.android.Dependencies
-import app.pulse.android.R
 import app.pulse.android.Database
 import app.pulse.android.service.DOWNLOAD_KEY_PREFIX
 import app.pulse.core.data.models.SongEntity
 import app.pulse.core.data.utils.songBundle
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -129,102 +124,67 @@ object LocalDownloads {
         }
     }
 
-    // ponytail: app-process download. Move to WorkManager or a foreground service
-    // if downloads must survive process death.
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    private val inFlight = mutableSetOf<String>()
-
-    /** Returns true when no download is running for [key]. */
-    internal fun beginDownload(key: String): Boolean =
-        synchronized(inFlight) { inFlight.add(key) }
-
-    internal fun endDownload(key: String) {
-        synchronized(inFlight) { inFlight.remove(key) }
+    private fun deletePartial(dest: File, request: SaveRequest) {
+        dest.listFiles()
+            ?.filter { it.name.startsWith("${request.baseName}.") || it.name.startsWith("${request.videoId}.") }
+            ?.forEach { it.delete() }
+        coversDir().listFiles()
+            ?.filter { it.name.startsWith("${request.baseName}.") || it.name.startsWith("${request.videoId}.") }
+            ?.forEach { it.delete() }
     }
 
-    fun save(context: Context, mediaItem: MediaItem, likedAt: Long?) {
-        val appContext = context.applicationContext
-        val videoId = mediaItem.mediaId
-        val baseName = downloadBaseName(
-            mediaItem.mediaMetadata.title?.toString(),
-            mediaItem.mediaMetadata.artist?.toString()
-        ).ifBlank { videoId }
+    suspend fun saveNow(
+        context: Context,
+        request: SaveRequest,
+        progress: SaveProgressListener
+    ): SaveResult = withContext(Dispatchers.IO) {
+        if (!canWrite(context)) return@withContext SaveResult.MissingPermission
 
-        if (!beginDownload(baseName)) {
-            Toast.makeText(
-                appContext,
-                R.string.already_downloading,
-                Toast.LENGTH_SHORT
-            ).show()
-            return
+        val dest = ensureDir() ?: return@withContext SaveResult.Failed(null)
+
+        val existing = findExisting(request.videoId, request.baseName)
+        if (existing != null) {
+            insert(request, existing, thumbnailFor(existing))
+            return@withContext SaveResult.AlreadySaved(existing)
         }
 
-        scope.launch {
-            try {
-                if (!canWrite(appContext)) {
-                    toast(appContext, R.string.grant_file_access_to_save)
-                    return@launch
-                }
-
-                val dest = ensureDir()
-                if (dest == null) {
-                    toast(appContext, R.string.save_to_local_failed)
-                    return@launch
-                }
-
-                val existing = findExisting(videoId, baseName)
-                if (existing != null) {
-                    insert(mediaItem, existing, thumbnailFor(existing), likedAt)
-                    toast(appContext, R.string.already_saved_to_local)
-                    return@launch
-                }
-
-                toast(appContext, R.string.saving_to_local)
-                try {
-                    val json = Dependencies.runSave(videoId, dest.absolutePath, baseName)
-                    val obj = JSONObject(json)
-                    val audio = File(obj.getString("path"))
-                    val thumbnail = obj.optString("thumb").takeIf { it.isNotBlank() }?.let(::File)
-                    val cover = writeCover(thumbnail, audio.nameWithoutExtension)
-                    if (cover != null) thumbnail?.delete()
-                    if (cover != null && (audio.extension.equals("m4a", true) || audio.extension.equals("mp4", true))) {
-                        runCatching { Dependencies.runEmbedCover(audio.absolutePath, cover.absolutePath) }
-                    }
-                    insert(mediaItem, audio, cover ?: thumbnailFor(audio), likedAt)
-                    toast(appContext, R.string.saved_to_local)
-                } catch (t: Throwable) {
-                    dest.listFiles()
-                        ?.filter { it.name.startsWith("$baseName.") || it.name.startsWith("$videoId.") }
-                        ?.forEach { it.delete() }
-                    coversDir().listFiles()
-                        ?.filter { it.name.startsWith("$baseName.") || it.name.startsWith("$videoId.") }
-                        ?.forEach { it.delete() }
-                    toast(appContext, R.string.save_to_local_failed)
-                }
-            } finally {
-                endDownload(baseName)
+        try {
+            val json = Dependencies.runSave(
+                request.videoId, dest.absolutePath, request.baseName, progress
+            )
+            if (progress.isCancelled()) {
+                deletePartial(dest, request)
+                return@withContext SaveResult.Cancelled
             }
+
+            val obj = JSONObject(json)
+            val audio = File(obj.getString("path"))
+            val thumbnail = obj.optString("thumb").takeIf { it.isNotBlank() }?.let(::File)
+            val cover = writeCover(thumbnail, audio.nameWithoutExtension)
+            if (cover != null) thumbnail?.delete()
+            if (cover != null &&
+                (audio.extension.equals("m4a", true) || audio.extension.equals("mp4", true))
+            ) {
+                runCatching { Dependencies.runEmbedCover(audio.absolutePath, cover.absolutePath) }
+            }
+            insert(request, audio, cover ?: thumbnailFor(audio))
+            SaveResult.Saved(audio)
+        } catch (t: Throwable) {
+            deletePartial(dest, request)
+            if (progress.isCancelled()) SaveResult.Cancelled else SaveResult.Failed(t)
         }
     }
 
-    private fun insert(mediaItem: MediaItem, audio: File, cover: File?, likedAt: Long?) {
-        val extras = mediaItem.mediaMetadata.extras?.songBundle
+    private fun insert(request: SaveRequest, audio: File, cover: File?) {
         Database.insert(
             SongEntity(
                 id = downloadSongId(audio.name),
-                title = mediaItem.mediaMetadata.title?.toString().orEmpty(),
-                artistsText = mediaItem.mediaMetadata.artist?.toString(),
-                durationText = extras?.durationText ?: "",
+                title = request.title,
+                artistsText = request.artist,
+                durationText = request.durationText,
                 thumbnailUrl = cover?.toUri()?.toString(),
-                likedAt = likedAt
+                likedAt = request.likedAt
             )
         )
-    }
-
-    private suspend fun toast(context: Context, text: Int) {
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context.applicationContext, text, Toast.LENGTH_SHORT).show()
-        }
     }
 }

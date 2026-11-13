@@ -55,6 +55,7 @@ import app.pulse.android.models.ui.toUiMedia
 import app.pulse.android.preferences.PlayerPreferences
 import app.pulse.android.query
 import app.pulse.android.service.PlayerService
+import app.pulse.android.service.SaveService
 import app.pulse.android.transaction
 import app.pulse.android.ui.components.BottomSheet
 import app.pulse.android.ui.components.BottomSheetState
@@ -364,7 +365,7 @@ private fun PlayerMenu(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = { granted ->
                 if (granted && LocalDownloads.canWrite(context)) {
-                    LocalDownloads.save(context, mediaItem, likedAt)
+                    SaveService.enqueue(context, mediaItem, likedAt)
                 }
             }
         )
@@ -384,7 +385,7 @@ private fun PlayerMenu(
         onShowNormalizationDialog = onShowNormalizationDialog,
         onSaveToLocal = {
             if (LocalDownloads.canWrite(context)) {
-                LocalDownloads.save(context, mediaItem, likedAt)
+                SaveService.enqueue(context, mediaItem, likedAt)
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     runCatching {
