@@ -99,6 +99,7 @@ import kotlinx.coroutines.withContext
 fun InHistoryMediaItemMenu(
     onDismiss: () -> Unit,
     song: Song,
+    onDeleteLocal: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isHiding by rememberSaveable { mutableStateOf(false) }
@@ -113,6 +114,7 @@ fun InHistoryMediaItemMenu(
         onDismiss = onDismiss,
         song = song,
         onHideFromDatabase = { isHiding = true },
+        onDeleteLocal = onDeleteLocal,
         modifier = modifier
     )
 }
@@ -122,11 +124,13 @@ fun InHistoryMediaItemMenu(
     onDismiss: () -> Unit,
     song: Song,
     onHideFromDatabase: () -> Unit,
+    onDeleteLocal: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) = NonQueuedMediaItemMenu(
     mediaItem = song.asMediaItem,
     onDismiss = onDismiss,
     onHideFromDatabase = onHideFromDatabase,
+    onDeleteLocal = onDeleteLocal,
     modifier = modifier
 )
 
@@ -156,6 +160,7 @@ fun NonQueuedMediaItemMenu(
     modifier: Modifier = Modifier,
     onRemoveFromPlaylist: (() -> Unit)? = null,
     onHideFromDatabase: (() -> Unit)? = null,
+    onDeleteLocal: (() -> Unit)? = null,
     onRemoveFromQuickPicks: (() -> Unit)? = null
 ) {
     val binder = LocalPlayerServiceBinder.current
@@ -177,6 +182,7 @@ fun NonQueuedMediaItemMenu(
         onEnqueue = { binder?.player?.enqueue(mediaItem) },
         onRemoveFromPlaylist = onRemoveFromPlaylist,
         onHideFromDatabase = onHideFromDatabase,
+        onDeleteLocal = onDeleteLocal,
         onRemoveFromQuickPicks = onRemoveFromQuickPicks,
         modifier = modifier
     )
@@ -212,6 +218,7 @@ fun BaseMediaItemMenu(
     onRemoveFromQueue: (() -> Unit)? = null,
     onRemoveFromPlaylist: (() -> Unit)? = null,
     onHideFromDatabase: (() -> Unit)? = null,
+    onDeleteLocal: (() -> Unit)? = null,
     onRemoveFromQuickPicks: (() -> Unit)? = null,
     onShowSpeedDialog: (() -> Unit)? = null,
     onShowNormalizationDialog: (() -> Unit)? = null,
@@ -222,6 +229,7 @@ fun BaseMediaItemMenu(
     MediaItemMenu(
         mediaItem = mediaItem,
         onDismiss = onDismiss,
+        onDeleteLocal = onDeleteLocal,
         onGoToEqualizer = onGoToEqualizer,
         onShowSleepTimer = onShowSleepTimer,
         onStartRadio = onStartRadio,
@@ -282,6 +290,7 @@ fun MediaItemMenu(
     onHideFromDatabase: (() -> Unit)? = null,
     onRemoveFromQueue: (() -> Unit)? = null,
     onRemoveFromPlaylist: (() -> Unit)? = null,
+    onDeleteLocal: (() -> Unit)? = null,
     onAddToPlaylist: ((Playlist, Int) -> Unit)? = null,
     onGoToAlbum: ((String) -> Unit)? = null,
     onGoToArtist: ((String) -> Unit)? = null,
@@ -842,12 +851,25 @@ fun MediaItemMenu(
                 )
             }
 
-            onHideFromDatabase?.let {
-                MenuEntry(
-                    icon = R.drawable.trash,
-                    text = stringResource(R.string.hide),
-                    onClick = onHideFromDatabase
-                )
+            if (isLocal) {
+                onDeleteLocal?.let {
+                    MenuEntry(
+                        icon = R.drawable.trash,
+                        text = stringResource(R.string.delete),
+                        onClick = {
+                            onDismiss()
+                            it()
+                        }
+                    )
+                }
+            } else {
+                onHideFromDatabase?.let {
+                    MenuEntry(
+                        icon = R.drawable.trash,
+                        text = stringResource(R.string.hide),
+                        onClick = onHideFromDatabase
+                    )
+                }
             }
 
             if (!isLocal) onRemoveFromQuickPicks?.let {

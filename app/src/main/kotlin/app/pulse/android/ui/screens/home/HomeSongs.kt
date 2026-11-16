@@ -66,6 +66,7 @@ import app.pulse.android.ui.components.LocalMenuState
 import app.pulse.android.ui.components.NewMenu
 import app.pulse.android.ui.components.NewMenuDivider
 import app.pulse.android.ui.components.NewMenuEntry
+import app.pulse.android.ui.components.rememberDeviceSongDeleter
 import app.pulse.android.ui.components.themed.ConfirmationDialog
 import app.pulse.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.pulse.android.ui.components.themed.CollapsingHeader
@@ -81,6 +82,7 @@ import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.center
 import app.pulse.android.utils.color
+import app.pulse.android.utils.downloadFileName
 import app.pulse.android.utils.forcePlayAtIndex
 import app.pulse.android.utils.formatted
 import app.pulse.android.utils.playingSong
@@ -93,6 +95,8 @@ import app.pulse.core.ui.Dimensions
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.onOverlay
 import app.pulse.core.ui.overlay
+import androidx.compose.ui.platform.LocalContext
+import app.pulse.android.utils.toast
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -153,6 +157,15 @@ fun HomeSongs(
         }
     }
     var hidingSong: String? by rememberSaveable { mutableStateOf(null) }
+    val context = LocalContext.current
+    var deletingSongId: String? by rememberSaveable { mutableStateOf(null) }
+    val deleteDeviceSong = rememberDeviceSongDeleter(
+        onDeleted = { songId ->
+            binder?.cache?.removeResource(songId)
+            query { Database.deleteSongById(songId) }
+        },
+        onFailed = { context.toast(R.string.delete_from_device_failed) }
+    )
 
     // not keyed on songProvider: it is rebuilt on every recomposition of the caller, so
     // keying on it would cancel and re-run this Room query each time. Both callers derive
@@ -303,28 +316,77 @@ fun HomeSongs(
                     }
                 )
 
-                SongItem(
-                    modifier = Modifier
-                        .combinedClickable(
-                            onLongClick = {
-                                keyboardController?.hide()
-                                menuState.display {
-                                    InHistoryMediaItemMenu(
-                                        song = song,
-                                        onDismiss = menuState::hide,
-                                        onHideFromDatabase = { hidingSong = song.id }
-                                    )
-                                }
-                            },
-                            onClick = {
-                                keyboardController?.hide()
-                                binder?.stopRadio()
-                                binder?.player?.forcePlayAtIndex(
-                                    items.map { it.asMediaItem },
-                                    items.indexOf(song)
+                val clickModifier = Modifier
+                    .combinedClickable(
+                        onLongClick = {
+                            keyboardController?.hide()
+                            menuState.display {
+                                InHistoryMediaItemMenu(
+                                    song = song,
+                                    onDismiss = menuState::hide,
+                                    onHideFromDatabase = { hidingSong = song.id },
+                                    onDeleteLocal = { deletingSongId = song.id }
                                 )
                             }
-                        )
+                        },
+                        onClick = {
+                            keyboardController?.hide()
+                            binder?.stopRadio()
+                            binder?.player?.forcePlayAtIndex(
+                                items.map { it.asMediaItem },
+                                items.indexOf(song)
+                            )
+                        }
+                    )
+
+                val rowContent: @Composable (Modifier) -> Unit = { modifier ->
+                    SongItem(
+                        modifier = modifier,
+                        song = song,
+                        thumbnailSize = Dimensions.thumbnails.song,
+                        onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
+                            {
+                                BasicText(
+                                    text = song.formattedTotalPlayTime,
+                                    style = typography.xxs.semiBold.center.color(colorPalette.onOverlay),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(Color.Transparent, colorPalette.overlay)
+                                            ),
+                                            shape = thumbnailShape.copy(
+                                                topStart = CornerSize(0.dp),
+                                                topEnd = CornerSize(0.dp)
+                                            )
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .align(Alignment.BottomCenter)
+                                )
+                            }
+                        } else null,
+                        isPlaying = playing && currentMediaId == song.id
+                    )
+                }
+
+                if (song.isLocal && deletingSongId == song.id) DeleteLocalSongDialog(
+                    onDismiss = { deletingSongId = null },
+                    onConfirm = {
+                        deletingSongId = null
+                        if (downloadFileName(song.id) != null) {
+                            query {
+                                LocalDownloads.delete(song.id)
+                                binder?.cache?.removeResource(song.id)
+                                Database.deleteSongById(song.id)
+                            }
+                        } else deleteDeviceSong(song.id)
+                    }
+                )
+
+                rowContent(
+                    clickModifier
                         .animateItem()
                         .let {
                             if (AppearancePreferences.swipeToHideSong) it.swipeToClose(
@@ -340,33 +402,7 @@ fun HomeSongs(
                                 }
                                 animationJob.join()
                             } else it
-                        },
-                    song = song,
-                    thumbnailSize = Dimensions.thumbnails.song,
-                    onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
-                        {
-                            BasicText(
-                                text = song.formattedTotalPlayTime,
-                                style = typography.xxs.semiBold.center.color(colorPalette.onOverlay),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(Color.Transparent, colorPalette.overlay)
-                                        ),
-                                        shape = thumbnailShape.copy(
-                                            topStart = CornerSize(0.dp),
-                                            topEnd = CornerSize(0.dp)
-                                        )
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    .align(Alignment.BottomCenter)
-                            )
                         }
-                    } else null,
-                    isPlaying = playing && currentMediaId == song.id
                 )
             }
         }
@@ -405,6 +441,16 @@ fun HideSongDialog(
         modifier = modifier
     )
 }
+
+@Composable
+private fun DeleteLocalSongDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) = ConfirmationDialog(
+    text = stringResource(R.string.confirm_delete_from_device),
+    onDismiss = onDismiss,
+    onConfirm = onConfirm
+)
 
 // Row content, for convenience, doesn't need modifier/receiver
 @Suppress("UnusedReceiverParameter", "ModifierMissing")
