@@ -41,6 +41,27 @@ fun mediaStoreId(songId: String): Long? {
 fun orphanFileNames(names: List<String>, indexed: Set<String>): List<String> =
     names.filter { name -> File(name).extension.lowercase() in audioExtensions && name !in indexed }
 
+data class SongSelection(
+    val downloads: List<String>,
+    val devices: List<String>,
+    val remote: List<String>
+)
+
+/** Split selected song ids by kind so the right deleter handles each. */
+fun partitionSelectedIds(ids: Collection<String>): SongSelection {
+    val downloads = mutableListOf<String>()
+    val devices = mutableListOf<String>()
+    val remote = mutableListOf<String>()
+    ids.forEach { id ->
+        when {
+            id.startsWith(DOWNLOAD_KEY_PREFIX) -> downloads += id
+            id.startsWith(LOCAL_KEY_PREFIX) -> devices += id
+            else -> remote += id
+        }
+    }
+    return SongSelection(downloads, devices, remote)
+}
+
 fun pickFileName(names: List<String>, baseName: String, extensions: Set<String>): String? =
     names.firstOrNull { name ->
         val ext = name.substringAfterLast('.', "").lowercase()

@@ -75,4 +75,14 @@ class LocalDownloadsTest {
         val indexed = setOf("A.mp3", "B.mp3")
         assertTrue(orphanFileNames(names, indexed).isEmpty())
     }
+
+    @Test
+    fun `selection partitions download device and remote ids`() {
+        val result = partitionSelectedIds(
+            listOf("local:download:a.webm", "local:123", "abc", "local:download:b.mp3")
+        )
+        assertEquals(listOf("local:download:a.webm", "local:download:b.mp3"), result.downloads)
+        assertEquals(listOf("local:123"), result.devices)
+        assertEquals(listOf("abc"), result.remote)
+    }
 }
