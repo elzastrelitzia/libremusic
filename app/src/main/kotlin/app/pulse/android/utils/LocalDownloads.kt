@@ -9,6 +9,7 @@ import android.os.Environment
 import app.pulse.android.Dependencies
 import app.pulse.android.Database
 import app.pulse.android.service.DOWNLOAD_KEY_PREFIX
+import app.pulse.android.service.LOCAL_KEY_PREFIX
 import app.pulse.core.data.models.SongEntity
 import app.pulse.core.data.utils.songBundle
 import androidx.core.net.toUri
@@ -28,6 +29,12 @@ fun downloadFileName(songId: String): String? {
     if (!songId.startsWith(DOWNLOAD_KEY_PREFIX)) return null
     val name = songId.removePrefix(DOWNLOAD_KEY_PREFIX)
     return name.takeIf { it.isNotBlank() && File(it).name == it }
+}
+
+fun mediaStoreId(songId: String): Long? {
+    if (!songId.startsWith(LOCAL_KEY_PREFIX)) return null
+    if (songId.startsWith(DOWNLOAD_KEY_PREFIX)) return null
+    return songId.removePrefix(LOCAL_KEY_PREFIX).toLongOrNull()
 }
 
 fun pickFileName(names: List<String>, baseName: String, extensions: Set<String>): String? =

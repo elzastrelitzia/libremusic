@@ -51,4 +51,13 @@ class LocalDownloadsTest {
         assertEquals("Title", downloadBaseName("../Title...", null))
         assertEquals(60, downloadBaseName("x".repeat(300), null).length)
     }
+
+    @Test
+    fun `media store id parses only device local ids`() {
+        assertEquals(123L, mediaStoreId("local:123"))
+        assertNull(mediaStoreId("local:download:abc.webm"))
+        assertNull(mediaStoreId("local:abc"))
+        assertNull(mediaStoreId("local:"))
+        assertNull(mediaStoreId("abc"))
+    }
 }

@@ -89,6 +89,8 @@
     <string name="hide">Hide</string>
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
+    <string name="confirm_delete_from_device">Delete this song from your device? The file will be permanently deleted.</string>
+    <string name="delete_from_device_failed">Could not delete from device</string>
     <string name="reset">Reset</string>
     <string name="clear">Clear</string>
     <string name="view_all">View all</string>
