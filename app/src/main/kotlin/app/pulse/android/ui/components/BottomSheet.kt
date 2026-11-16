@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -60,7 +59,11 @@ fun BottomSheet(
     content: @Composable BoxScope.() -> Unit
 ) = Box(
     modifier = modifier
-        .offset(y = (state.expandedBound - state.value).coerceAtLeast(0.dp))
+        .graphicsLayer {
+            // Drag offset read in the layer phase, a composition read here rebuilt and
+            // re-recorded the whole player on every pointer event.
+            translationY = (state.expandedBound - state.value).coerceAtLeast(0.dp).toPx()
+        }
         .then(
             if (dragEnabled) Modifier.pointerInput(state) {
                 val velocityTracker = VelocityTracker()
