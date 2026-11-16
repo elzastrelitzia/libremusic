@@ -62,6 +62,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -353,10 +354,25 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
             )
 
             val dockHiddenCount by LocalDockHiddenCount.current
+            // the live value changes every drag event and would
+            // recompose this whole screen, mid-drag nothing behind the sheet needs insets.
+            val playerSheetInset by remember(playerBottomSheetState) {
+                derivedStateOf {
+                    if (playerBottomSheetState.expanded) playerBottomSheetState.expandedBound
+                    else playerBottomSheetState.collapsedBound
+                }
+            }
+            // The glass dock is covered while the player is up, drop it (blur and
+            // refraction shaders) until the sheet is nearly collapsed.
+            val dockVisible by remember(playerBottomSheetState, dockHiddenCount) {
+                derivedStateOf {
+                    dockHiddenCount == 0 && playerBottomSheetState.progress < 0.15f
+                }
+            }
             val playerAwareWindowInsets = remember(
                 bottomDp,
                 animatedBottomDp,
-                playerBottomSheetState.value,
+                playerSheetInset,
                 imeVisible,
                 imeBottomDp,
                 AppearancePreferences.compactDock,
@@ -371,8 +387,8 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 }
                 val baseBottom = animatedBottomDp + dockClearance
                 val bottom =
-                    if (imeVisible) imeBottomDp.coerceAtLeast(playerBottomSheetState.value)
-                    else playerBottomSheetState.value.coerceAtLeast(baseBottom)
+                    if (imeVisible) imeBottomDp.coerceAtLeast(playerSheetInset)
+                    else playerSheetInset.coerceAtLeast(baseBottom)
 
                 windowInsets
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
@@ -448,7 +464,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                         }
 
                         AnimatedVisibility(
-                            visible = dockHiddenCount == 0,
+                            visible = dockVisible,
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                             modifier = Modifier.align(Alignment.BottomCenter)
