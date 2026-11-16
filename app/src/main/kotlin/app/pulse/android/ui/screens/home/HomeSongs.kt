@@ -337,7 +337,7 @@ fun HomeSongs(
                                     NewMenuDivider()
 
                                     NewMenuEntry(
-                                        icon = R.drawable.list,
+                                        icon = R.drawable.check,
                                         text = stringResource(R.string.select_songs),
                                         onClick = {
                                             isMenuVisible = false
