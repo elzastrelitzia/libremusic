@@ -2,6 +2,7 @@ package app.pulse.android.utils
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LocalDownloadsTest {
@@ -59,5 +60,19 @@ class LocalDownloadsTest {
         assertNull(mediaStoreId("local:abc"))
         assertNull(mediaStoreId("local:"))
         assertNull(mediaStoreId("abc"))
+    }
+
+    @Test
+    fun `orphan names keep audio files not yet indexed`() {
+        val names = listOf("Song - Artist.webm", "Cover.jpg", "Song.webm.part", "Other.mp3")
+        val indexed = setOf("Other.mp3")
+        assertEquals(listOf("Song - Artist.webm"), orphanFileNames(names, indexed))
+    }
+
+    @Test
+    fun `orphan names exclude indexed and non-audio files`() {
+        val names = listOf("A.mp3", "B.mp3", "C.jpg")
+        val indexed = setOf("A.mp3", "B.mp3")
+        assertTrue(orphanFileNames(names, indexed).isEmpty())
     }
 }

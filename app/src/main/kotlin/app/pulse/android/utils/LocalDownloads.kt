@@ -37,6 +37,10 @@ fun mediaStoreId(songId: String): Long? {
     return songId.removePrefix(LOCAL_KEY_PREFIX).toLongOrNull()
 }
 
+/** Audio file names in `names` that are not already indexed as `local:download:` rows. */
+fun orphanFileNames(names: List<String>, indexed: Set<String>): List<String> =
+    names.filter { name -> File(name).extension.lowercase() in audioExtensions && name !in indexed }
+
 fun pickFileName(names: List<String>, baseName: String, extensions: Set<String>): String? =
     names.firstOrNull { name ->
         val ext = name.substringAfterLast('.', "").lowercase()
@@ -128,6 +132,28 @@ object LocalDownloads {
         stale.forEach { id ->
             delete(id)
             Database.deleteSongById(id)
+        }
+    }
+
+    /** Insert database rows for saved audio files on disk that have no row yet. */
+    fun importOrphans() {
+        val dir = dir()
+        if (!dir.isDirectory) return
+        val names = dir.list()?.toList().orEmpty()
+        val indexed = Database.downloadSongIds().mapNotNull { downloadFileName(it) }.toSet()
+        orphanFileNames(names, indexed).forEach { name ->
+            val file = File(dir, name)
+            val baseName = name.substringBeforeLast('.', "")
+            val parts = baseName.split(" - ", limit = 2)
+            Database.insert(
+                SongEntity(
+                    id = downloadSongId(name),
+                    title = parts.getOrNull(0) ?: baseName,
+                    artistsText = parts.getOrNull(1),
+                    durationText = null,
+                    thumbnailUrl = thumbnailFor(file)?.toUri()?.toString()
+                )
+            )
         }
     }
 
