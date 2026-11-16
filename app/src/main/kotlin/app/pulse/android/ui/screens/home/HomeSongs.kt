@@ -5,6 +5,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,10 +46,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,6 +73,7 @@ import app.pulse.android.ui.components.NewMenu
 import app.pulse.android.ui.components.NewMenuDivider
 import app.pulse.android.ui.components.NewMenuEntry
 import app.pulse.android.ui.components.rememberDeviceSongDeleter
+import app.pulse.android.ui.components.rememberDeviceSongsDeleter
 import app.pulse.android.ui.components.themed.ConfirmationDialog
 import app.pulse.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.pulse.android.ui.components.themed.CollapsingHeader
@@ -79,6 +86,7 @@ import app.pulse.android.ui.items.SongItem
 import app.pulse.android.ui.modifiers.swipeToClose
 import app.pulse.android.ui.screens.Route
 import app.pulse.android.utils.LocalDownloads
+import app.pulse.android.utils.partitionSelectedIds
 import app.pulse.android.utils.asMediaItem
 import app.pulse.android.utils.center
 import app.pulse.android.utils.color
@@ -167,6 +175,25 @@ fun HomeSongs(
         onFailed = { context.toast(R.string.delete_from_device_failed) }
     )
 
+    var selectionMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(emptySet<String>()) }
+    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+    val deleteDeviceSongs = rememberDeviceSongsDeleter(
+        onResult = { deletedIds, failed ->
+            query {
+                deletedIds.forEach { Database.deleteSongById(it) }
+            }
+            if (failed) context.toast(R.string.delete_from_device_failed)
+            selectionMode = false
+            selectedIds = emptySet()
+        }
+    )
+
+    BackHandler(enabled = selectionMode) {
+        selectionMode = false
+        selectedIds = emptySet()
+    }
+
     // not keyed on songProvider: it is rebuilt on every recomposition of the caller, so
     // keying on it would cancel and re-run this Room query each time. Both callers derive
     // the query solely from sortBy and sortOrder, which are keys.
@@ -186,7 +213,33 @@ fun HomeSongs(
             var searching by rememberSaveable { mutableStateOf(false) }
             var isMenuVisible by rememberSaveable { mutableStateOf(false) }
 
-            AnimatedContent(
+            if (selectionMode) {
+                HeaderPillRow {
+                    BasicText(
+                        text = pluralStringResource(
+                            R.plurals.songs_selected,
+                            selectedIds.size,
+                            selectedIds.size
+                        ),
+                        style = typography.s.semiBold,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+
+                    HeaderIconButton(
+                        icon = R.drawable.trash,
+                        onClick = { showDeleteSelectedDialog = true }
+                    )
+
+                    HeaderIconButton(
+                        icon = R.drawable.close,
+                        onClick = {
+                            selectionMode = false
+                            selectedIds = emptySet()
+                        }
+                    )
+                }
+            } else {
+                AnimatedContent(
                 targetState = searching,
                 label = ""
             ) { state ->
@@ -280,12 +333,24 @@ fun HomeSongs(
                                             isMenuVisible = false
                                         }
                                     )
+
+                                    NewMenuDivider()
+
+                                    NewMenuEntry(
+                                        icon = R.drawable.list,
+                                        text = stringResource(R.string.select_songs),
+                                        onClick = {
+                                            isMenuVisible = false
+                                            selectionMode = true
+                                        }
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
+        }
         }
     ) {
         LazyColumn(
@@ -316,26 +381,35 @@ fun HomeSongs(
                     }
                 )
 
+                val selected = song.id in selectedIds
                 val clickModifier = Modifier
                     .combinedClickable(
                         onLongClick = {
                             keyboardController?.hide()
-                            menuState.display {
-                                InHistoryMediaItemMenu(
-                                    song = song,
-                                    onDismiss = menuState::hide,
-                                    onHideFromDatabase = { hidingSong = song.id },
-                                    onDeleteLocal = { deletingSongId = song.id }
-                                )
+                            if (selectionMode) {
+                                selectedIds = if (selected) selectedIds - song.id else selectedIds + song.id
+                            } else {
+                                menuState.display {
+                                    InHistoryMediaItemMenu(
+                                        song = song,
+                                        onDismiss = menuState::hide,
+                                        onHideFromDatabase = { hidingSong = song.id },
+                                        onDeleteLocal = { deletingSongId = song.id }
+                                    )
+                                }
                             }
                         },
                         onClick = {
                             keyboardController?.hide()
-                            binder?.stopRadio()
-                            binder?.player?.forcePlayAtIndex(
-                                items.map { it.asMediaItem },
-                                items.indexOf(song)
-                            )
+                            if (selectionMode) {
+                                selectedIds = if (selected) selectedIds - song.id else selectedIds + song.id
+                            } else {
+                                binder?.stopRadio()
+                                binder?.player?.forcePlayAtIndex(
+                                    items.map { it.asMediaItem },
+                                    items.indexOf(song)
+                                )
+                            }
                         }
                     )
 
@@ -344,6 +418,16 @@ fun HomeSongs(
                         modifier = modifier,
                         song = song,
                         thumbnailSize = Dimensions.thumbnails.song,
+                        trailingContent = if (selectionMode) {
+                            {
+                                if (selected) Image(
+                                    painter = painterResource(R.drawable.check),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(colorPalette.accent),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        } else null,
                         onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
                             {
                                 BasicText(
@@ -387,9 +471,13 @@ fun HomeSongs(
 
                 rowContent(
                     clickModifier
+                        .background(
+                            if (selected) colorPalette.accent.copy(alpha = 0.12f)
+                            else Color.Transparent
+                        )
                         .animateItem()
                         .let {
-                            if (AppearancePreferences.swipeToHideSong) it.swipeToClose(
+                            if (!selectionMode && AppearancePreferences.swipeToHideSong) it.swipeToClose(
                                 key = filteredItems,
                                 requireUnconsumed = true
                             ) { animationJob ->
@@ -412,6 +500,32 @@ fun HomeSongs(
             lazyListState = lazyListState,
             icon = null
         )
+
+    if (showDeleteSelectedDialog) ConfirmationDialog(
+        text = stringResource(R.string.confirm_delete_songs),
+        onDismiss = { showDeleteSelectedDialog = false },
+        onConfirm = {
+            showDeleteSelectedDialog = false
+            val partition = partitionSelectedIds(selectedIds)
+            query {
+                partition.downloads.forEach { id ->
+                    LocalDownloads.delete(id)
+                    binder?.cache?.removeResource(id)
+                    Database.deleteSongById(id)
+                }
+                partition.remote.forEach { id ->
+                    binder?.cache?.removeResource(id)
+                    Database.deleteSongById(id)
+                }
+            }
+            if (partition.devices.isEmpty()) {
+                selectionMode = false
+                selectedIds = emptySet()
+            } else {
+                deleteDeviceSongs(partition.devices)
+            }
+        }
+    )
     }
 }
 

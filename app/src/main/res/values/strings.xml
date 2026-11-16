@@ -91,6 +91,12 @@
     <string name="delete">Delete</string>
     <string name="confirm_delete_from_device">Delete this song from your device? The file will be permanently deleted.</string>
     <string name="delete_from_device_failed">Could not delete from device</string>
+    <string name="select_songs">Select songs</string>
+    <plurals name="songs_selected">
+        <item quantity="one">%1$d song selected</item>
+        <item quantity="other">%1$d songs selected</item>
+    </plurals>
+    <string name="confirm_delete_songs">Delete selected songs? Device files will be permanently deleted.</string>
     <string name="reset">Reset</string>
     <string name="clear">Clear</string>
     <string name="view_all">View all</string>
