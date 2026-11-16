@@ -108,6 +108,7 @@ import app.pulse.android.ui.components.themed.LocalNavigationState
 import app.pulse.android.ui.components.themed.UpdateDialog
 import app.pulse.android.ui.components.themed.BatteryOptimizationPrompt
 import androidx.compose.ui.platform.LocalContext
+import app.pulse.android.utils.LocalDownloads
 import app.pulse.android.utils.isIgnoringBatteryOptimizations
 import app.pulse.core.ui.utils.isLandscape
 
@@ -734,6 +735,11 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         applicationScope.launch {
             MonetCompat.enablePaletteCompat()
             with(ServiceNotifications) { createAll() }
+            if (LocalDownloads.canWrite(this@MainApplication)) {
+                withContext(Dispatchers.IO) {
+                    runCatching { LocalDownloads.importOrphans() }
+                }
+            }
         }
 
     }
