@@ -119,6 +119,86 @@ fun rememberDeviceSongDeleter(
     }
 }
 
+/** Batch delete device songs through one MediaStore delete request (API 30+) or per-file below. */
+@Composable
+fun rememberDeviceSongsDeleter(
+    onResult: (deletedIds: List<String>, failed: Boolean) -> Unit
+): (List<String>) -> Unit {
+    val context = LocalContext.current
+    val currentOnResult by rememberUpdatedState(onResult)
+    var pendingIds by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
+
+    val consentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        val ids = pendingIds
+        pendingIds = emptyList()
+        if (result.resultCode != Activity.RESULT_OK) {
+            currentOnResult(emptyList(), true)
+            return@rememberLauncherForActivityResult
+        }
+        currentOnResult(ids, false)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val ids = pendingIds
+        pendingIds = emptyList()
+        if (!granted) {
+            currentOnResult(emptyList(), true)
+            return@rememberLauncherForActivityResult
+        }
+        val deleted = deleteAll(context, ids)
+        currentOnResult(deleted, deleted.size != ids.size)
+    }
+
+    return remember(context, consentLauncher, permissionLauncher) {
+        delete@{ ids ->
+            val uris = ids.mapNotNull { songUri(it) }
+            if (uris.isEmpty()) {
+                currentOnResult(emptyList(), true)
+                return@delete
+            }
+
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                    pendingIds = ids
+                    runCatching {
+                        val request = MediaStore.createDeleteRequest(
+                            context.contentResolver,
+                            uris
+                        )
+                        consentLauncher.launch(
+                            IntentSenderRequest.Builder(request.intentSender).build()
+                        )
+                    }.onFailure {
+                        pendingIds = emptyList()
+                        currentOnResult(emptyList(), true)
+                    }
+                }
+
+                context.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) -> {
+                    val deleted = deleteAll(context, ids)
+                    currentOnResult(deleted, deleted.size != ids.size)
+                }
+
+                else -> {
+                    pendingIds = ids
+                    permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            }
+        }
+    }
+}
+
+private fun deleteAll(context: android.content.Context, ids: List<String>): List<String> =
+    ids.filter { id ->
+        runCatching {
+            songUri(id)?.let { context.contentResolver.delete(it, null, null) } ?: 0
+        }.getOrDefault(0) > 0
+    }
+
 private fun songUri(songId: String): Uri? =
     mediaStoreId(songId)?.let {
         ContentUris.withAppendedId(AudioMediaCursor.uri, it)
