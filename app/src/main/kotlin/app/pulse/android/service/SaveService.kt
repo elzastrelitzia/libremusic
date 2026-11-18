@@ -115,7 +115,7 @@ class SaveService : Service() {
                 currentRequest = item.request
                 cancelled = false
                 lastPercent = -1
-                mutableSaveProgress.value = null
+                mutableSaveProgress.value = -1f
                 showProgress(item.request, percent = null, waiting = waitingCount())
 
                 val result = try {
@@ -142,6 +142,11 @@ class SaveService : Service() {
                     mutableSaveProgress.value = percent / 100f
                     showProgress(request, percent, waitingCount())
                 }
+            }
+
+            override fun onProcessing() {
+                mutableSaveProgress.value = -1f
+                showProgress(request, null, waitingCount())
             }
 
             override fun isCancelled(): Boolean = cancelled

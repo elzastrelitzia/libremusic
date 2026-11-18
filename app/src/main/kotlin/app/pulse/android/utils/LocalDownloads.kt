@@ -215,6 +215,7 @@ object LocalDownloads {
             val obj = JSONObject(json)
             val audio = File(obj.getString("path"))
             val thumbnail = obj.optString("thumb").takeIf { it.isNotBlank() }?.let(::File)
+            progress.onProcessing()
             val cover = writeCover(thumbnail, audio.nameWithoutExtension)
             if (cover != null) thumbnail?.delete()
             if (cover != null &&

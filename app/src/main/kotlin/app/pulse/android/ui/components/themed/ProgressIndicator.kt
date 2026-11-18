@@ -21,17 +21,18 @@ fun CircularProgressIndicator(
     trackColor: Color = LocalAppearance.current.colorPalette.background1
 ) {
     val (colorPalette) = LocalAppearance.current
+    val isIndeterminate = progress == null || progress!! < 0f
 
-    if (progress == null) androidx.compose.material3.CircularProgressIndicator(
+    if (isIndeterminate) androidx.compose.material3.CircularProgressIndicator(
         modifier = modifier,
         color = color,
         trackColor = trackColor,
         strokeCap = strokeCap ?: ProgressIndicatorDefaults.CircularIndeterminateStrokeCap
     ) else {
         val animatedProgress by (
-            if (animateProgress) animateFloatAsState(targetValue = progress)
-            else remember { derivedStateOf { progress } }
-            )
+            if (animateProgress) animateFloatAsState(targetValue = progress!!)
+            else remember { derivedStateOf { progress!! } }
+        )
 
         androidx.compose.material3.CircularProgressIndicator(
             modifier = modifier,
@@ -52,17 +53,18 @@ fun LinearProgressIndicator(
     color: Color = LocalAppearance.current.colorPalette.accent
 ) {
     val (colorPalette) = LocalAppearance.current
+    val isIndeterminate = progress == null || progress!! < 0f
 
-    if (progress == null) androidx.compose.material3.LinearProgressIndicator(
+    if (isIndeterminate) androidx.compose.material3.LinearProgressIndicator(
         modifier = modifier,
         color = color,
         trackColor = colorPalette.background1,
         strokeCap = strokeCap
     ) else {
         val animatedProgress by (
-            if (animateProgress) animateFloatAsState(targetValue = progress)
-            else remember { derivedStateOf { progress } }
-            )
+            if (animateProgress) animateFloatAsState(targetValue = progress!!)
+            else remember { derivedStateOf { progress!! } }
+        )
 
         androidx.compose.material3.LinearProgressIndicator(
             modifier = modifier,
