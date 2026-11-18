@@ -375,20 +375,6 @@ fun FullscreenPlayer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0f to Color.Transparent,
-                            0.25f to Color.Transparent,
-                            0.45f to Color.Transparent,
-                            0.7f to gradientEndColor,
-                            1f to gradientEndColor
-                        )
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
                     .graphicsLayer {
                         alpha = if (isShowingLyrics || isShowingQueue) 0.9f else 0f
                     }
@@ -444,6 +430,20 @@ fun FullscreenPlayer(
             val lyricsContentAlpha by animateFloatAsState(
                 targetValue = if (isShowingLyrics || isShowingQueue) 1f else 0f,
                 label = "lyricsContentAlpha"
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(350.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.15f to gradientEndColor,
+                            1f to gradientEndColor
+                        )
+                    )
             )
 
             Column(modifier = Modifier.fillMaxSize()) {
@@ -557,24 +557,10 @@ fun FullscreenPlayer(
                     }
                 }
 
-                // scrim that belongs to the controls
-                val controlsScrim = if (isShowingLyrics) {
-                    Modifier
-                        .background(
-                            Brush.verticalGradient(
-                                0f to Color.Transparent,
-                                0.15f to gradientEndColor,
-                                1f to gradientEndColor
-                            )
-                        )
-                        .padding(top = 56.dp)
-                } else Modifier
-
                 val bottomControls: @Composable () -> Unit = {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .then(controlsScrim)
                     ) {
                         if (uiMedia != null) {
                             Box(modifier = Modifier.padding(horizontal = 48.dp)) {
