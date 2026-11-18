@@ -106,8 +106,8 @@ fun AppearanceSettings() {
                 onCheckedChange = { compactDock = it }
             )
             SwitchSettingsEntry(
-                title = stringResource(R.string.glass_dock_blur),
-                text = stringResource(R.string.glass_dock_blur_description),
+                title = stringResource(R.string.glass_blur),
+                text = stringResource(R.string.glass_blur_description),
                 isChecked = glassBlur,
                 onCheckedChange = { glassBlur = it }
             )
