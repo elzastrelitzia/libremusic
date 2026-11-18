@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.pulse.android.LocalPlayerServiceBinder
 import app.pulse.android.R
+import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.preferences.PlayerPreferences
 import app.pulse.android.utils.bold
 import app.pulse.android.utils.color
@@ -346,6 +347,7 @@ fun LyricsShareSelection(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val enabled = selection.isNotEmpty()
+                    val glassBlur = AppearancePreferences.glassBlur
                     val glassStyle = liquidGlassStyle(
                         colorPalette = colorPalette,
                         tokens = LiquidGlassTokens(
@@ -357,10 +359,15 @@ fun LyricsShareSelection(
                         modifier = Modifier
                             .size(64.dp)
                             .clip(CircleShape)
-                            .hazeGlass(
-                                input = HazeInput.Backdrop(hazeState),
-                                style = glassStyle,
-                            )
+                            .let {
+                                if (glassBlur) it.hazeGlass(
+                                    input = HazeInput.Backdrop(hazeState),
+                                    style = glassStyle,
+                                ) else it.background(
+                                    colorPalette.background1.copy(alpha = 0.9f),
+                                    CircleShape,
+                                )
+                            }
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,

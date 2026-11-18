@@ -40,7 +40,7 @@ fun MorphingDock(
     modifier: Modifier = Modifier
 ) {
     val compact = AppearancePreferences.compactDock
-    val glassDockBlur = AppearancePreferences.glassDockBlur
+    val glassBlur = AppearancePreferences.glassBlur
     val dockPad = if (compact) 16.dp else 24.dp
     val dockSpacing = if (compact) 6.dp else 8.dp
     val baseSize = if (compact) Dimensions.items.collapsedPlayerHeight else 64.dp
@@ -163,7 +163,7 @@ fun MorphingDock(
                         scaleY       = 1f - navHideFactor
                     }
             ) {
-                FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, useGlass = glassDockBlur, modifier = Modifier.fillMaxSize())
+                FloatingSearchButton(onClick = onSearchClick, dockHazeState = dockHazeState, useGlass = glassBlur, modifier = Modifier.fillMaxSize())
             }
         }
 
@@ -194,7 +194,7 @@ fun MorphingDock(
                     hiddenTabs      = currentNavState.hiddenTabs,
                     expandedWidth   = expandedNavWidth,
                     dockHazeState   = dockHazeState,
-                    useGlass        = glassDockBlur,
+                    useGlass        = glassBlur,
                     modifier        = Modifier.fillMaxSize()
                 )
             }
@@ -232,7 +232,7 @@ fun MorphingDock(
                     onClick = onHomeClick,
                     icon = if (LocalDockBackArrow.current.value > 0) R.drawable.chevron_back else R.drawable.home,
                     dockHazeState = dockHazeState,
-                    useGlass = glassDockBlur,
+                    useGlass = glassBlur,
                 )
             }
         }
@@ -254,7 +254,7 @@ fun MorphingDock(
             MorphingMiniPlayer(
                 progress = playerMorphProgress,
                 dockHazeState = dockHazeState,
-                useGlass = glassDockBlur,
+                useGlass = glassBlur,
                 onClick  = onPlayerClick,
                 modifier = Modifier.fillMaxSize(),
                 contentWidth = currentPlayerWidth

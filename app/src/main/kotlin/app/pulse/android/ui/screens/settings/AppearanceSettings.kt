@@ -108,8 +108,8 @@ fun AppearanceSettings() {
             SwitchSettingsEntry(
                 title = stringResource(R.string.glass_dock_blur),
                 text = stringResource(R.string.glass_dock_blur_description),
-                isChecked = glassDockBlur,
-                onCheckedChange = { glassDockBlur = it }
+                isChecked = glassBlur,
+                onCheckedChange = { glassBlur = it }
             )
         }
         SettingsGroup(title = stringResource(R.string.text)) {
