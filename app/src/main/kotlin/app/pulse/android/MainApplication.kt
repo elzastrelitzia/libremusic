@@ -190,6 +190,23 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "MainActivity"
+
+/**
+ * Ensures the QuickJS runtime file exists and is executable.
+ * Throws [IllegalStateException] with a clear message if the runtime is missing
+ * or cannot be made executable.
+ */
+internal fun ensureQuickJsExecutable(file: File): File {
+    if (!file.exists()) {
+        throw IllegalStateException("QuickJS runtime missing: ${file.absolutePath}")
+    }
+    if (!file.canExecute()) {
+        if (!file.setExecutable(true)) {
+            throw IllegalStateException("QuickJS runtime not executable: ${file.absolutePath}")
+        }
+    }
+    return file
+}
 private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 // Viewmodel in order to avoid recreating the entire Player state (WORKAROUND)
@@ -802,6 +819,8 @@ object Dependencies {
             .also { if (!it.canExecute()) it.setExecutable(true) }
     }
 
+    fun requireQuickJs(): File = ensureQuickJsExecutable(quickjsPath)
+
     @Volatile
     private var engineWarmed = false
 
@@ -815,6 +834,7 @@ object Dependencies {
     fun runDownload(id: String): String {
         // warmed on first resolve, not at launch, importing yt-dlp costs tens of
         // MB, and most launches never play anything.
+        requireQuickJs()
         ensureWarm()
         return module.callAttr("download", quickjsPath.absolutePath, id).toString()
     }
@@ -825,6 +845,7 @@ object Dependencies {
         baseName: String,
         progress: SaveProgressListener? = null
     ): String {
+        requireQuickJs()
         ensureWarm()
         return module.callAttr(
             "save", quickjsPath.absolutePath, id, destDir, baseName, progress

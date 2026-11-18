@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import app.pulse.android.Dependencies
 import app.pulse.android.Database
 import app.pulse.android.service.DOWNLOAD_KEY_PREFIX
@@ -225,6 +226,7 @@ object LocalDownloads {
             SaveResult.Saved(audio)
         } catch (t: Throwable) {
             deletePartial(dest, request)
+            Log.e("LocalDownloads", "save failed for ${request.videoId} (${request.baseName})", t)
             if (progress.isCancelled()) SaveResult.Cancelled else SaveResult.Failed(t)
         }
     }
