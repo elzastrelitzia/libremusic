@@ -221,7 +221,7 @@ fun Player(
         var audioDialogOpen by rememberSaveable { mutableStateOf(false) }
         var boostDialogOpen by rememberSaveable { mutableStateOf(false) }
 
-        NewLayoutContent(
+        FullscreenPlayer(
             mediaItem = activeMediaItem,
             binder = binder,
             likedAt = likedAt,

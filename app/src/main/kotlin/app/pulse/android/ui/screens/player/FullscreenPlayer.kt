@@ -126,7 +126,7 @@ private data class ShareSelection(
 )
 
 @Composable
-fun NewLayoutContent(
+fun FullscreenPlayer(
     mediaItem: MediaItem?,
     binder: PlayerService.Binder?,
     likedAt: Long?,
@@ -780,7 +780,7 @@ fun NewLayoutContent(
             ) {
                 Spacer(modifier = Modifier.height(28.dp))
 
-                NewLayoutVolumeSlider(
+                PlayerVolumeSlider(
                     context = context,
                     colorPalette = colorPalette,
                     enabled = controlsEnabled,
@@ -888,7 +888,7 @@ fun NewLayoutContent(
 }
 
 @Composable
-private fun NewLayoutVolumeSlider(
+private fun PlayerVolumeSlider(
     context: Context,
     colorPalette: app.pulse.core.ui.ColorPalette,
     enabled: Boolean = true,

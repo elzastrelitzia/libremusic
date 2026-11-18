@@ -916,7 +916,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         // Warm Coil's cache with the next song's fullscreen artwork so the
         // boundary doesn't flash a blank thumbnail while it fetches. Explicit
-        // memoryCacheKey matches the AsyncImage request in NewLayoutContent.
+        // memoryCacheKey matches the AsyncImage request in FullscreenPlayer.
         next.mediaMetadata.artworkUri?.toString()?.thumbnail(
             maxOf(
                 resources.displayMetrics.widthPixels,
