@@ -9,11 +9,14 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.SupervisorJob
@@ -45,6 +48,9 @@ class SaveService : Service() {
     @Volatile private var foregroundStarted = false
     @Volatile private var lastPercent = -1
     private var lastStartId = 0
+
+    private fun canNotify(): Boolean =
+        NotificationManagerCompat.from(this).areNotificationsEnabled()
 
     override fun onCreate() {
         super.onCreate()
@@ -86,8 +92,9 @@ class SaveService : Service() {
             queue.clear()
             keys.clear()
         }
+        mutableSaveProgress.value = null
         if (currentRequest == null && waitingCount() == 0) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            if (canNotify()) stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf(lastStartId)
         }
     }
@@ -108,6 +115,7 @@ class SaveService : Service() {
                 currentRequest = item.request
                 cancelled = false
                 lastPercent = -1
+                mutableSaveProgress.value = null
                 showProgress(item.request, percent = null, waiting = waitingCount())
 
                 val result = try {
@@ -131,6 +139,7 @@ class SaveService : Service() {
                 val percent = savePercent(downloaded, total)
                 if (percent != null && throttle.shouldEmit(percent, SystemClock.elapsedRealtime())) {
                     lastPercent = percent
+                    mutableSaveProgress.value = percent / 100f
                     showProgress(request, percent, waitingCount())
                 }
             }
@@ -165,11 +174,13 @@ class SaveService : Service() {
                 ).build()
             )
 
-        if (!foregroundStarted) {
-            ServiceNotifications.save.startForeground(this, { builder })
-            foregroundStarted = true
-        } else {
-            ServiceNotifications.save.sendNotification(this, { builder })
+        if (canNotify()) {
+            if (!foregroundStarted) {
+                ServiceNotifications.save.startForeground(this, { builder })
+                foregroundStarted = true
+            } else {
+                ServiceNotifications.save.sendNotification(this, { builder })
+            }
         }
     }
 
@@ -194,25 +205,30 @@ class SaveService : Service() {
     }
 
     private fun settle(result: SaveResult, request: SaveRequest) {
+        mutableSaveProgress.value = null
         val title = getString(messageFor(result))
         val text = request.title.ifBlank { request.baseName }
 
         toast(messageFor(result))
 
-        val builder = NotificationCompat.Builder(this, ServiceNotifications.save.id)
-            .setSmallIcon(R.drawable.download)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setAutoCancel(true)
+        if (canNotify()) {
+            val builder = NotificationCompat.Builder(this, ServiceNotifications.save.id)
+                .setSmallIcon(R.drawable.download)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setAutoCancel(true)
 
-        ServiceNotifications.save.sendNotification(this, { builder })
+            ServiceNotifications.save.sendNotification(this, { builder })
 
-        scope.launch(Dispatchers.Main) {
-            delay(1500)
-            if (waitingCount() > 0) return@launch
-            ServiceNotifications.save.cancel(this@SaveService)
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            foregroundStarted = false
+            scope.launch(Dispatchers.Main) {
+                delay(1500)
+                if (waitingCount() > 0) return@launch
+                ServiceNotifications.save.cancel(this@SaveService)
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                foregroundStarted = false
+                maybeStop()
+            }
+        } else {
             maybeStop()
         }
     }
@@ -248,7 +264,7 @@ class SaveService : Service() {
                 .putExtra(EXTRA_ARTIST, request.artist)
                 .putExtra(EXTRA_DURATION_TEXT, request.durationText)
                 .putExtra(EXTRA_LIKED_AT, request.likedAt ?: -1L)
-            ContextCompat.startForegroundService(context, intent)
+            context.startService(intent)
         }
 
         fun cancel(context: Context) {
@@ -267,3 +283,6 @@ class SaveService : Service() {
         }
     }
 }
+
+private val mutableSaveProgress = MutableStateFlow<Float?>(null)
+val saveProgress: StateFlow<Float?> = mutableSaveProgress.asStateFlow()

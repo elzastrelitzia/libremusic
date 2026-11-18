@@ -92,6 +92,7 @@ import app.pulse.android.utils.medium
 import app.pulse.android.utils.forceSeekToNext
 import app.pulse.android.utils.forceSeekToPrevious
 import app.pulse.android.utils.semiBold
+import app.pulse.android.ui.components.themed.CircularProgressIndicator
 import app.pulse.android.utils.shouldBePlaying
 import app.pulse.android.utils.rememberIsBuffering
 import app.pulse.android.utils.thumbnail
@@ -141,6 +142,7 @@ fun NewLayoutContent(
     onShowLyrics: (Boolean) -> Unit,
     isShowingQueue: Boolean = false,
     onShowQueue: (Boolean) -> Unit = {},
+    saveProgress: Float? = null,
     modifier: Modifier = Modifier
 ) {
     val (baseColorPalette, typography, thumbnailCornerSize) = LocalAppearance.current
@@ -840,23 +842,35 @@ fun NewLayoutContent(
                         )
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clickable(
-                                enabled = controlsEnabled,
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = onMenuLaunch
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ellipsis_horizontal),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(colorPalette.accent),
-                            modifier = Modifier.size(24.dp)
-                        )
+                    if (saveProgress != null) {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                progress = saveProgress
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clickable(
+                                    enabled = controlsEnabled,
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    onClick = onMenuLaunch
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.ellipsis_horizontal),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(colorPalette.accent),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }

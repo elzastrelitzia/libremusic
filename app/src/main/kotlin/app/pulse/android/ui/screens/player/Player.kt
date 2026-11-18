@@ -56,6 +56,7 @@ import app.pulse.android.preferences.PlayerPreferences
 import app.pulse.android.query
 import app.pulse.android.service.PlayerService
 import app.pulse.android.service.SaveService
+import app.pulse.android.service.saveProgress
 import app.pulse.android.transaction
 import app.pulse.android.ui.components.BottomSheet
 import app.pulse.android.ui.components.BottomSheetState
@@ -80,6 +81,7 @@ import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.utils.roundedShape
 import app.pulse.core.data.utils.songBundle
 import app.pulse.providers.innertube.models.NavigationEndpoint
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -95,6 +97,8 @@ fun Player(
     val menuState = LocalMenuState.current
     val (colorPalette, _, _) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
+
+    val saveProgress by saveProgress.collectAsState()
 
     val pipHandler = rememberPipHandler()
 
@@ -224,6 +228,7 @@ fun Player(
             setLikedAt = { likedAt = it },
             position = position,
             duration = duration,
+            saveProgress = saveProgress,
             onLyricsClick = {
                 overlayMode = if (overlayMode == OverlayMode.Lyrics) OverlayMode.None else OverlayMode.Lyrics
             },
@@ -389,12 +394,6 @@ private fun PlayerMenu(
         }
     }
 
-    val notificationPermLauncher = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-            startSave()
-        }
-    } else null
-
     BaseMediaItemMenu(
         mediaItem = mediaItem,
         onStartRadio = {
@@ -408,13 +407,7 @@ private fun PlayerMenu(
         onShowSpeedDialog = onShowSpeedDialog,
         onShowNormalizationDialog = onShowNormalizationDialog,
         onSaveToLocal = {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                !context.hasPermission(Manifest.permission.POST_NOTIFICATIONS)
-            ) {
-                notificationPermLauncher?.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                startSave()
-            }
+            startSave()
         }
     )
 }

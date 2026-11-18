@@ -17,13 +17,15 @@ fun CircularProgressIndicator(
     progress: Float? = null,
     animateProgress: Boolean = progress != null,
     strokeCap: StrokeCap? = null,
-    color: Color = LocalAppearance.current.colorPalette.accent
+    color: Color = LocalAppearance.current.colorPalette.accent,
+    trackColor: Color = LocalAppearance.current.colorPalette.background1
 ) {
     val (colorPalette) = LocalAppearance.current
 
     if (progress == null) androidx.compose.material3.CircularProgressIndicator(
         modifier = modifier,
         color = color,
+        trackColor = trackColor,
         strokeCap = strokeCap ?: ProgressIndicatorDefaults.CircularIndeterminateStrokeCap
     ) else {
         val animatedProgress by (
@@ -34,6 +36,7 @@ fun CircularProgressIndicator(
         androidx.compose.material3.CircularProgressIndicator(
             modifier = modifier,
             color = color,
+            trackColor = trackColor,
             strokeCap = strokeCap ?: ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
             progress = { animatedProgress }
         )
