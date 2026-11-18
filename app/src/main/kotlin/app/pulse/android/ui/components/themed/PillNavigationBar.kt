@@ -44,13 +44,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.glass.GlassOptics
-import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.GlassTransformTarget
-import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
-import dev.chrisbanes.haze.glass.material3.material3
-import androidx.compose.ui.graphics.Color
 import app.pulse.android.R
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.core.ui.Dimensions
@@ -144,14 +139,7 @@ fun FloatingSearchButton(
             .let {
                 if (useGlass) it.hazeGlass(
                     input = HazeInput.Sources(dockHazeState),
-                    style = GlassStyle.clear.material3().then {
-                        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
-                        tint(colorPalette.background1.copy(alpha = 0.5f))
-                        specularIntensity(0f)
-                        edgeSoftness(0.dp)
-                        edgeShadow(Color.Transparent)
-                        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
-                    },
+                    style = liquidGlassStyle(colorPalette),
                     interactionSource = interactionSource,
                     interactionTransformTarget = GlassTransformTarget.MaterialAndContent,
                 ) else it.background(colorPalette.background1.copy(alpha = 0.9f), CircleShape)
@@ -188,14 +176,8 @@ fun MorphingNavigationBar(
     val lazyListState = rememberLazyListState()
     val haptics = LocalHapticFeedback.current
 
-    val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
-        specularIntensity(0f)
-        edgeSoftness(0.dp)
-        edgeShadow(Color.Transparent)
-        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
-    }
+    val glassStyle = liquidGlassStyle(colorPalette)
+
     val interactionSource = remember { MutableInteractionSource() }
 
     // The pill is the dock's only selection highlight. It sits on the selected tab at rest
@@ -480,14 +462,7 @@ fun HomeCircleButton(
     val (colorPalette) = LocalAppearance.current
     val compact = AppearancePreferences.compactDock
     val iconSize = if (compact) 20.dp else 24.dp
-    val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
-        specularIntensity(0f)
-        edgeSoftness(0.dp)
-        edgeShadow(Color.Transparent)
-        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
-    }
+    val glassStyle = liquidGlassStyle(colorPalette)
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier

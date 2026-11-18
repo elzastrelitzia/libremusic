@@ -47,6 +47,7 @@ import app.pulse.android.R
 import app.pulse.android.preferences.AppearancePreferences
 import app.pulse.android.models.ui.toUiMedia
 import app.pulse.android.ui.components.themed.CircularProgressIndicator
+import app.pulse.android.ui.components.themed.liquidGlassStyle
 import app.pulse.core.ui.utils.px
 import app.pulse.android.utils.DisposableListener
 import app.pulse.android.utils.asMediaItem
@@ -63,13 +64,8 @@ import app.pulse.android.models.ui.UiMedia
 import coil3.compose.AsyncImage
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.glass.GlassOptics
-import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.GlassTransformTarget
-import dev.chrisbanes.haze.glass.OpticalSizeValue
 import dev.chrisbanes.haze.glass.hazeGlass
-import dev.chrisbanes.haze.glass.material3.material3
-import androidx.compose.ui.graphics.Color
 
 @Composable
 fun rememberMiniPlayerState(): MiniPlayerState {
@@ -150,14 +146,7 @@ fun MorphingMiniPlayer(
     val state = rememberMiniPlayerState()
     val (activeMediaItem, metadata, shouldBePlaying, isBuffering, binder) = state
 
-    val glassStyle = GlassStyle.clear.material3().then {
-        backgroundColor(colorPalette.background1.copy(alpha = 0.3f))
-        tint(colorPalette.background1.copy(alpha = 0.5f))
-        specularIntensity(0f)
-        edgeSoftness(0.dp)
-        edgeShadow(Color.Transparent)
-        optics { copy(blurRadius = OpticalSizeValue.Fixed(4.dp)) }
-    }
+    val glassStyle = liquidGlassStyle(colorPalette)
     val interactionSource = remember { MutableInteractionSource() }
 
     Box(

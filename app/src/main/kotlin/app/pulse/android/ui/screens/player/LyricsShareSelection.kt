@@ -40,8 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -54,13 +54,13 @@ import app.pulse.android.preferences.PlayerPreferences
 import app.pulse.android.utils.bold
 import app.pulse.android.utils.color
 import app.pulse.android.utils.shareToInstagramStory
+import app.pulse.android.ui.components.themed.LiquidGlassTokens
+import app.pulse.android.ui.components.themed.liquidGlassStyle
 import app.pulse.core.ui.LocalAppearance
 import app.pulse.core.ui.overlay
 import coil3.compose.AsyncImage
 import dev.chrisbanes.haze.HazeInput
-import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
-import dev.chrisbanes.haze.glass.material3.material3
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
@@ -346,13 +346,13 @@ fun LyricsShareSelection(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val enabled = selection.isNotEmpty()
-                    val glassStyle = GlassStyle.clear.material3().then {
-                        backgroundColor(colorPalette.background1.copy(alpha = 0.9f))
-                        tint(colorPalette.background1.copy(alpha = 0.5f))
-                        specularIntensity(0f)
-                        edgeSoftness(2.dp)
-                        edgeShadow(Color.Transparent)
-                    }
+                    val glassStyle = liquidGlassStyle(
+                        colorPalette = colorPalette,
+                        tokens = LiquidGlassTokens(
+                            backgroundAlpha = 0.9f,
+                            edgeSoftness = 2.dp,
+                        ),
+                    )
                     Box(
                         modifier = Modifier
                             .size(64.dp)
