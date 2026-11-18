@@ -22,7 +22,7 @@ val clean by tasks.registering(Delete::class) {
 
 allprojects {
     group = "com.elza.pulse"
-    version = "26.1.5"
+    version = "26.1.6"
 
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
