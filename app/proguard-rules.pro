@@ -64,3 +64,7 @@
 # to both the language-id and translate registrars.
 -keep class * implements com.google.firebase.components.ComponentRegistrar { void <init>(); }
 -keep,allowshrinking interface com.google.firebase.components.ComponentRegistrar
+
+# Chaquopy calls these Kotlin callback methods by name in download.py
+-keep interface app.pulse.android.utils.SaveProgressListener { *; }
+-keep class * implements app.pulse.android.utils.SaveProgressListener { *; }
