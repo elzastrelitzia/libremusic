@@ -315,6 +315,14 @@ fun FullscreenPlayer(
         colorPalette.background0.copy(alpha = 0.95f)
     }
 
+    val controlsScrimGradient = remember(gradientEndColor) {
+        Brush.verticalGradient(
+            0f to Color.Transparent,
+            0.15f to gradientEndColor,
+            1f to gradientEndColor
+        )
+    }
+
 
 
     Box(
@@ -432,18 +440,12 @@ fun FullscreenPlayer(
                 label = "lyricsContentAlpha"
             )
 
-            Box(
+            if (!isShowingLyrics) Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(350.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            0f to Color.Transparent,
-                            0.15f to gradientEndColor,
-                            1f to gradientEndColor
-                        )
-                    )
+                    .background(controlsScrimGradient)
             )
 
             Column(modifier = Modifier.fillMaxSize()) {
@@ -691,6 +693,17 @@ fun FullscreenPlayer(
                             modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
                             onDismiss = { onShowQueue(false) },
                             lazyListState = queueListState
+                        )
+                    }
+
+                    if (isShowingLyrics) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .height(350.dp)
+                                .alpha(controlsAlpha)
+                                .background(controlsScrimGradient)
                         )
                     }
 
