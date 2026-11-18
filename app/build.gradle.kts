@@ -154,34 +154,6 @@ android {
     }
 }
 
-afterEvaluate {
-    val jniLibs = file("${layout.projectDirectory}/src/main/jniLibs").also { it.mkdirs() }
-    android.buildTypes.forEach { type ->
-        val typeCapitalized = type.name.let {
-            it.first().uppercase() + it.substring(1)
-        }
-
-        tasks.named("assemble${typeCapitalized}").configure {
-            doFirst {
-                val cxxDir =
-                    file("${layout.buildDirectory.get()}/intermediates/cxx/${if (typeCapitalized == "Debug") "Debug" else "RelWithDebInfo"}")
-
-                cxxDir.walkTopDown().forEach cxx@{ f ->
-                    if (f.name != "qjs") return@cxx
-
-                    f.copyTo(
-                        target = jniLibs
-                            .resolve(f.parentFile.name)
-                            .also { it.mkdirs() }
-                            .resolve("libqjs.so"), // disguise because fuck you
-                        overwrite = true
-                    )
-                }
-            }
-        }
-    }
-}
-
 kotlin {
     // jvmToolchain(libs.versions.jvm.get().toInt())
 

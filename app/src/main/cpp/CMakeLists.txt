@@ -57,5 +57,11 @@ add_custom_command(TARGET qjs POST_BUILD
         COMMENT "Stripping qjs binary for ${ANDROID_ABI}"
 )
 
+add_custom_command(TARGET qjs POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:qjs> ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libqjs.so
+        COMMENT "Installing libqjs.so for ${ANDROID_ABI}"
+)
+
 add_library(dummy SHARED dummy.c)
 add_dependencies(dummy qjs)
